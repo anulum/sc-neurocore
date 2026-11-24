@@ -10,31 +10,40 @@
 
 from __future__ import annotations
 
-from tests.model_loihi_cuba_support import *  # noqa: F403
+from sc_neurocore.neurons.models.loihi_cuba import (
+    LoihiCUBANeuron,
+)
 
 
 class TestLoihiCUBAIsolation:
-    def test_defaults(self):
+    """The LoihiCUBANeuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = LoihiCUBANeuron()
         assert n.v == 0 and n.u == 0
         assert n.v_threshold == 1000 and n.tau_v == 10
 
-    def test_integer_state(self):
+    def test_integer_state(self) -> None:
+        """The voltage and current registers stay integer-valued after a step."""
         n = LoihiCUBANeuron()
         n.step(100)
         assert isinstance(n.v, int) and isinstance(n.u, int)
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert LoihiCUBANeuron().step(100) in (0, 1)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = LoihiCUBANeuron()
         for _ in range(100):
             n.step(100)
         n.reset()
         assert n.v == 0 and n.u == 0
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = LoihiCUBANeuron()

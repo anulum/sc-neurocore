@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_lnm_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.lnm import (
+    LearnableNeuronModel,
+)
 
 
 class TestLNMAnalytical:
-    def test_v_update_formula(self):
+    """Analytical behaviour of the LearnableNeuronModel."""
+
+    def test_v_update_formula(self) -> None:
+        """One step follows alpha·v + beta·I + gamma·f(v) unless it spikes."""
         n = LearnableNeuronModel()
         v0 = n.v
         I = 0.5
@@ -24,19 +30,22 @@ class TestLNMAnalytical:
         if n.v != n.v_reset:
             assert abs(n.v - expected) < 1e-12
 
-    def test_sigmoid_midpoint(self):
+    def test_sigmoid_midpoint(self) -> None:
+        """The logistic nonlinearity is one half at its midpoint."""
         n = LearnableNeuronModel()
         f = 1.0 / (1.0 + np.exp(0.0))
         assert abs(f - 0.5) < 1e-12
 
-    def test_alpha_decay(self):
+    def test_alpha_decay(self) -> None:
+        """Without input, the leak alpha lets the voltage decay."""
         n = LearnableNeuronModel(v_threshold=100.0)
         n.v = 0.8
         for _ in range(50):
             n.step(0.0)
         assert n.v < 0.8
 
-    def test_beta_scales_input(self):
+    def test_beta_scales_input(self) -> None:
+        """A larger input gain beta drives the voltage higher."""
         n1 = LearnableNeuronModel(beta=0.1, v_threshold=100.0)
         n2 = LearnableNeuronModel(beta=0.5, v_threshold=100.0)
         for _ in range(50):
@@ -44,13 +53,15 @@ class TestLNMAnalytical:
             n2.step(5.0)
         assert n2.v > n1.v
 
-    def test_gamma_zero_linear(self):
+    def test_gamma_zero_linear(self) -> None:
+        """With gamma at zero the update is linear in v and I."""
         n = LearnableNeuronModel(gamma=0.0, v_threshold=100.0)
         n.v = 0.5
         n.step(1.0)
         assert abs(n.v - (0.9 * 0.5 + 0.1 * 1.0)) < 1e-12
 
-    def test_spike_resets(self):
+    def test_spike_resets(self) -> None:
+        """A spike resets the voltage to v_reset."""
         n = LearnableNeuronModel()
         for _ in range(10_000):
             if n.step(5.0) == 1:

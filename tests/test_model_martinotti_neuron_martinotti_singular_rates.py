@@ -10,17 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_martinotti_neuron_support import *  # noqa: F403
-
 
 class TestMartinottiSingularRates:
-    def test_alpha_singular_returns_limit_at_singularity(self):
+    """The singular gating-rate helper at and around its removable singularity."""
+
+    def test_alpha_singular_returns_limit_at_singularity(self) -> None:
+        """Alpha singular returns limit at singularity."""
         from sc_neurocore.neurons.models.martinotti_neuron import _alpha_singular
 
         assert _alpha_singular(0.0, -4.0, -4.0) == -4.0
         assert _alpha_singular(0.0, 5.0, 5.0) == 5.0
 
-    def test_alpha_singular_continuous_across_singularity(self):
+    def test_alpha_singular_continuous_across_singularity(self) -> None:
+        """Alpha singular continuous across singularity."""
         from sc_neurocore.neurons.models.martinotti_neuron import _alpha_singular
 
         left = _alpha_singular(-1e-7, 5.0, 5.0)

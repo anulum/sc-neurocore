@@ -1320,6 +1320,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 61 top-level model-zoo test modules of the learnable neuron model,
+  Loihi 2, Loihi CUBA, liquid time-constant, Mainen-Sejnowski, Marder
+  STG, Martinotti, McKean and Morris-Lecar neurons import their names
+  explicitly instead of through a suppressed star import, gain their
+  missing docstrings and type annotations and are enrolled in the
+  docstring policy.
+
 - The 60 top-level model-zoo test modules of the Hindmarsh-Rose,
   Hodgkin-Huxley, Huber-Braun, inhibitory LIF, inhomogeneous Poisson,
   KLIF, Lapicque, Larter-Breakspear and leaky compete-and-fire neurons

@@ -10,19 +10,27 @@
 
 from __future__ import annotations
 
-from tests.model_lnm_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.lnm import (
+    LearnableNeuronModel,
+)
 
 
 class TestLNMParameters:
+    """Parameter behaviour of the LearnableNeuronModel."""
+
     @pytest.mark.parametrize("alpha", [0.5, 0.9, 0.99])
-    def test_alpha_sweep(self, alpha: float):
+    def test_alpha_sweep(self, alpha: float) -> None:
+        """The model is exercised across a sweep of alpha."""
         n = LearnableNeuronModel(alpha=alpha)
         for _ in range(5000):
             n.step(5.0)
         assert np.isfinite(n.v)
 
     @pytest.mark.parametrize("gamma", [0.0, 0.05, 0.2])
-    def test_gamma_sweep(self, gamma: float):
+    def test_gamma_sweep(self, gamma: float) -> None:
+        """The model is exercised across a sweep of gamma."""
         n = LearnableNeuronModel(gamma=gamma)
         for _ in range(5000):
             n.step(5.0)

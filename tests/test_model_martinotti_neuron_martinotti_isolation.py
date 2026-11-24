@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_martinotti_neuron_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.martinotti_neuron import (
+    MartinottiNeuron,
+)
+from tests.model_martinotti_neuron_support import (
+    _spikes,
+)
 
 
 class TestMartinottiIsolation:
-    def test_construction_defaults(self):
+    """The MartinottiNeuron in isolation."""
+
+    def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = MartinottiNeuron()
         assert n.v == -65.0
         assert n.g_na == 40.0
@@ -22,23 +31,28 @@ class TestMartinottiIsolation:
         assert n.c_m == 0.8
         assert n.dt == 0.025
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert MartinottiNeuron().step(5.0) in (0, 1)
 
-    def test_quiescent_without_drive(self):
+    def test_quiescent_without_drive(self) -> None:
+        """Quiescent without drive."""
         assert _spikes(MartinottiNeuron(), 0.0, 20000) == 0
 
-    def test_suprathreshold_spiking(self):
+    def test_suprathreshold_spiking(self) -> None:
+        """Suprathreshold spiking."""
         assert _spikes(MartinottiNeuron(), 5.0, 40000) > 20
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = MartinottiNeuron()
         for _ in range(50000):
             n.step(5.0)
         for value in (n.v, n.m, n.h, n.n, n.p, n.s):
             assert np.isfinite(value)
 
-    def test_reset_restores_initial(self):
+    def test_reset_restores_initial(self) -> None:
+        """Reset restores initial."""
         n = MartinottiNeuron()
         for _ in range(1000):
             n.step(5.0)

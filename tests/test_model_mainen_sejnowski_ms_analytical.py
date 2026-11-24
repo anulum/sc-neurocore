@@ -10,26 +10,31 @@
 
 from __future__ import annotations
 
-from tests.model_mainen_sejnowski_support import *  # noqa: F403
+from sc_neurocore.neurons.models.mainen_sejnowski import (
+    MainenSejnowskiNeuron,
+)
 
 
 class TestMSAnalytical:
-    def test_20_substeps(self):
+    """Analytical behaviour of the MainenSejnowskiNeuron."""
+
+    def test_20_substeps(self) -> None:
+        """The default time step is 0.005 ms."""
         n = MainenSejnowskiNeuron()
         assert n.dt == 0.005  # 1/0.005 = 200? No, source: range(20)
 
-    def test_soma_passive_axon_active(self):
+    def test_soma_passive_axon_active(self) -> None:
         """Soma: leak+coupling. Axon: Na+K+coupling."""
         n = MainenSejnowskiNeuron()
         assert n.g_l > 0  # soma leak
         assert n.g_na > 0 and n.g_k > 0  # axon active
 
-    def test_coupling_kappa(self):
+    def test_coupling_kappa(self) -> None:
         """κ couples soma↔axon bidirectionally."""
         n = MainenSejnowskiNeuron()
         assert n.kappa > 0
 
-    def test_voltage_clipping(self):
+    def test_voltage_clipping(self) -> None:
         """vs, va clipped to [-200, 200]."""
         n = MainenSejnowskiNeuron()
         for _ in range(500):
@@ -37,7 +42,7 @@ class TestMSAnalytical:
         assert -200 <= n.vs <= 200
         assert -200 <= n.va <= 200
 
-    def test_gating_clipped(self):
+    def test_gating_clipped(self) -> None:
         """m, h, n clipped to [0, 1]."""
         n = MainenSejnowskiNeuron()
         for _ in range(500):
@@ -46,6 +51,7 @@ class TestMSAnalytical:
             val = getattr(n, attr)
             assert 0.0 <= val <= 1.0
 
-    def test_reversal_ordering(self):
+    def test_reversal_ordering(self) -> None:
+        """The reversal potentials are in physiological order."""
         n = MainenSejnowskiNeuron()
         assert n.e_k < n.e_l < n.e_na

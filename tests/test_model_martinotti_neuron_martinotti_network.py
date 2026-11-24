@@ -10,14 +10,32 @@
 
 from __future__ import annotations
 
-from tests.model_martinotti_neuron_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.martinotti_neuron import (
+    MartinottiNeuron,
+)
 
 
 class TestMartinottiNetwork:
-    def test_population_size(self):
+    """The MartinottiNeuron in a network."""
+
+    def test_population_size(self) -> None:
+        """A population holds the requested number of neurons."""
         assert Population(MartinottiNeuron, n=8, label="martinotti").n == 8
 
-    def test_population_drives_spikes(self):
+    def test_population_drives_spikes(self) -> None:
+        """Population drives spikes."""
         pop = Population(MartinottiNeuron, n=5, label="martinotti")
         drive = PoissonInput(n=5, rate_hz=600.0, weight=8.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

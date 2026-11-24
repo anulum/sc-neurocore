@@ -10,23 +10,35 @@
 
 from __future__ import annotations
 
-from tests.model_marder_stg_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.marder_stg import (
+    MarderSTGNeuron,
+)
+from tests.model_marder_stg_support import (
+    _run,
+)
 
 
 class TestSTGDynamics:
-    def test_rate_increases_with_drive(self):
+    """Dynamics of the MarderSTGNeuron."""
+
+    def test_rate_increases_with_drive(self) -> None:
+        """Rate increases with drive."""
         low = len(_run(MarderSTGNeuron(), current=0.0, steps=50_000))
         high = len(_run(MarderSTGNeuron(), current=10.0, steps=50_000))
         assert high > low
 
     @pytest.mark.parametrize("current", [0.0, 2.0, 5.0, 10.0])
-    def test_fi_sweep_finite(self, current: float):
+    def test_fi_sweep_finite(self, current: float) -> None:
+        """The voltage stays finite across a current sweep."""
         n = MarderSTGNeuron()
         for _ in range(20_000):
             n.step(current)
         assert np.isfinite(n.v)
 
-    def test_upward_crossing_only(self):
+    def test_upward_crossing_only(self) -> None:
+        """Upward crossing only."""
         n = MarderSTGNeuron()
         prev_v = n.v
         for _ in range(50_000):

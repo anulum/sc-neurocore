@@ -10,19 +10,27 @@
 
 from __future__ import annotations
 
-from tests.model_ltc_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.ltc import (
+    LiquidTimeConstantNeuron,
+)
 
 
 class TestLTCParameters:
+    """Parameter behaviour of the LiquidTimeConstantNeuron."""
+
     @pytest.mark.parametrize("tau_base", [5.0, 10.0, 20.0])
-    def test_tau_base_sweep(self, tau_base: float):
+    def test_tau_base_sweep(self, tau_base: float) -> None:
+        """The model is exercised across a sweep of tau_base."""
         n = LiquidTimeConstantNeuron(tau_base=tau_base)
         for _ in range(5000):
             n.step(5.0)
         assert np.isfinite(n.x)
 
     @pytest.mark.parametrize("w_tau", [-1.0, -0.5, 0.0])
-    def test_w_tau_sweep(self, w_tau: float):
+    def test_w_tau_sweep(self, w_tau: float) -> None:
+        """The model is exercised across a sweep of w_tau."""
         n = LiquidTimeConstantNeuron(w_tau=w_tau)
         for _ in range(5000):
             n.step(5.0)

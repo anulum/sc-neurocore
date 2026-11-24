@@ -10,32 +10,42 @@
 
 from __future__ import annotations
 
-from tests.model_lnm_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.lnm import (
+    LearnableNeuronModel,
+)
 
 
 class TestLNMIsolation:
-    def test_defaults(self):
+    """The LearnableNeuronModel in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = LearnableNeuronModel()
         assert n.v == 0.0 and n.alpha == 0.9 and n.beta == 0.1
         assert n.gamma == 0.05 and n.v_threshold == 1.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert LearnableNeuronModel().step(0.0) in (0, 1)
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = LearnableNeuronModel()
         for _ in range(100_000):
             n.step(5.0)
         assert np.isfinite(n.v)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = LearnableNeuronModel()
         for _ in range(100):
             n.step(5.0)
         n.reset()
         assert n.v == 0.0
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = LearnableNeuronModel()

@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_morris_lecar_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.morris_lecar import (
+    MorrisLecarNeuron,
+)
 
 
 class TestMorrisLecarNeuronSimulate:
     """Engineering-verification surface for ``MorrisLecarNeuron.simulate``."""
 
     def test_simulate_python_returns_finite_trace(self) -> None:
+        """Simulate python returns finite trace."""
         n = MorrisLecarNeuron()
         trace, spikes = n.simulate(1000, current=80.0, backend="python")
         assert trace.shape == (1000,)
@@ -24,6 +29,7 @@ class TestMorrisLecarNeuronSimulate:
         assert spikes >= 1
 
     def test_simulate_rust_matches_or_ulp_python(self) -> None:
+        """Simulate rust matches or ULP python."""
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
         py = MorrisLecarNeuron()
         rs = MorrisLecarNeuron()
@@ -34,6 +40,7 @@ class TestMorrisLecarNeuronSimulate:
         assert max_diff < 1e-9
 
     def test_simulate_rust_rejects_non_default(self) -> None:
+        """Simulate rust rejects non-default."""
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
         n = MorrisLecarNeuron(dt=0.02)
         with pytest.raises(RuntimeError, match="factory-default"):

@@ -10,14 +10,38 @@
 
 from __future__ import annotations
 
-from tests.model_marder_stg_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    firing_rate,
+    isi,
+    spike_count,
+)
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.marder_stg import (
+    MarderSTGNeuron,
+)
 
 
 class TestSTGPipeline:
-    def test_population(self):
+    """The MarderSTGNeuron in the network pipeline."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         assert Population(MarderSTGNeuron, n=10, label="stg").n == 10
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(MarderSTGNeuron, n=10, label="stg")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -25,13 +49,15 @@ class TestSTGPipeline:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_analysis_spike_count(self):
+    def test_analysis_spike_count(self) -> None:
+        """The analysis counts the spikes of a driven run."""
         n = MarderSTGNeuron()
         train = np.array([float(n.step(0.0)) for _ in range(50_000)])
         assert spike_count(train) >= 10
         assert spike_count(train) == int(train.sum())
 
-    def test_analysis_firing_rate(self):
+    def test_analysis_firing_rate(self) -> None:
+        """The analysis gives the firing rate of a driven run."""
         n = MarderSTGNeuron()
         train = np.array([float(n.step(0.0)) for _ in range(50_000)])
         intervals = isi(train, dt=0.00005)

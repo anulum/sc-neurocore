@@ -10,12 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_lnm_support import *  # noqa: F403
+from sc_neurocore.neurons.models.lnm import (
+    LearnableNeuronModel,
+)
 
 
 class TestLearnableNeuronModel:
-    def test_fires(self):
-        from sc_neurocore.neurons.models.lnm import LearnableNeuronModel
+    """The LearnableNeuronModel fires under drive."""
 
+    def test_fires(self) -> None:
+        """Sustained drive makes the neuron fire."""
         n = LearnableNeuronModel()
         assert sum(n.step(2.0) for _ in range(50)) > 0

@@ -10,18 +10,29 @@
 
 from __future__ import annotations
 
-from tests.model_morris_lecar_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.morris_lecar import (
+    MorrisLecarNeuron,
+)
+from tests.model_morris_lecar_support import (
+    _run,
+)
 
 
 class TestMLDynamics:
+    """Dynamics of the MorrisLecarNeuron."""
+
     @pytest.mark.parametrize("current", [50.0, 80.0, 100.0, 120.0, 150.0])
-    def test_fi_sweep(self, current: float):
+    def test_fi_sweep(self, current: float) -> None:
+        """The state stays finite across a current sweep."""
         n = MorrisLecarNeuron()
         for _ in range(20_000):
             n.step(current)
         assert np.isfinite(n.v)
 
-    def test_regular_isi_in_band(self):
+    def test_regular_isi_in_band(self) -> None:
+        """Regular ISI in band."""
         n = MorrisLecarNeuron()
         spikes = _run(n, current=100.0, steps=50_000)
         if len(spikes) >= 10:
@@ -29,7 +40,8 @@ class TestMLDynamics:
             cv = np.std(isis) / np.mean(isis)
             assert cv < 0.1
 
-    def test_upward_crossing_only(self):
+    def test_upward_crossing_only(self) -> None:
+        """Upward crossing only."""
         n = MorrisLecarNeuron()
         prev_v = n.v
         for _ in range(20_000):

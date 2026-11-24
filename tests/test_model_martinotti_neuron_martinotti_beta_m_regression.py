@@ -10,24 +10,32 @@
 
 from __future__ import annotations
 
-from tests.model_martinotti_neuron_support import *  # noqa: F403
+from sc_neurocore.neurons.models.martinotti_neuron import (
+    MartinottiNeuron,
+)
+from tests.model_martinotti_neuron_support import (
+    _spikes,
+)
 
 
 class TestMartinottiBetaMRegression:
     """Guards the corrected β_m offset against the depolarisation-block bug."""
 
-    def test_firing_rate_increases_with_current(self):
+    def test_firing_rate_increases_with_current(self) -> None:
+        """Firing rate increases with current."""
         low = _spikes(MartinottiNeuron(), 2.0, 30000)
         mid = _spikes(MartinottiNeuron(), 5.0, 30000)
         high = _spikes(MartinottiNeuron(), 10.0, 30000)
         assert low < mid < high
 
-    def test_no_depolarisation_block_at_strong_drive(self):
+    def test_no_depolarisation_block_at_strong_drive(self) -> None:
+        """No depolarisation block at strong drive."""
         # The bug capped firing at two or three spikes and pinned V near threshold
         # for any stimulus; healthy kinetics fire repetitively under strong drive.
         assert _spikes(MartinottiNeuron(), 10.0, 40000) > 100
 
-    def test_membrane_recovers_below_threshold_after_drive(self):
+    def test_membrane_recovers_below_threshold_after_drive(self) -> None:
+        """Membrane recovers below threshold after drive."""
         n = MartinottiNeuron()
         for _ in range(40000):
             n.step(5.0)

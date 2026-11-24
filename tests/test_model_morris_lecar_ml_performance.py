@@ -10,12 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_morris_lecar_support import *  # noqa: F403
+import time
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.morris_lecar import (
+    MorrisLecarNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestMLPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the MorrisLecarNeuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = MorrisLecarNeuron()
         N = 100_000
         t0 = time.perf_counter()
@@ -32,7 +50,8 @@ class TestMLPerformance:
             strict_minimum_per_second=20_000.0,
         )
 
-    def test_network_throughput(self):
+    def test_network_throughput(self) -> None:
+        """The network meets its throughput floor."""
         pop = Population(MorrisLecarNeuron, n=20, label="bench")
         drive = PoissonInput(n=20, rate_hz=500.0, weight=100.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

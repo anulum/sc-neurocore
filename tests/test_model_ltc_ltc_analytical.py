@@ -10,30 +10,36 @@
 
 from __future__ import annotations
 
-from tests.model_ltc_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.ltc import (
+    LiquidTimeConstantNeuron,
+)
 
 
 class TestLTCAnalytical:
-    def test_input_dependent_tau(self):
+    """Analytical behaviour of the LiquidTimeConstantNeuron."""
+
+    def test_input_dependent_tau(self) -> None:
         """τ depends on input via sigmoid: τ = τ_base · σ(w_τ·I)."""
         n = LiquidTimeConstantNeuron()
         # At I=0: σ(0) = 0.5 → τ = 10 * 0.5 = 5
         tau_zero = n.tau_base * (1.0 / (1.0 + np.exp(0.0)))
         assert abs(tau_zero - 5.0) < 1e-10
 
-    def test_tau_clipped(self):
+    def test_tau_clipped(self) -> None:
         """τ ≥ 0.1 prevents division by zero."""
         n = LiquidTimeConstantNeuron()
         # Very negative input → σ → 0 → tau → 0, clipped to 0.1
         n.step(-1000.0)
         assert np.isfinite(n.x)
 
-    def test_f_target_tanh(self):
+    def test_f_target_tanh(self) -> None:
         """f_target = tanh(w_x·x + w_in·I). Bounded [-1, 1]."""
         f = np.tanh(0.8 * 0.0 + 1.0 * 5.0)
         assert -1 <= f <= 1
 
-    def test_spike_resets_x(self):
+    def test_spike_resets_x(self) -> None:
+        """A spike resets the hidden state x to zero."""
         n = LiquidTimeConstantNeuron()
         for _ in range(10_000):
             if n.step(5.0) == 1:

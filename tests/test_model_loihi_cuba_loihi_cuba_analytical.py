@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.model_loihi_cuba_support import *  # noqa: F403
+from sc_neurocore.neurons.models.loihi_cuba import (
+    LoihiCUBANeuron,
+)
 
 
 class TestLoihiCUBAAnalytical:

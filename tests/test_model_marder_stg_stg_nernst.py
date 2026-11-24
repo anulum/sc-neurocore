@@ -10,16 +10,24 @@
 
 from __future__ import annotations
 
-from tests.model_marder_stg_support import *  # noqa: F403
+import math
+from sc_neurocore.neurons.models.marder_stg import (
+    MarderSTGNeuron,
+)
 
 
 class TestSTGNernst:
-    def test_e_ca_positive_at_rest(self):
+    """The calcium Nernst potential of the MarderSTGNeuron."""
+
+    def test_e_ca_positive_at_rest(self) -> None:
+        """E Ca positive at rest."""
         assert MarderSTGNeuron()._nernst_e_ca(0.05) > 100.0
 
-    def test_e_ca_decreases_with_calcium(self):
+    def test_e_ca_decreases_with_calcium(self) -> None:
+        """E Ca decreases with calcium."""
         n = MarderSTGNeuron()
         assert n._nernst_e_ca(50.0) < n._nernst_e_ca(0.05)
 
-    def test_e_ca_handles_zero_calcium(self):
+    def test_e_ca_handles_zero_calcium(self) -> None:
+        """E Ca handles zero calcium."""
         assert math.isfinite(MarderSTGNeuron()._nernst_e_ca(0.0))

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3980
+expected_file_count = 4039
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -15964,3 +15964,239 @@ rationale = "Exercise SC-NeuroCore: model leaky compete fire lcf performance."
 [[file]]
 path = "tests/test_model_leaky_compete_fire_lcf_pipeline.py"
 rationale = "Exercise SC-NeuroCore: model leaky compete fire lcf pipeline."
+
+[[file]]
+path = "tests/test_model_lnm_learnable_neuron_model.py"
+rationale = "Exercise SC-NeuroCore: model lnm learnable neuron model."
+
+[[file]]
+path = "tests/test_model_lnm_lnm_analytical.py"
+rationale = "Exercise SC-NeuroCore: model lnm lnm analytical."
+
+[[file]]
+path = "tests/test_model_lnm_lnm_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model lnm lnm dynamics."
+
+[[file]]
+path = "tests/test_model_lnm_lnm_isolation.py"
+rationale = "Exercise SC-NeuroCore: model lnm lnm isolation."
+
+[[file]]
+path = "tests/test_model_lnm_lnm_parameters.py"
+rationale = "Exercise SC-NeuroCore: model lnm lnm parameters."
+
+[[file]]
+path = "tests/test_model_lnm_lnm_performance.py"
+rationale = "Exercise SC-NeuroCore: model lnm lnm performance."
+
+[[file]]
+path = "tests/test_model_lnm_lnm_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model lnm lnm pipeline."
+
+[[file]]
+path = "tests/test_model_lnm_lnm_validation.py"
+rationale = "Exercise SC-NeuroCore: model lnm lnm validation."
+
+[[file]]
+path = "tests/test_model_loihi2_loihi2.py"
+rationale = "Exercise SC-NeuroCore: model loihi2 loihi2."
+
+[[file]]
+path = "tests/test_model_loihi2_loihi2_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model loihi2 loihi2 dynamics."
+
+[[file]]
+path = "tests/test_model_loihi2_loihi2_isolation.py"
+rationale = "Exercise SC-NeuroCore: model loihi2 loihi2 isolation."
+
+[[file]]
+path = "tests/test_model_loihi2_loihi2_performance.py"
+rationale = "Exercise SC-NeuroCore: model loihi2 loihi2 performance."
+
+[[file]]
+path = "tests/test_model_loihi2_loihi2_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model loihi2 loihi2 pipeline."
+
+[[file]]
+path = "tests/test_model_loihi_cuba_loihi_cuba_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model loihi cuba loihi cuba dynamics."
+
+[[file]]
+path = "tests/test_model_loihi_cuba_loihi_cuba_isolation.py"
+rationale = "Exercise SC-NeuroCore: model loihi cuba loihi cuba isolation."
+
+[[file]]
+path = "tests/test_model_loihi_cuba_loihi_cuba_performance.py"
+rationale = "Exercise SC-NeuroCore: model loihi cuba loihi cuba performance."
+
+[[file]]
+path = "tests/test_model_loihi_cuba_loihi_cuba_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model loihi cuba loihi cuba pipeline."
+
+[[file]]
+path = "tests/test_model_ltc_liquid_time_constant.py"
+rationale = "Exercise SC-NeuroCore: model ltc liquid time constant."
+
+[[file]]
+path = "tests/test_model_ltc_ltc_analytical.py"
+rationale = "Exercise SC-NeuroCore: model ltc ltc analytical."
+
+[[file]]
+path = "tests/test_model_ltc_ltc_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model ltc ltc dynamics."
+
+[[file]]
+path = "tests/test_model_ltc_ltc_isolation.py"
+rationale = "Exercise SC-NeuroCore: model ltc ltc isolation."
+
+[[file]]
+path = "tests/test_model_ltc_ltc_parameters.py"
+rationale = "Exercise SC-NeuroCore: model ltc ltc parameters."
+
+[[file]]
+path = "tests/test_model_ltc_ltc_performance.py"
+rationale = "Exercise SC-NeuroCore: model ltc ltc performance."
+
+[[file]]
+path = "tests/test_model_ltc_ltc_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model ltc ltc pipeline."
+
+[[file]]
+path = "tests/test_model_mainen_sejnowski_ms_analytical.py"
+rationale = "Exercise SC-NeuroCore: model mainen sejnowski ms analytical."
+
+[[file]]
+path = "tests/test_model_mainen_sejnowski_ms_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model mainen sejnowski ms dynamics."
+
+[[file]]
+path = "tests/test_model_mainen_sejnowski_ms_isolation.py"
+rationale = "Exercise SC-NeuroCore: model mainen sejnowski ms isolation."
+
+[[file]]
+path = "tests/test_model_mainen_sejnowski_ms_performance.py"
+rationale = "Exercise SC-NeuroCore: model mainen sejnowski ms performance."
+
+[[file]]
+path = "tests/test_model_mainen_sejnowski_ms_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model mainen sejnowski ms pipeline."
+
+[[file]]
+path = "tests/test_model_marder_stg_stg_bursting.py"
+rationale = "Exercise SC-NeuroCore: model marder stg stg bursting."
+
+[[file]]
+path = "tests/test_model_marder_stg_stg_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model marder stg stg dynamics."
+
+[[file]]
+path = "tests/test_model_marder_stg_stg_gating.py"
+rationale = "Exercise SC-NeuroCore: model marder stg stg gating."
+
+[[file]]
+path = "tests/test_model_marder_stg_stg_isolation.py"
+rationale = "Exercise SC-NeuroCore: model marder stg stg isolation."
+
+[[file]]
+path = "tests/test_model_marder_stg_stg_nernst.py"
+rationale = "Exercise SC-NeuroCore: model marder stg stg nernst."
+
+[[file]]
+path = "tests/test_model_marder_stg_stg_numerics.py"
+rationale = "Exercise SC-NeuroCore: model marder stg stg numerics."
+
+[[file]]
+path = "tests/test_model_marder_stg_stg_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model marder stg stg pipeline."
+
+[[file]]
+path = "tests/test_model_marder_stg_stg_safety.py"
+rationale = "Exercise SC-NeuroCore: model marder stg stg safety."
+
+[[file]]
+path = "tests/test_model_martinotti_neuron_martinotti_adaptation.py"
+rationale = "Exercise SC-NeuroCore: model martinotti neuron martinotti adaptation."
+
+[[file]]
+path = "tests/test_model_martinotti_neuron_martinotti_beta_m_regression.py"
+rationale = "Exercise SC-NeuroCore: model martinotti neuron martinotti beta m regression."
+
+[[file]]
+path = "tests/test_model_martinotti_neuron_martinotti_integrator.py"
+rationale = "Exercise SC-NeuroCore: model martinotti neuron martinotti integrator."
+
+[[file]]
+path = "tests/test_model_martinotti_neuron_martinotti_isolation.py"
+rationale = "Exercise SC-NeuroCore: model martinotti neuron martinotti isolation."
+
+[[file]]
+path = "tests/test_model_martinotti_neuron_martinotti_network.py"
+rationale = "Exercise SC-NeuroCore: model martinotti neuron martinotti network."
+
+[[file]]
+path = "tests/test_model_martinotti_neuron_martinotti_singular_rates.py"
+rationale = "Exercise SC-NeuroCore: model martinotti neuron martinotti singular rates."
+
+[[file]]
+path = "tests/test_model_martinotti_neuron_martinotti_validation.py"
+rationale = "Exercise SC-NeuroCore: model martinotti neuron martinotti validation."
+
+[[file]]
+path = "tests/test_model_mckean_mc_kean_analytical.py"
+rationale = "Exercise SC-NeuroCore: model mckean mc kean analytical."
+
+[[file]]
+path = "tests/test_model_mckean_mc_kean_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model mckean mc kean dynamics."
+
+[[file]]
+path = "tests/test_model_mckean_mc_kean_isolation.py"
+rationale = "Exercise SC-NeuroCore: model mckean mc kean isolation."
+
+[[file]]
+path = "tests/test_model_mckean_mc_kean_parameters.py"
+rationale = "Exercise SC-NeuroCore: model mckean mc kean parameters."
+
+[[file]]
+path = "tests/test_model_mckean_mc_kean_performance.py"
+rationale = "Exercise SC-NeuroCore: model mckean mc kean performance."
+
+[[file]]
+path = "tests/test_model_mckean_mc_kean_public_workflow.py"
+rationale = "Exercise SC-NeuroCore: model mckean mc kean public workflow."
+
+[[file]]
+path = "tests/test_model_mckean_mc_kean_validation.py"
+rationale = "Exercise SC-NeuroCore: model mckean mc kean validation."
+
+[[file]]
+path = "tests/test_model_morris_lecar_ml_analytical.py"
+rationale = "Exercise SC-NeuroCore: model morris lecar ml analytical."
+
+[[file]]
+path = "tests/test_model_morris_lecar_ml_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model morris lecar ml dynamics."
+
+[[file]]
+path = "tests/test_model_morris_lecar_ml_isolation.py"
+rationale = "Exercise SC-NeuroCore: model morris lecar ml isolation."
+
+[[file]]
+path = "tests/test_model_morris_lecar_ml_parameters.py"
+rationale = "Exercise SC-NeuroCore: model morris lecar ml parameters."
+
+[[file]]
+path = "tests/test_model_morris_lecar_ml_performance.py"
+rationale = "Exercise SC-NeuroCore: model morris lecar ml performance."
+
+[[file]]
+path = "tests/test_model_morris_lecar_ml_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model morris lecar ml pipeline."
+
+[[file]]
+path = "tests/test_model_morris_lecar_ml_type_ii.py"
+rationale = "Exercise SC-NeuroCore: model morris lecar ml type ii."
+
+[[file]]
+path = "tests/test_model_morris_lecar_morris_lecar_neuron_simulate.py"
+rationale = "Exercise SC-NeuroCore: model morris lecar morris lecar neuron simulate."

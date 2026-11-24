@@ -10,33 +10,43 @@
 
 from __future__ import annotations
 
-from tests.model_mckean_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.sc_triangular_mckean import (
+    SCTriangularMcKeanNeuron as McKeanNeuron,
+)
 
 
 class TestMcKeanParameters:
+    """Parameter behaviour of the McKeanNeuron."""
+
     @pytest.mark.parametrize("epsilon", [0.005, 0.01, 0.05])
-    def test_epsilon_timescale(self, epsilon: float):
+    def test_epsilon_timescale(self, epsilon: float) -> None:
+        """The state stays finite across the epsilon timescales."""
         n = McKeanNeuron(epsilon=epsilon)
         for _ in range(20_000):
             n.step(0.5)
         assert np.isfinite(n.v) and np.isfinite(n.w)
 
     @pytest.mark.parametrize("a", [0.1, 0.25, 0.4])
-    def test_a_breakpoint_sweep(self, a: float):
+    def test_a_breakpoint_sweep(self, a: float) -> None:
+        """The model is exercised across a sweep of a_breakpoint."""
         n = McKeanNeuron(a=a)
         for _ in range(20_000):
             n.step(0.5)
         assert np.isfinite(n.v)
 
     @pytest.mark.parametrize("gamma", [0.3, 0.5, 0.8])
-    def test_gamma_sweep(self, gamma: float):
+    def test_gamma_sweep(self, gamma: float) -> None:
+        """The model is exercised across a sweep of gamma."""
         n = McKeanNeuron(gamma=gamma)
         for _ in range(20_000):
             n.step(0.5)
         assert np.isfinite(n.v)
 
     @pytest.mark.parametrize("dt", [0.05, 0.1, 0.2])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = McKeanNeuron(dt=dt)
         for _ in range(20_000):
             n.step(0.5)

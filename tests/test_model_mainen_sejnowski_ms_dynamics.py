@@ -10,22 +10,34 @@
 
 from __future__ import annotations
 
-from tests.model_mainen_sejnowski_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.mainen_sejnowski import (
+    MainenSejnowskiNeuron,
+)
+from tests.model_mainen_sejnowski_support import (
+    _run,
+)
 
 
 class TestMSDynamics:
-    def test_fires(self):
+    """Dynamics of the MainenSejnowskiNeuron."""
+
+    def test_fires(self) -> None:
+        """Sustained drive makes the neuron fire."""
         n = MainenSejnowskiNeuron()
         spikes = _run(n, current=10.0, steps=500)
         assert len(spikes) >= 1
 
-    def test_rate_monotonic(self):
+    def test_rate_monotonic(self) -> None:
+        """The firing rate does not fall as the current rises."""
         s_low = len(_run(MainenSejnowskiNeuron(), 5.0, 500))
         s_high = len(_run(MainenSejnowskiNeuron(), 20.0, 500))
         assert s_high >= s_low
 
     @pytest.mark.parametrize("current", [0.0, 5.0, 10.0, 20.0])
-    def test_fi_sweep(self, current: float):
+    def test_fi_sweep(self, current: float) -> None:
+        """The state stays finite across a current sweep."""
         n = MainenSejnowskiNeuron()
         for _ in range(200):
             n.step(current)

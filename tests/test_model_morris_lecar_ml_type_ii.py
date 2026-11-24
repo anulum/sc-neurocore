@@ -10,20 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_morris_lecar_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.morris_lecar import (
+    MorrisLecarNeuron,
+)
+from tests.model_morris_lecar_support import (
+    _run,
+)
 
 
 class TestMLTypeII:
-    def test_subthreshold_silent(self):
+    """Type II excitability of the MorrisLecarNeuron."""
+
+    def test_subthreshold_silent(self) -> None:
+        """A subthreshold current gives no spikes."""
         n = MorrisLecarNeuron()
         assert len(_run(n, current=10.0, steps=10_000)) == 0
 
-    def test_oscillatory_in_band(self):
+    def test_oscillatory_in_band(self) -> None:
+        """Oscillatory in band."""
         n = MorrisLecarNeuron()
         spikes = _run(n, current=100.0, steps=20_000)
         assert len(spikes) >= 10
 
-    def test_type_ii_frequency_onset(self):
+    def test_type_ii_frequency_onset(self) -> None:
         """Type-II: non-zero frequency onset (Hopf bifurcation)."""
         # Near threshold, frequency should be non-zero
         n = MorrisLecarNeuron()
@@ -33,7 +43,7 @@ class TestMLTypeII:
             # Non-zero frequency at onset (unlike Type-I continuous)
             assert np.mean(isis) < 10_000
 
-    def test_high_current_suppression(self):
+    def test_high_current_suppression(self) -> None:
         """Very high I pushes past oscillatory window."""
         n = MorrisLecarNeuron()
         s_mid = len(_run(n, current=100.0, steps=10_000))
@@ -41,7 +51,8 @@ class TestMLTypeII:
         s_high = len(_run(n2, current=300.0, steps=10_000))
         assert s_mid >= s_high
 
-    def test_voltage_bounded(self):
+    def test_voltage_bounded(self) -> None:
+        """The voltage stays inside physiological bounds."""
         n = MorrisLecarNeuron()
         vs = []
         for _ in range(20_000):
@@ -49,8 +60,8 @@ class TestMLTypeII:
             vs.append(n.v)
         assert min(vs) > -100 and max(vs) < 150
 
-    def test_w_bounded(self):
-        """w ∈ [0, 1) — recovery variable stays in physiological range."""
+    def test_w_bounded(self) -> None:
+        """The recovery variable w stays in its physiological range [0, 1)."""
         n = MorrisLecarNeuron()
         ws = []
         for _ in range(20_000):

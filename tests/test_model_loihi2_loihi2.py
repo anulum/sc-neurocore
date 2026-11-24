@@ -10,19 +10,21 @@
 
 from __future__ import annotations
 
-from tests.model_loihi2_support import *  # noqa: F403
+from sc_neurocore.neurons.models.loihi2 import (
+    Loihi2Neuron,
+)
 
 
 class TestLoihi2:
-    def test_fires(self):
-        from sc_neurocore.neurons.models.loihi2 import Loihi2Neuron
+    """The Loihi2Neuron fires under drive and keeps an integer state."""
 
+    def test_fires(self) -> None:
+        """Sustained drive makes the neuron fire."""
         n = Loihi2Neuron()
         assert sum(n.step(200) for _ in range(100)) > 0
 
-    def test_integer_state(self):
-        from sc_neurocore.neurons.models.loihi2 import Loihi2Neuron
-
+    def test_integer_state(self) -> None:
+        """The neuron state stays integer-valued, as on the chip."""
         n = Loihi2Neuron()
         n.step(100)
         assert isinstance(n.s1, int)

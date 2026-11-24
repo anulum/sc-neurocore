@@ -10,18 +10,27 @@
 
 from __future__ import annotations
 
-from tests.model_morris_lecar_support import *  # noqa: F403
+from sc_neurocore.neurons.models.morris_lecar import (
+    MorrisLecarNeuron,
+)
+from tests.model_morris_lecar_support import (
+    _lam,
+    _m_inf,
+    _w_inf,
+)
 
 
 class TestMLAnalytical:
-    def test_m_inf_tanh(self):
+    """Analytical behaviour of the MorrisLecarNeuron."""
+
+    def test_m_inf_tanh(self) -> None:
         """m_∞(V) = 0.5·(1 + tanh((V-v1)/v2))."""
         n = MorrisLecarNeuron()
         for v in [-80, -60, -20, 0, 40]:
             expected = _m_inf(float(v), n.v1, n.v2)
             assert abs(n._m_inf(float(v)) - expected) < 1e-14
 
-    def test_m_inf_range(self):
+    def test_m_inf_range(self) -> None:
         """m_∞ ∈ (0, 1) — tanh bounded."""
         n = MorrisLecarNeuron()
         assert n._m_inf(-200.0) > 0
@@ -29,42 +38,44 @@ class TestMLAnalytical:
         assert n._m_inf(200.0) > 0.99
         assert n._m_inf(200.0) < 1.0
 
-    def test_m_inf_midpoint(self):
-        """m_∞(v1) = 0.5."""
+    def test_m_inf_midpoint(self) -> None:
+        """The steady-state calcium activation m_∞(v1) equals 0.5."""
         n = MorrisLecarNeuron()
         assert abs(n._m_inf(n.v1) - 0.5) < 1e-12
 
-    def test_w_inf_tanh(self):
+    def test_w_inf_tanh(self) -> None:
+        """The steady-state w_inf matches its tanh formula."""
         n = MorrisLecarNeuron()
         for v in [-80, -60, -20, 0, 40]:
             expected = _w_inf(float(v), n.v3, n.v4)
             assert abs(n._w_inf(float(v)) - expected) < 1e-14
 
-    def test_w_inf_midpoint(self):
-        """w_∞(v3) = 0.5."""
+    def test_w_inf_midpoint(self) -> None:
+        """The steady-state recovery w_∞(v3) equals 0.5."""
         n = MorrisLecarNeuron()
         assert abs(n._w_inf(n.v3) - 0.5) < 1e-12
 
-    def test_lambda_positive(self):
+    def test_lambda_positive(self) -> None:
         """λ(V) = φ·cosh(...) > 0 for all V (cosh > 0)."""
         n = MorrisLecarNeuron()
         for v in [-100, -60, 0, 50]:
             assert n._lam(float(v)) > 0
 
-    def test_lambda_matches_reference(self):
+    def test_lambda_matches_reference(self) -> None:
+        """Lambda matches reference."""
         n = MorrisLecarNeuron()
         for v in [-80, -40, 0, 30]:
             expected = _lam(float(v), n.v3, n.v4, n.phi)
             assert abs(n._lam(float(v)) - expected) < 1e-14
 
-    def test_lambda_minimum_at_v3(self):
+    def test_lambda_minimum_at_v3(self) -> None:
         """λ minimum at V=v3 where cosh(0)=1 → λ_min = φ."""
         n = MorrisLecarNeuron()
         lam_v3 = n._lam(n.v3)
         assert abs(lam_v3 - n.phi) < 1e-12
 
-    def test_dv_formula_one_step(self):
-        """dV = (-I_Ca - I_K - I_L + I) / C_m · dt."""
+    def test_dv_formula_one_step(self) -> None:
+        """The Euler voltage step is dV = (-I_Ca - I_K - I_L + I) / C_m · dt."""
         n = MorrisLecarNeuron(integrator="baseline_euler")
         v0, w0 = n.v, n.w
         I = 50.0
@@ -76,8 +87,8 @@ class TestMLAnalytical:
         n.step(I)
         assert abs((n.v - v0) - expected_dv) < 1e-10
 
-    def test_dw_formula_one_step(self):
-        """dw = λ(V)·(w_∞(V) - w) · dt."""
+    def test_dw_formula_one_step(self) -> None:
+        """The Euler recovery step is dw = λ(V)·(w_∞(V) - w) · dt."""
         n = MorrisLecarNeuron(integrator="baseline_euler")
         v0, w0 = n.v, n.w
         lam = n._lam(v0)
@@ -86,7 +97,8 @@ class TestMLAnalytical:
         n.step(0.0)
         assert abs((n.w - w0) - expected_dw) < 1e-14
 
-    def test_default_rk4_separates_from_historical_euler(self):
+    def test_default_rk4_separates_from_historical_euler(self) -> None:
+        """Default RK4 separates from historical Euler."""
         default = MorrisLecarNeuron(dt=0.1)
         baseline = MorrisLecarNeuron(dt=0.1, integrator="baseline_euler")
         current = 50.0
@@ -98,7 +110,7 @@ class TestMLAnalytical:
         assert abs(default.v - baseline.v) > 1e-6
         assert abs(default.w - baseline.w) > 1e-8
 
-    def test_current_balance_at_rest(self):
+    def test_current_balance_at_rest(self) -> None:
         """Three currents at initial state."""
         n = MorrisLecarNeuron()
         v = n.v

@@ -10,12 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_mainen_sejnowski_support import *  # noqa: F403
+import time
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.mainen_sejnowski import (
+    MainenSejnowskiNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestMSPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the MainenSejnowskiNeuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = MainenSejnowskiNeuron()
         N = 200
         t0 = time.perf_counter()
@@ -29,7 +47,8 @@ class TestMSPerformance:
             strict_minimum_per_second=50.0,
         )
 
-    def test_network_throughput(self):
+    def test_network_throughput(self) -> None:
+        """The network meets its throughput floor."""
         pop = Population(MainenSejnowskiNeuron, n=5, label="bench")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=10.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

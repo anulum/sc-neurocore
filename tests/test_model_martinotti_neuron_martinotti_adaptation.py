@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_martinotti_neuron_support import *  # noqa: F403
+from sc_neurocore.neurons.models.martinotti_neuron import (
+    MartinottiNeuron,
+)
+from tests.model_martinotti_neuron_support import (
+    _spikes,
+)
 
 
 class TestMartinottiAdaptation:
-    def test_m_current_block_changes_firing(self):
+    """The M-current adaptation of the MartinottiNeuron."""
+
+    def test_m_current_block_changes_firing(self) -> None:
+        """M current block changes firing."""
         intact = _spikes(MartinottiNeuron(), 5.0, 40000)
         blocked = _spikes(MartinottiNeuron(g_m=0.0), 5.0, 40000)
         assert intact != blocked

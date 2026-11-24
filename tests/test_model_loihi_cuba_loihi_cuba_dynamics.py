@@ -10,20 +10,31 @@
 
 from __future__ import annotations
 
-from tests.model_loihi_cuba_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.loihi_cuba import (
+    LoihiCUBANeuron,
+)
+from tests.model_loihi_cuba_support import (
+    _run,
+)
 
 
 class TestLoihiCUBADynamics:
-    def test_fires(self):
+    """Dynamics of the LoihiCUBANeuron."""
+
+    def test_fires(self) -> None:
+        """Sustained drive makes the neuron fire."""
         assert len(_run(LoihiCUBANeuron(), 200, 5000)) >= 50
 
-    def test_rate_monotonic(self):
+    def test_rate_monotonic(self) -> None:
+        """The firing rate does not fall as the current rises."""
         s_low = len(_run(LoihiCUBANeuron(), 100, 5000))
         s_high = len(_run(LoihiCUBANeuron(), 500, 5000))
         assert s_high >= s_low
 
     @pytest.mark.parametrize("current", [50, 100, 200, 500])
-    def test_fi_sweep(self, current: int):
+    def test_fi_sweep(self, current: int) -> None:
+        """The state stays finite across a current sweep."""
         n = LoihiCUBANeuron()
         for _ in range(5000):
             n.step(current)

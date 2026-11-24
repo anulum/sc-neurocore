@@ -10,25 +10,38 @@
 
 from __future__ import annotations
 
-from tests.model_martinotti_neuron_support import *  # noqa: F403
+from typing import Any, cast
+import pytest
+from sc_neurocore.neurons.models.martinotti_neuron import (
+    MartinottiNeuron,
+)
+from tests.model_martinotti_neuron_support import (
+    _spikes,
+)
 
 
 class TestMartinottiIntegrator:
-    def test_default_integrator_is_rk4(self):
+    """Integrator choice and agreement of the MartinottiNeuron."""
+
+    def test_default_integrator_is_rk4(self) -> None:
+        """Default integrator is RK4."""
         assert MartinottiNeuron().integrator == "rk4"
 
-    def test_rejects_unknown_integrator(self):
+    def test_rejects_unknown_integrator(self) -> None:
+        """The model rejects unknown integrator."""
         with pytest.raises(ValueError, match="Unsupported integrator"):
-            MartinottiNeuron(integrator="midpoint")  # type: ignore[arg-type]
+            MartinottiNeuron(integrator=cast(Any, "midpoint"))
 
-    def test_baseline_euler_path_runs_and_diverges_from_rk4(self):
+    def test_baseline_euler_path_runs_and_diverges_from_rk4(self) -> None:
+        """Baseline Euler path runs and diverges from RK4."""
         rk4 = MartinottiNeuron()
         euler = MartinottiNeuron(integrator="baseline_euler")
         assert _spikes(rk4, 5.0, 40000) > 0
         assert _spikes(euler, 5.0, 40000) > 0
         assert rk4.v != euler.v
 
-    def test_rk4_and_euler_agree_to_first_order_at_tiny_dt(self):
+    def test_rk4_and_euler_agree_to_first_order_at_tiny_dt(self) -> None:
+        """RK4 and Euler agree to first order at tiny dt."""
         rk4 = MartinottiNeuron(dt=1e-5)
         euler = MartinottiNeuron(dt=1e-5, integrator="baseline_euler")
         for _ in range(200):

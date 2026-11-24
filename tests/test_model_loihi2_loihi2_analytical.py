@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.model_loihi2_support import *  # noqa: F403
+from sc_neurocore.neurons.models.loihi2 import (
+    Loihi2Neuron,
+)
 
 
 class TestLoihi2Analytical:

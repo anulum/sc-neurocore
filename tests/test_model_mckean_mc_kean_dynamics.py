@@ -10,21 +10,33 @@
 
 from __future__ import annotations
 
-from tests.model_mckean_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.sc_triangular_mckean import (
+    SCTriangularMcKeanNeuron as McKeanNeuron,
+)
+from tests.model_mckean_support import (
+    _run,
+)
 
 
 class TestMcKeanDynamics:
-    def test_silent_at_zero_input(self):
+    """Dynamics of the McKeanNeuron."""
+
+    def test_silent_at_zero_input(self) -> None:
+        """Silent at zero input."""
         n = McKeanNeuron()
         assert len(_run(n, current=0.0, steps=20_000)) == 0
 
-    def test_oscillatory_in_band(self):
+    def test_oscillatory_in_band(self) -> None:
+        """Oscillatory in band."""
         for current in [0.4, 0.5, 0.6]:
             n = McKeanNeuron()
             spikes = _run(n, current=current, steps=20_000)
             assert len(spikes) >= 3, f"I={current}: only {len(spikes)} spikes"
 
-    def test_rate_monotonic(self):
+    def test_rate_monotonic(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for current in [0.3, 0.5, 0.7]:
             n = McKeanNeuron()
@@ -32,13 +44,15 @@ class TestMcKeanDynamics:
         assert rates[-1] >= rates[0]
 
     @pytest.mark.parametrize("current", [0.0, 0.3, 0.5, 0.7, 1.0])
-    def test_fi_sweep(self, current: float):
+    def test_fi_sweep(self, current: float) -> None:
+        """The state stays finite across a current sweep."""
         n = McKeanNeuron()
         for _ in range(20_000):
             n.step(current)
         assert np.isfinite(n.v)
 
-    def test_regular_isi(self):
+    def test_regular_isi(self) -> None:
+        """Constant drive gives regular inter-spike intervals."""
         n = McKeanNeuron()
         spikes = _run(n, current=0.5, steps=50_000)
         if len(spikes) >= 10:
@@ -46,7 +60,8 @@ class TestMcKeanDynamics:
             cv = np.std(isis) / np.mean(isis)
             assert cv < 0.1
 
-    def test_bounded_orbit(self):
+    def test_bounded_orbit(self) -> None:
+        """The voltage orbit stays bounded under constant drive."""
         n = McKeanNeuron()
         vs, ws = [], []
         for _ in range(20_000):
@@ -56,7 +71,8 @@ class TestMcKeanDynamics:
         assert min(vs) > -2 and max(vs) < 2
         assert min(ws) > -2 and max(ws) < 2
 
-    def test_upward_crossing_only(self):
+    def test_upward_crossing_only(self) -> None:
+        """Upward crossing only."""
         n = McKeanNeuron()
         prev_v = n.v
         for _ in range(20_000):
