@@ -10,12 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_wang_buzsaki_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.wang_buzsaki import (
+    WangBuzsakiNeuron,
+)
+from tests.model_wang_buzsaki_support import (
+    _run,
+)
 
 
 class TestWBHHProperties:
-    def test_m_is_instantaneous(self):
-        """m is computed as m_inf each sub-step, not integrated as ODE."""
+    """Hodgkin-Huxley gating properties of the WangBuzsakiNeuron."""
+
+    def test_m_is_instantaneous(self) -> None:
+        """The activation m is computed as m_inf each sub-step, not integrated as an ODE."""
         # Verify by checking that m_inf depends only on V, not on history
         n = WangBuzsakiNeuron()
         # After many steps, the state should be on the limit cycle
@@ -32,7 +40,7 @@ class TestWBHHProperties:
         # m_inf is deterministic — just verify it's finite and in [0,1]
         assert 0 <= m_inf <= 1
 
-    def test_phi_accelerates_gating(self):
+    def test_phi_accelerates_gating(self) -> None:
         """phi=5 makes h and n dynamics 5× faster than standard HH."""
         n_fast = WangBuzsakiNeuron(phi=5.0)
         n_slow = WangBuzsakiNeuron(phi=1.0)
@@ -44,21 +52,24 @@ class TestWBHHProperties:
         dh_slow = abs(n_slow.h - h_slow_init)
         assert dh_fast > dh_slow
 
-    def test_gating_bounded(self):
+    def test_gating_bounded(self) -> None:
+        """The gating variables stay inside [0, 1]."""
         n = WangBuzsakiNeuron()
         for _ in range(20000):
             n.step(5.0)
         assert -0.01 <= n.h <= 1.01, f"h = {n.h}"
         assert -0.01 <= n.n <= 1.01, f"n = {n.n}"
 
-    def test_isi_regularity(self):
+    def test_isi_regularity(self) -> None:
+        """Constant drive gives regular inter-spike intervals."""
         n = WangBuzsakiNeuron()
         spikes = _run(n, current=1.0, steps=20000)
         isis = np.diff(spikes[5:]).astype(float)
         cv = np.std(isis) / np.mean(isis)
         assert cv < 0.05
 
-    def test_singularity_protection(self):
+    def test_singularity_protection(self) -> None:
+        """Singularity protection."""
         n = WangBuzsakiNeuron(v=-35.0)
         n.step(0.0)
         assert np.isfinite(n.v)

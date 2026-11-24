@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_wendling_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.wendling import (
+    WendlingNeuron,
+)
 
 
 class TestWendlingEEGOutput:
-    def test_output_is_eeg_signal(self):
+    """The EEG-like output of the WendlingNeuron."""
+
+    def test_output_is_eeg_signal(self) -> None:
         """Output = y1 - y2 - y3 (postsynaptic potential difference)."""
         n = WendlingNeuron()
         for _ in range(100):
@@ -23,7 +28,7 @@ class TestWendlingEEGOutput:
         expected = n.y1 - n.y2 - n.y3
         assert abs(output - expected) < 1e-10
 
-    def test_eeg_transient_dynamics(self):
+    def test_eeg_transient_dynamics(self) -> None:
         """With p_ext=220, output shows transient ramp then convergence.
 
         The full trace has range > 15 mV (transient), but converges
@@ -38,7 +43,7 @@ class TestWendlingEEGOutput:
         v_range = vs.max() - vs.min()
         assert v_range > 10.0, f"Total EEG range = {v_range:.2f}"
 
-    def test_different_p_ext_different_dynamics(self):
+    def test_different_p_ext_different_dynamics(self) -> None:
         """Different external input → different EEG pattern."""
         n1 = WendlingNeuron()
         n2 = WendlingNeuron()

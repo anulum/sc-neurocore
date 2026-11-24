@@ -1378,6 +1378,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 50 top-level test modules of the Tsodyks-Markram, VIP,
+  Wang-Buzsaki, Wendling, Wilson-Cowan and Yamada neurons and of the
+  model zoo's network configurations import their names explicitly
+  instead of through a suppressed star import, gain their missing
+  docstrings and type annotations and are enrolled in the docstring
+  policy, and the support module left without an importer is deleted.
+
 - The 60 top-level model-zoo test modules of the SRM0, SST, stochastic
   integrate-and-fire, SuperSpike, two-compartment LIF, Terman-Wang,
   theta, Traub-Miles and TrueNorth neurons import their names explicitly

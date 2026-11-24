@@ -10,13 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_wendling_support import *  # noqa: F403
+from sc_neurocore.neurons.models.wendling import (
+    WendlingNeuron,
+)
 
 
 class TestWendlingFourPopulations:
     """4 populations: pyramidal (y0), excitatory (y1), fast inh (y2), slow inh (y3)."""
 
-    def test_excitatory_gains(self):
+    def test_excitatory_gains(self) -> None:
         """a_exc controls excitatory PSP amplitude."""
         n_weak = WendlingNeuron(a_exc=1.0)
         n_strong = WendlingNeuron(a_exc=5.0)
@@ -25,7 +27,7 @@ class TestWendlingFourPopulations:
             n_strong.step(220.0)
         assert abs(n_weak.y1) != abs(n_strong.y1)
 
-    def test_fast_inhibition(self):
+    def test_fast_inhibition(self) -> None:
         """b_fast controls fast GABA_A inhibition amplitude."""
         n_weak = WendlingNeuron(b_fast=10.0)
         n_strong = WendlingNeuron(b_fast=40.0)
@@ -34,7 +36,7 @@ class TestWendlingFourPopulations:
             n_strong.step(220.0)
         assert abs(n_weak.y2) != abs(n_strong.y2)
 
-    def test_slow_inhibition(self):
+    def test_slow_inhibition(self) -> None:
         """g_slow controls slow GABA_B inhibition."""
         n_weak = WendlingNeuron(g_slow=5.0)
         n_strong = WendlingNeuron(g_slow=20.0)

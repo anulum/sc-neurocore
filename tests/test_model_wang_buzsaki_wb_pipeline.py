@@ -10,14 +10,41 @@
 
 from __future__ import annotations
 
-from tests.model_wang_buzsaki_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    firing_rate,
+    isi,
+    spike_count,
+)
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.wang_buzsaki import (
+    WangBuzsakiNeuron,
+)
 
 
 class TestWBPipeline:
-    def test_population(self):
+    """The WangBuzsakiNeuron in the network pipeline."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         assert Population(WangBuzsakiNeuron, n=10, label="wb").n == 10
 
-    def test_network_with_drive(self):
+    def test_network_with_drive(self) -> None:
+        """A Poisson-driven population produces spikes."""
         pop = Population(WangBuzsakiNeuron, n=10, label="wb")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -25,7 +52,8 @@ class TestWBPipeline:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_projection_affects_target(self):
+    def test_projection_affects_target(self) -> None:
+        """Projection affects target."""
         src = Population(WangBuzsakiNeuron, n=10, label="src")
         tgt_with = Population(WangBuzsakiNeuron, n=10, label="tgt_w")
         tgt_without = Population(WangBuzsakiNeuron, n=10, label="tgt_wo")
@@ -43,7 +71,8 @@ class TestWBPipeline:
         assert mon_src.count > 0
         assert mon_with.count >= mon_without.count
 
-    def test_analysis_pipeline(self):
+    def test_analysis_pipeline(self) -> None:
+        """The analysis pipeline reports a driven run."""
         n = WangBuzsakiNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(20000)])
         sc = spike_count(train)

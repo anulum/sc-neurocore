@@ -10,19 +10,29 @@
 
 from __future__ import annotations
 
-from tests.model_yamada_support import *  # noqa: F403
+from sc_neurocore.neurons.models.yamada import (
+    YamadaNeuron,
+)
+from tests.model_yamada_support import (
+    _run,
+)
 
 
 class TestYamadaFI:
-    def test_silent_at_zero(self):
+    """The current-to-rate response of the YamadaNeuron."""
+
+    def test_silent_at_zero(self) -> None:
+        """Zero current gives no spikes."""
         n = YamadaNeuron()
         assert len(_run(n, current=0.0, steps=50000)) == 0
 
-    def test_fires_at_high_current(self):
+    def test_fires_at_high_current(self) -> None:
+        """The model fires at high current."""
         n = YamadaNeuron()
         assert len(_run(n, current=50.0, steps=200000)) >= 10
 
-    def test_rate_increases_with_current(self):
+    def test_rate_increases_with_current(self) -> None:
+        """The firing rate rises with the current."""
         n1 = YamadaNeuron()
         n2 = YamadaNeuron()
         s1 = len(_run(n1, current=30.0, steps=200000))

@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5629
+    "test_files": 5628
   },
   "documentation": {
     "public_pages": [
@@ -3655,7 +3655,6 @@
       "tests/model_tsodyks_markram_support.py",
       "tests/model_vip_neuron_support.py",
       "tests/model_wang_buzsaki_support.py",
-      "tests/model_wendling_support.py",
       "tests/model_wilson_cowan_support.py",
       "tests/model_wilson_hr_support.py",
       "tests/model_yamada_support.py",

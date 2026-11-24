@@ -10,36 +10,48 @@
 
 from __future__ import annotations
 
-from tests.model_wilson_cowan_support import *  # noqa: F403
+from typing import Any
+import math
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.wilson_cowan import (
+    WilsonCowanUnit,
+)
 
 
 class TestWilsonCowanIsolation:
-    def test_defaults(self):
+    """The WilsonCowanUnit in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = WilsonCowanUnit()
         assert n.e == 0.1 and n.i == 0.05
         assert n.w_ee == 10.0 and n.w_ei == 6.0
         assert n.tau_e == 1.0 and n.tau_i == 2.0
 
-    def test_step_returns_float(self):
+    def test_step_returns_float(self) -> None:
         """Returns E rate (float), not binary spike."""
         n = WilsonCowanUnit()
         result = n.step(0.0)
         assert isinstance(result, float)
 
-    def test_both_variables_evolve(self):
+    def test_both_variables_evolve(self) -> None:
+        """Both variables evolve."""
         n = WilsonCowanUnit()
         e0, i0 = n.e, n.i
         for _ in range(100):
             n.step(5.0)
         assert n.e != e0 and n.i != i0
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = WilsonCowanUnit()
         for _ in range(100000):
             n.step(5.0)
         assert np.isfinite(n.e) and np.isfinite(n.i)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = WilsonCowanUnit(w_ee=12.0, tau_i=3.0, theta=3.5, dt=0.05)
         for _ in range(100):
             n.step(5.0)
@@ -48,21 +60,24 @@ class TestWilsonCowanIsolation:
         assert (n.w_ee, n.tau_i, n.theta, n.dt) == (12.0, 3.0, 3.5, 0.05)
 
     @pytest.mark.parametrize("n_steps", [-1, 1.5, True, 1 << 31])
-    def test_simulate_rejects_invalid_batch_length(self, n_steps: object):
+    def test_simulate_rejects_invalid_batch_length(self, n_steps: Any) -> None:
+        """Simulate rejects invalid batch length."""
         n = WilsonCowanUnit()
         before = (n.e, n.i)
         with pytest.raises(ValueError, match="n_steps"):
-            n.simulate(n_steps)  # type: ignore[arg-type]
+            n.simulate(n_steps)
         assert (n.e, n.i) == before
 
-    def test_simulate_rejects_non_finite_current_before_mutation(self):
+    def test_simulate_rejects_non_finite_current_before_mutation(self) -> None:
+        """Simulate rejects non-finite current before mutation."""
         n = WilsonCowanUnit()
         before = (n.e, n.i)
         with pytest.raises(ValueError, match="current"):
             n.simulate(4, math.nan)
         assert (n.e, n.i) == before
 
-    def test_python_batch_numerical_failure_is_atomic(self):
+    def test_python_batch_numerical_failure_is_atomic(self) -> None:
+        """Python batch numerical failure is atomic."""
         n = WilsonCowanUnit(dt=1.0e308)
         before = (n.e, n.i)
         with pytest.raises((ValueError, FloatingPointError)):

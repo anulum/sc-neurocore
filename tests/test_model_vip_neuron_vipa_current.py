@@ -10,16 +10,25 @@
 
 from __future__ import annotations
 
-from tests.model_vip_neuron_support import *  # noqa: F403
+from sc_neurocore.neurons.models.vip_neuron import (
+    VIPNeuron,
+)
+from tests.model_vip_neuron_support import (
+    _spikes,
+)
 
 
 class TestVIPACurrent:
-    def test_a_current_block_changes_firing(self):
+    """The A-type potassium current of the VIPNeuron."""
+
+    def test_a_current_block_changes_firing(self) -> None:
+        """A current block changes firing."""
         intact = _spikes(VIPNeuron(), 1.0, 40000)
         blocked = _spikes(VIPNeuron(g_a=0.0), 1.0, 40000)
         assert intact != blocked
 
-    def test_a_gate_inactivates_during_drive(self):
+    def test_a_gate_inactivates_during_drive(self) -> None:
+        """A gate inactivates during drive."""
         # The b inactivation gate falls from its rested 0.9 under sustained drive.
         n = VIPNeuron()
         for _ in range(2000):

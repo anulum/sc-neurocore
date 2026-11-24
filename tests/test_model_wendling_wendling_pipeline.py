@@ -10,14 +10,23 @@
 
 from __future__ import annotations
 
-from tests.model_wendling_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.neurons.models.wendling import (
+    WendlingNeuron,
+)
 
 
 class TestWendlingPipeline:
-    def test_population_creates(self):
+    """The WendlingNeuron in the network pipeline."""
+
+    def test_population_creates(self) -> None:
+        """A population of the model is built."""
         assert Population(WendlingNeuron, n=5, label="wend").n == 5
 
-    def test_returns_float_not_spike(self):
+    def test_returns_float_not_spike(self) -> None:
         """Wendling is a neural mass model returning EEG signal (float).
 
         Network.step_all expects int return for spike detection.

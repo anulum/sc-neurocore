@@ -10,19 +10,29 @@
 
 from __future__ import annotations
 
-from tests.model_tsodyks_markram_support import *  # noqa: F403
+from sc_neurocore.neurons.models.tsodyks_markram import (
+    TsodyksMarkramNeuron,
+)
+from tests.model_tsodyks_markram_support import (
+    _run,
+)
 
 
 class TestTMFI:
-    def test_subthreshold_silent(self):
+    """The current-to-rate response of the TsodyksMarkramNeuron."""
+
+    def test_subthreshold_silent(self) -> None:
+        """A subthreshold current gives no spikes."""
         n = TsodyksMarkramNeuron()
         assert len(_run(n, current=10.0, steps=10000)) == 0
 
-    def test_suprathreshold_fires(self):
+    def test_suprathreshold_fires(self) -> None:
+        """A suprathreshold current fires repeatedly."""
         n = TsodyksMarkramNeuron()
         assert len(_run(n, current=20.0, steps=10000)) >= 10
 
-    def test_monotonic_fi(self):
+    def test_monotonic_fi(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [20.0, 30.0, 50.0]:
             n = TsodyksMarkramNeuron()

@@ -10,14 +10,32 @@
 
 from __future__ import annotations
 
-from tests.model_vip_neuron_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.vip_neuron import (
+    VIPNeuron,
+)
 
 
 class TestVIPNetwork:
-    def test_population_size(self):
+    """The VIPNeuron in a network."""
+
+    def test_population_size(self) -> None:
+        """A population holds the requested number of neurons."""
         assert Population(VIPNeuron, n=8, label="vip").n == 8
 
-    def test_population_drives_spikes(self):
+    def test_population_drives_spikes(self) -> None:
+        """Population drives spikes."""
         pop = Population(VIPNeuron, n=5, label="vip")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=4.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

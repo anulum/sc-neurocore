@@ -10,22 +10,31 @@
 
 from __future__ import annotations
 
-from tests.model_wang_buzsaki_support import *  # noqa: F403
+from sc_neurocore.neurons.models.wang_buzsaki import (
+    WangBuzsakiNeuron,
+)
+from tests.model_wang_buzsaki_support import (
+    _run,
+)
 
 
 class TestWBFI:
-    def test_subthreshold_silent(self):
+    """The current-to-rate response of the WangBuzsakiNeuron."""
+
+    def test_subthreshold_silent(self) -> None:
+        """A subthreshold current gives no spikes."""
         n = WangBuzsakiNeuron()
         assert len(_run(n, current=0.0, steps=20000)) == 0
 
-    def test_monotonic_fi(self):
+    def test_monotonic_fi(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [0.5, 1.0, 2.0, 5.0]:
             n = WangBuzsakiNeuron()
             rates.append(len(_run(n, current=I, steps=20000)))
         assert all(rates[i] <= rates[i + 1] for i in range(len(rates) - 1))
 
-    def test_fast_spiking_at_high_current(self):
+    def test_fast_spiking_at_high_current(self) -> None:
         """At I=10, frequency >> gamma band (fast-spiking characteristic)."""
         n = WangBuzsakiNeuron()
         spikes = _run(n, current=10.0, steps=20000)

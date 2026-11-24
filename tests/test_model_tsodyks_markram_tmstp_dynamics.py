@@ -10,21 +10,24 @@
 
 from __future__ import annotations
 
-from tests.model_tsodyks_markram_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.tsodyks_markram import (
+    TsodyksMarkramNeuron,
+)
 
 
 class TestTMSTPDynamics:
     """Short-term plasticity: x (depression) and u (facilitation)."""
 
-    def test_x_depletes_on_presyn_spike(self):
-        """x decreases on presynaptic spike (depression)."""
+    def test_x_depletes_on_presyn_spike(self) -> None:
+        """The resource x decreases on a presynaptic spike (depression)."""
         n = TsodyksMarkramNeuron()
         x0 = n.x
         n.step(0.0, presynaptic_spike=True)
         assert n.x < x0, f"x={n.x}, expected depletion"
 
-    def test_x_recovers_between_spikes(self):
-        """x recovers toward 1.0 with tau_d between spikes."""
+    def test_x_recovers_between_spikes(self) -> None:
+        """The resource x recovers toward 1.0 with tau_d between spikes."""
         n = TsodyksMarkramNeuron()
         n.step(0.0, presynaptic_spike=True)  # deplete
         x_after_spike = n.x
@@ -32,15 +35,15 @@ class TestTMSTPDynamics:
             n.step(0.0)  # no presyn spike, x recovers
         assert n.x > x_after_spike
 
-    def test_u_facilitates_on_presyn_spike(self):
-        """u increases on presynaptic spike (facilitation)."""
+    def test_u_facilitates_on_presyn_spike(self) -> None:
+        """The utilisation u increases on a presynaptic spike (facilitation)."""
         n = TsodyksMarkramNeuron()
         u0 = n.u
         n.step(0.0, presynaptic_spike=True)
         assert n.u > u0
 
-    def test_u_decays_between_spikes(self):
-        """u decays toward u_se with tau_f between spikes."""
+    def test_u_decays_between_spikes(self) -> None:
+        """The utilisation u decays toward u_se with tau_f between spikes."""
         n = TsodyksMarkramNeuron()
         n.step(0.0, presynaptic_spike=True)  # facilitate
         u_after = n.u
@@ -48,7 +51,7 @@ class TestTMSTPDynamics:
             n.step(0.0)
         assert abs(n.u - n.u_se) < abs(u_after - n.u_se)
 
-    def test_depression_reduces_efficacy(self):
+    def test_depression_reduces_efficacy(self) -> None:
         """Repeated presyn spikes deplete x → weaker synaptic current."""
         n = TsodyksMarkramNeuron()
         # First spike: high x
@@ -59,15 +62,15 @@ class TestTMSTPDynamics:
         x2 = n.x
         assert x2 < x1, "x should deplete further on second spike"
 
-    def test_x_bounded_0_1(self):
-        """x stays in [0, 1]."""
+    def test_x_bounded_0_1(self) -> None:
+        """The resource x stays inside [0, 1]."""
         n = TsodyksMarkramNeuron()
         for _ in range(1000):
             n.step(0.0, presynaptic_spike=(np.random.random() < 0.5))
         assert 0.0 <= n.x <= 1.0
 
-    def test_u_bounded_0_1(self):
-        """u stays in [0, 1]."""
+    def test_u_bounded_0_1(self) -> None:
+        """The utilisation u stays inside [0, 1]."""
         n = TsodyksMarkramNeuron()
         for _ in range(1000):
             n.step(0.0, presynaptic_spike=(np.random.random() < 0.5))

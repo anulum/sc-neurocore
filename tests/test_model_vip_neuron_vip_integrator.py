@@ -10,25 +10,38 @@
 
 from __future__ import annotations
 
-from tests.model_vip_neuron_support import *  # noqa: F403
+from typing import Any, cast
+import pytest
+from sc_neurocore.neurons.models.vip_neuron import (
+    VIPNeuron,
+)
+from tests.model_vip_neuron_support import (
+    _spikes,
+)
 
 
 class TestVIPIntegrator:
-    def test_default_integrator_is_rk4(self):
+    """Integrator choice and agreement of the VIPNeuron."""
+
+    def test_default_integrator_is_rk4(self) -> None:
+        """Default integrator is RK4."""
         assert VIPNeuron().integrator == "rk4"
 
-    def test_rejects_unknown_integrator(self):
+    def test_rejects_unknown_integrator(self) -> None:
+        """The model rejects unknown integrator."""
         with pytest.raises(ValueError, match="Unsupported integrator"):
-            VIPNeuron(integrator="midpoint")  # type: ignore[arg-type]
+            VIPNeuron(integrator=cast(Any, "midpoint"))
 
-    def test_baseline_euler_path_runs_and_diverges_from_rk4(self):
+    def test_baseline_euler_path_runs_and_diverges_from_rk4(self) -> None:
+        """Baseline Euler path runs and diverges from RK4."""
         rk4 = VIPNeuron()
         euler = VIPNeuron(integrator="baseline_euler")
         assert _spikes(rk4, 1.0, 40000) > 0
         assert _spikes(euler, 1.0, 40000) > 0
         assert rk4.v != euler.v
 
-    def test_rk4_and_euler_agree_to_first_order_at_tiny_dt(self):
+    def test_rk4_and_euler_agree_to_first_order_at_tiny_dt(self) -> None:
+        """RK4 and Euler agree to first order at tiny dt."""
         rk4 = VIPNeuron(dt=1e-5)
         euler = VIPNeuron(dt=1e-5, integrator="baseline_euler")
         for _ in range(200):

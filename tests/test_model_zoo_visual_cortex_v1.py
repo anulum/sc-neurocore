@@ -10,39 +10,57 @@
 
 from __future__ import annotations
 
-from tests.model_zoo_support import *  # noqa: F403
+import pytest
+import time
+from sc_neurocore.model_zoo import (
+    visual_cortex_v1,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.neurons.models import (
+    HodgkinHuxleyNeuron,
+    WangBuzsakiNeuron,
+)
+from tests.model_zoo_support import (
+    _run_and_count,
+    _total_neurons,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestVisualCortexV1:
     """Orientation-tuned simple→complex cell model."""
 
-    def test_returns_network(self):
+    def test_returns_network(self) -> None:
+        """The model returns network."""
         assert isinstance(visual_cortex_v1(n_orientation=4, n_per_orientation=10), Network)
 
-    def test_population_count(self):
+    def test_population_count(self) -> None:
         """n_orient simple + n_orient complex = 2·n_orient."""
         net = visual_cortex_v1(n_orientation=4, n_per_orientation=10)
         assert len(net.populations) == 8  # 4 simple + 4 complex
 
-    def test_simple_cells_use_hh(self):
+    def test_simple_cells_use_hh(self) -> None:
+        """Simple cells use HH."""
         net = visual_cortex_v1(n_orientation=4, n_per_orientation=10)
         for i in range(4):
             assert net.populations[i]._model_cls is HodgkinHuxleyNeuron
 
-    def test_complex_cells_use_wang_buzsaki(self):
+    def test_complex_cells_use_wang_buzsaki(self) -> None:
+        """Complex cells use wang buzsaki."""
         net = visual_cortex_v1(n_orientation=4, n_per_orientation=10)
         for i in range(4, 8):
             assert net.populations[i]._model_cls is WangBuzsakiNeuron
 
-    def test_simple_to_complex_feedforward(self):
+    def test_simple_to_complex_feedforward(self) -> None:
         """Each simple→complex pair has a projection (weight=3.0)."""
         net = visual_cortex_v1(n_orientation=4, n_per_orientation=10)
         # First n_orient projections are simple→complex
         for i in range(4):
             assert net.projections[i].weight == 3.0
 
-    def test_cross_orientation_inhibition(self):
+    def test_cross_orientation_inhibition(self) -> None:
         """Cross-orientation projections have negative weights w = -1/(1+dist)."""
         net = visual_cortex_v1(n_orientation=4, n_per_orientation=10)
         # After the 4 feedforward: 4×3=12 cross-orientation
@@ -50,31 +68,35 @@ class TestVisualCortexV1:
         for p in cross_projs:
             assert p.weight < 0
 
-    def test_cross_orientation_weight_distance_dependent(self):
+    def test_cross_orientation_weight_distance_dependent(self) -> None:
         """Closer orientations have stronger inhibition: |w(dist=1)| > |w(dist=2)|."""
         # dist=1: w = -1/(1+1) = -0.5; dist=2: w = -1/(1+2) = -0.333
         w1 = -1.0 / (1.0 + 1)
         w2 = -1.0 / (1.0 + 2)
         assert abs(w1) > abs(w2)
 
-    def test_monitors_per_population(self):
+    def test_monitors_per_population(self) -> None:
         """2 monitors per orientation (simple + complex)."""
         net = visual_cortex_v1(n_orientation=4, n_per_orientation=10)
         assert len(net.spike_monitors) == 8
 
-    def test_one_stimulus_per_orientation(self):
+    def test_one_stimulus_per_orientation(self) -> None:
+        """One stimulus per orientation."""
         net = visual_cortex_v1(n_orientation=4, n_per_orientation=10)
         assert len(net.stimuli) == 4
 
-    def test_produces_spikes(self):
+    def test_produces_spikes(self) -> None:
+        """The model produces spikes."""
         assert _run_and_count(visual_cortex_v1(n_orientation=4, n_per_orientation=10)) > 0
 
     @pytest.mark.parametrize("n_orient", [2, 4, 8])
-    def test_scales_orientations(self, n_orient: int):
+    def test_scales_orientations(self, n_orient: int) -> None:
+        """The model scales orientations."""
         net = visual_cortex_v1(n_orientation=n_orient, n_per_orientation=5)
         assert len(net.populations) == 2 * n_orient
 
-    def test_performance(self):
+    def test_performance(self) -> None:
+        """The configuration simulates 50 ms above its load-tolerant throughput floor."""
         net = visual_cortex_v1(n_orientation=2, n_per_orientation=5)
         n_neurons = _total_neurons(net)
         t0 = time.perf_counter()

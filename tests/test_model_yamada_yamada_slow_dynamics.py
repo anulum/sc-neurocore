@@ -10,12 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_yamada_support import *  # noqa: F403
+from sc_neurocore.neurons.models.yamada import (
+    YamadaNeuron,
+)
+from tests.model_yamada_support import (
+    _run,
+)
 
 
 class TestYamadaSlowDynamics:
-    def test_q_evolves_slowly(self):
-        """q (tau_q=300) evolves much slower than n."""
+    """Dynamics of the YamadaNeuron."""
+
+    def test_q_evolves_slowly(self) -> None:
+        """The slow variable q (tau_q=300) evolves much more slowly than n."""
         n = YamadaNeuron()
         n0, q0 = n.n, n.q
         for _ in range(100):
@@ -24,7 +31,7 @@ class TestYamadaSlowDynamics:
         dq = abs(n.q - q0)
         assert dn > 5 * dq, f"dn={dn:.6f}, dq={dq:.6f}"
 
-    def test_q_accumulates_with_current(self):
+    def test_q_accumulates_with_current(self) -> None:
         """Higher current → V spends more time depolarised → q_inf → q grows."""
         n_low = YamadaNeuron()
         n_high = YamadaNeuron()
@@ -33,7 +40,7 @@ class TestYamadaSlowDynamics:
             n_high.step(100.0)
         assert n_high.q > n_low.q
 
-    def test_q_modulates_excitability(self):
+    def test_q_modulates_excitability(self) -> None:
         """Higher g_q → heavier q current → different firing."""
         n_weak = YamadaNeuron(g_q=1.0)
         n_heavy_q = YamadaNeuron(g_q=10.0)
@@ -41,7 +48,7 @@ class TestYamadaSlowDynamics:
         s_heavy_q = len(_run(n_heavy_q, current=50.0, steps=200000))
         assert s_weak != s_heavy_q
 
-    def test_tau_q_controls_convergence_speed(self):
+    def test_tau_q_controls_convergence_speed(self) -> None:
         """Faster tau_q → q converges to q_inf faster."""
         n_fast = YamadaNeuron(tau_q=100.0)
         n_slow = YamadaNeuron(tau_q=1000.0)

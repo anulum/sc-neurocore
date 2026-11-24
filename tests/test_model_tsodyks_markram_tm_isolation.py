@@ -10,31 +10,40 @@
 
 from __future__ import annotations
 
-from tests.model_tsodyks_markram_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.tsodyks_markram import (
+    TsodyksMarkramNeuron,
+)
 
 
 class TestTMIsolation:
-    def test_defaults(self):
+    """The TsodyksMarkramNeuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = TsodyksMarkramNeuron()
         assert n.v == -65.0 and n.x == 1.0 and n.u == 0.2
         assert n.tau_d == 200.0 and n.tau_f == 600.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert TsodyksMarkramNeuron().step(0.0) in (0, 1)
 
-    def test_dual_input_signature(self):
+    def test_dual_input_signature(self) -> None:
         """step(current, presynaptic_spike) — two inputs."""
         n = TsodyksMarkramNeuron()
         s = n.step(10.0, presynaptic_spike=True)
         assert s in (0, 1)
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = TsodyksMarkramNeuron()
         for _ in range(50000):
             n.step(20.0)
         assert np.isfinite(n.v) and np.isfinite(n.x) and np.isfinite(n.u)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = TsodyksMarkramNeuron()
         for _ in range(100):
             n.step(20.0, presynaptic_spike=True)

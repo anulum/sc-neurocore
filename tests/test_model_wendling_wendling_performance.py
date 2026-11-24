@@ -10,12 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_wendling_support import *  # noqa: F403
+import time
+from sc_neurocore.neurons.models.wendling import (
+    WendlingNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestWendlingPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the WendlingNeuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = WendlingNeuron()
         N = 20000
         t0 = time.perf_counter()

@@ -10,39 +10,54 @@
 
 from __future__ import annotations
 
-from tests.model_vip_neuron_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.vip_neuron import (
+    VIPNeuron,
+)
+from tests.model_vip_neuron_support import (
+    _spikes,
+)
 
 
 class TestVIPIsolation:
-    def test_construction_defaults(self):
+    """The VIPNeuron in isolation."""
+
+    def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = VIPNeuron()
         assert n.v == -65.0
         assert n.g_a == 8.0
         assert n.c_m == 0.5
         assert n.dt == 0.025
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert VIPNeuron().step(1.0) in (0, 1)
 
-    def test_quiescent_without_drive(self):
+    def test_quiescent_without_drive(self) -> None:
+        """Quiescent without drive."""
         assert _spikes(VIPNeuron(), 0.0, 20000) == 0
 
-    def test_suprathreshold_spiking(self):
+    def test_suprathreshold_spiking(self) -> None:
+        """Suprathreshold spiking."""
         assert _spikes(VIPNeuron(), 1.0, 40000) >= 10
 
-    def test_rate_increases_with_current(self):
+    def test_rate_increases_with_current(self) -> None:
+        """The firing rate rises with the current."""
         s1 = _spikes(VIPNeuron(), 0.6, 30000)
         s2 = _spikes(VIPNeuron(), 2.0, 30000)
         assert s1 < s2
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = VIPNeuron()
         for _ in range(50000):
             n.step(1.0)
         for value in (n.v, n.h, n.n, n.a, n.b):
             assert np.isfinite(value)
 
-    def test_reset_restores_initial(self):
+    def test_reset_restores_initial(self) -> None:
+        """Reset restores initial."""
         n = VIPNeuron()
         for _ in range(1000):
             n.step(1.0)

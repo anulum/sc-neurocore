@@ -10,18 +10,25 @@
 
 from __future__ import annotations
 
-from tests.model_yamada_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.yamada import (
+    YamadaNeuron,
+)
 
 
 class TestYamadaHHProperties:
-    def test_gating_bounded(self):
+    """Hodgkin-Huxley gating properties of the YamadaNeuron."""
+
+    def test_gating_bounded(self) -> None:
+        """The gating variables stay inside [0, 1]."""
         n = YamadaNeuron()
         for _ in range(200000):
             n.step(50.0)
         assert -0.01 <= n.n <= 1.01, f"n = {n.n}"
         assert -0.01 <= n.q <= 1.01, f"q = {n.q}"
 
-    def test_sigmoid_half_activations(self):
+    def test_sigmoid_half_activations(self) -> None:
         """m_inf(-30) = 0.5, n_inf(-30) = 0.5, q_inf(-50) = 0.5."""
         m_inf = 1.0 / (1.0 + np.exp(-(-30.0 + 30.0) / 9.5))
         assert abs(m_inf - 0.5) < 1e-10
@@ -30,7 +37,7 @@ class TestYamadaHHProperties:
         q_inf = 1.0 / (1.0 + np.exp(-(-50.0 + 50.0) / 10.0))
         assert abs(q_inf - 0.5) < 1e-10
 
-    def test_na_inactivation_via_n(self):
+    def test_na_inactivation_via_n(self) -> None:
         """Na current uses (1-n) as inactivation: I_Na = g_Na·m_inf³·(1-n)·(V-E_Na)."""
         n = YamadaNeuron()
         m_inf = 1.0 / (1.0 + np.exp(-(n.v + 30.0) / 9.5))
@@ -39,13 +46,15 @@ class TestYamadaHHProperties:
         assert i_na < 0  # inward
 
     @pytest.mark.parametrize("dt", [0.02, 0.05, 0.1])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = YamadaNeuron(dt=dt)
         for _ in range(100000):
             n.step(50.0)
         assert np.isfinite(n.v)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = YamadaNeuron()

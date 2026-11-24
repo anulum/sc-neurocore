@@ -10,13 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_wang_buzsaki_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.wang_buzsaki import (
+    WangBuzsakiNeuron,
+)
+from tests.model_wang_buzsaki_support import (
+    _run,
+)
 
 
 class TestWBGammaFrequency:
     """The model is designed for gamma-band (30–80 Hz) firing."""
 
-    def test_gamma_band_at_moderate_current(self):
+    def test_gamma_band_at_moderate_current(self) -> None:
         """At I=0.5–1.0, firing frequency should be in gamma range (30–80 Hz).
 
         Each step() = 0.5 ms. ISI in steps × 0.5 ms = ISI_ms.
@@ -30,7 +36,7 @@ class TestWBGammaFrequency:
         freq_hz = 1000.0 / mean_isi_ms
         assert 30 < freq_hz < 100, f"freq = {freq_hz:.0f} Hz, expected gamma range"
 
-    def test_onset_frequency_near_30hz(self):
+    def test_onset_frequency_near_30hz(self) -> None:
         """At threshold current, frequency should start near lower gamma."""
         n = WangBuzsakiNeuron()
         spikes = _run(n, current=0.5, steps=20000)

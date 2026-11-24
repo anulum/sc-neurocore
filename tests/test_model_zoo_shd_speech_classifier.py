@@ -10,24 +10,36 @@
 
 from __future__ import annotations
 
-from tests.model_zoo_support import *  # noqa: F403
+import time
+from sc_neurocore.model_zoo import (
+    shd_speech_classifier,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from tests.model_zoo_support import (
+    _run_and_count,
+    _total_neurons,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestSHDSpeechClassifier:
     """700-256-20 recurrent SNN for spiking Heidelberg digits."""
 
-    def test_returns_network(self):
+    def test_returns_network(self) -> None:
+        """The model returns network."""
         assert isinstance(shd_speech_classifier(), Network)
 
-    def test_topology_three_populations(self):
+    def test_topology_three_populations(self) -> None:
+        """Topology three populations."""
         net = shd_speech_classifier()
         assert len(net.populations) == 3
         assert net.populations[0].n == 700  # input
         assert net.populations[1].n == 256  # recurrent
         assert net.populations[2].n == 20  # output
 
-    def test_three_projections_including_recurrent(self):
+    def test_three_projections_including_recurrent(self) -> None:
         """input→rec, rec→rec (recurrent), rec→output."""
         net = shd_speech_classifier()
         assert len(net.projections) == 3
@@ -35,21 +47,24 @@ class TestSHDSpeechClassifier:
         rec_proj = net.projections[1]
         assert rec_proj.source is rec_proj.target
 
-    def test_recurrent_tau_longer(self):
+    def test_recurrent_tau_longer(self) -> None:
         """Recurrent layer uses tau_mem=20 vs input tau_mem=10."""
         net = shd_speech_classifier()
         inp_neuron = net.populations[0].neurons[0]
         rec_neuron = net.populations[1].neurons[0]
         assert rec_neuron.tau_mem > inp_neuron.tau_mem
 
-    def test_two_monitors(self):
+    def test_two_monitors(self) -> None:
+        """The classifier attaches two spike monitors."""
         net = shd_speech_classifier()
         assert len(net.spike_monitors) == 2
 
-    def test_produces_spikes(self):
+    def test_produces_spikes(self) -> None:
+        """The model produces spikes."""
         assert _run_and_count(shd_speech_classifier()) > 0
 
-    def test_performance(self):
+    def test_performance(self) -> None:
+        """The configuration simulates 50 ms above its load-tolerant throughput floor."""
         net = shd_speech_classifier()
         n_neurons = _total_neurons(net)
         t0 = time.perf_counter()

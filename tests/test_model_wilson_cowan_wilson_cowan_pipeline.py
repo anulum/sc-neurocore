@@ -10,14 +10,27 @@
 
 from __future__ import annotations
 
-from tests.model_wilson_cowan_support import *  # noqa: F403
+import json
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.neurons.models.wilson_cowan import (
+    WilsonCowanUnit,
+)
+from tests.model_wilson_cowan_support import (
+    _REPOSITORY,
+    tomllib,
+)
 
 
 class TestWilsonCowanPipeline:
-    def test_population_creates(self):
+    """The WilsonCowanUnit in the network pipeline."""
+
+    def test_population_creates(self) -> None:
+        """A population of the model is built."""
         assert Population(WilsonCowanUnit, n=10, label="wc").n == 10
 
-    def test_network_returns_float_not_spike(self):
+    def test_network_returns_float_not_spike(self) -> None:
         """WilsonCowanUnit.step() returns float (E rate), not int.
 
         Network.step_all expects int return for spike detection.
@@ -29,7 +42,8 @@ class TestWilsonCowanPipeline:
         assert isinstance(result, float)
         # The model is a RATE model, not a spiking model
 
-    def test_paired_declarative_schemas_match_runtime_defaults(self):
+    def test_paired_declarative_schemas_match_runtime_defaults(self) -> None:
+        """Paired declarative schemas match runtime defaults."""
         schema_root = _REPOSITORY / "src/sc_neurocore/neurons/model_schemas"
         toml_payload = tomllib.loads((schema_root / "wilson_cowan.toml").read_text())
         json_payload = json.loads((schema_root / "wilson_cowan.json").read_text())

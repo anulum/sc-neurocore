@@ -10,40 +10,56 @@
 
 from __future__ import annotations
 
-from tests.model_zoo_support import *  # noqa: F403
+import pytest
+import time
+from sc_neurocore.model_zoo import (
+    cortical_column,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.neurons.models import (
+    GolombFSNeuron,
+    PospischilNeuron,
+)
+from tests.model_zoo_support import (
+    _run_and_count,
+    _total_neurons,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestCorticalColumn:
     """4-layer cortical microcircuit with E/I per layer."""
 
-    def test_returns_network(self):
+    def test_returns_network(self) -> None:
+        """The model returns network."""
         assert isinstance(cortical_column(n_layers=4), Network)
 
-    def test_eight_populations_four_layers(self):
+    def test_eight_populations_four_layers(self) -> None:
         """4 layers × 2 (E+I) = 8 populations."""
         net = cortical_column(n_layers=4)
         assert len(net.populations) == 8
 
-    def test_excitatory_uses_pospischil(self):
+    def test_excitatory_uses_pospischil(self) -> None:
         """E populations use PospischilNeuron (RS type)."""
         net = cortical_column(n_layers=4)
         for i in range(0, 8, 2):
             assert net.populations[i]._model_cls is PospischilNeuron
 
-    def test_inhibitory_uses_golomb_fs(self):
+    def test_inhibitory_uses_golomb_fs(self) -> None:
         """I populations use GolombFSNeuron (FS type)."""
         net = cortical_column(n_layers=4)
         for i in range(1, 8, 2):
             assert net.populations[i]._model_cls is GolombFSNeuron
 
-    def test_intra_layer_wiring(self):
+    def test_intra_layer_wiring(self) -> None:
         """Each layer has E→I, I→E, E→E (3 per layer = 12 intra)."""
         net = cortical_column(n_layers=4)
         # 12 intra-layer + 3 inter-layer feedforward = 15
         assert len(net.projections) == 15
 
-    def test_feedforward_l4_to_l23(self):
+    def test_feedforward_l4_to_l23(self) -> None:
         """L4_E → L23_E feedforward projection exists."""
         net = cortical_column(n_layers=4)
         # Inter-layer: ff_map = [(1,0), (0,2), (2,3)]
@@ -51,25 +67,29 @@ class TestCorticalColumn:
         ff_projs = net.projections[12:]  # last 3 are inter-layer
         assert len(ff_projs) == 3
 
-    def test_thalamic_drive_targets_l4(self):
+    def test_thalamic_drive_targets_l4(self) -> None:
         """PoissonInput targets L4_E (populations[2])."""
         net = cortical_column(n_layers=4)
         assert len(net.stimuli) == 1
         assert net.stimuli[0].target is net.populations[2]
 
-    def test_eight_monitors(self):
+    def test_eight_monitors(self) -> None:
+        """Four layers give eight spike monitors."""
         net = cortical_column(n_layers=4)
         assert len(net.spike_monitors) == 8
 
-    def test_produces_spikes(self):
+    def test_produces_spikes(self) -> None:
+        """The model produces spikes."""
         assert _run_and_count(cortical_column(n_layers=4)) > 0
 
     @pytest.mark.parametrize("n_layers", [2, 3, 4])
-    def test_scales_layers(self, n_layers: int):
+    def test_scales_layers(self, n_layers: int) -> None:
+        """The model scales layers."""
         net = cortical_column(n_layers=n_layers)
         assert len(net.populations) == 2 * n_layers
 
-    def test_performance(self):
+    def test_performance(self) -> None:
+        """The configuration simulates 50 ms above its load-tolerant throughput floor."""
         net = cortical_column(n_layers=2)
         n_neurons = _total_neurons(net)
         t0 = time.perf_counter()

@@ -10,18 +10,28 @@
 
 from __future__ import annotations
 
-from tests.model_wendling_support import *  # noqa: F403
+from typing import Any
+import math
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.wendling import (
+    WendlingNeuron,
+)
 
 
 class TestWendlingParameters:
+    """Parameter behaviour of the WendlingNeuron."""
+
     @pytest.mark.parametrize("dt", [0.0005, 0.001, 0.002])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = WendlingNeuron(dt=dt)
         for _ in range(50000):
             n.step(220.0)
         assert np.isfinite(n.y1)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = WendlingNeuron()
@@ -46,11 +56,13 @@ class TestWendlingParameters:
             {"v0": math.inf},
         ],
     )
-    def test_invalid_physical_configuration_is_rejected(self, kwargs: dict[str, float]):
+    def test_invalid_physical_configuration_is_rejected(self, kwargs: dict[str, Any]) -> None:
+        """Invalid physical configuration is rejected."""
         with pytest.raises(ValueError):
             WendlingNeuron(**kwargs)
 
-    def test_non_finite_external_input_does_not_mutate_state(self):
+    def test_non_finite_external_input_does_not_mutate_state(self) -> None:
+        """Non-finite external input does not mutate state."""
         n = WendlingNeuron()
         before = (
             n.y0,
@@ -81,7 +93,8 @@ class TestWendlingParameters:
             n.y9,
         ) == before
 
-    def test_corrupted_runtime_state_does_not_mutate_state(self):
+    def test_corrupted_runtime_state_does_not_mutate_state(self) -> None:
+        """Corrupted runtime state does not mutate state."""
         n = WendlingNeuron()
         n.y6 = math.inf
         before = (

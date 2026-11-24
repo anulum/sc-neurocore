@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_yamada_support import *  # noqa: F403
+from sc_neurocore.neurons.models.yamada import (
+    YamadaNeuron,
+)
 
 
 class TestYamada:
-    def test_moderate_drive_crosses_threshold_in_short_window(self):
+    """Threshold crossing of the YamadaNeuron under moderate drive."""
+
+    def test_moderate_drive_crosses_threshold_in_short_window(self) -> None:
+        """Moderate drive crosses threshold in short window."""
         n = YamadaNeuron()
         assert sum(n.step(5.0) for _ in range(300)) > 0

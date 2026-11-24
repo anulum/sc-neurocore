@@ -10,12 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_wilson_cowan_support import *  # noqa: F403
+import numpy as np
+import time
+from sc_neurocore.neurons.models.wilson_cowan import (
+    WilsonCowanUnit,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestWilsonCowanPerformance:
-    def test_isolation_runtime_regression_sentinel(self):
+    """Throughput of the WilsonCowanUnit."""
+
+    def test_isolation_runtime_regression_sentinel(self) -> None:
         """Bound pathological slowdowns without making CI throughput claims."""
         n = WilsonCowanUnit()
         N = 50000

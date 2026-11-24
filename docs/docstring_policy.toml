@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4278
+expected_file_count = 4328
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -17156,3 +17156,203 @@ rationale = "Exercise SC-NeuroCore: model truenorth true north performance."
 [[file]]
 path = "tests/test_model_truenorth_true_north_pipeline.py"
 rationale = "Exercise SC-NeuroCore: model truenorth true north pipeline."
+
+[[file]]
+path = "tests/test_model_tsodyks_markram_tm_isolation.py"
+rationale = "Exercise SC-NeuroCore: model tsodyks markram tm isolation."
+
+[[file]]
+path = "tests/test_model_tsodyks_markram_tm_performance.py"
+rationale = "Exercise SC-NeuroCore: model tsodyks markram tm performance."
+
+[[file]]
+path = "tests/test_model_tsodyks_markram_tm_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model tsodyks markram tm pipeline."
+
+[[file]]
+path = "tests/test_model_tsodyks_markram_tm_synaptic_current.py"
+rationale = "Exercise SC-NeuroCore: model tsodyks markram tm synaptic current."
+
+[[file]]
+path = "tests/test_model_tsodyks_markram_tmfi.py"
+rationale = "Exercise SC-NeuroCore: model tsodyks markram tmfi."
+
+[[file]]
+path = "tests/test_model_tsodyks_markram_tmstp_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model tsodyks markram tmstp dynamics."
+
+[[file]]
+path = "tests/test_model_vip_neuron_vip_integrator.py"
+rationale = "Exercise SC-NeuroCore: model vip neuron vip integrator."
+
+[[file]]
+path = "tests/test_model_vip_neuron_vip_isolation.py"
+rationale = "Exercise SC-NeuroCore: model vip neuron vip isolation."
+
+[[file]]
+path = "tests/test_model_vip_neuron_vip_network.py"
+rationale = "Exercise SC-NeuroCore: model vip neuron vip network."
+
+[[file]]
+path = "tests/test_model_vip_neuron_vip_validation.py"
+rationale = "Exercise SC-NeuroCore: model vip neuron vip validation."
+
+[[file]]
+path = "tests/test_model_vip_neuron_vipa_current.py"
+rationale = "Exercise SC-NeuroCore: model vip neuron vipa current."
+
+[[file]]
+path = "tests/test_model_wang_buzsaki_wb_gamma_frequency.py"
+rationale = "Exercise SC-NeuroCore: model wang buzsaki wb gamma frequency."
+
+[[file]]
+path = "tests/test_model_wang_buzsaki_wb_isolation.py"
+rationale = "Exercise SC-NeuroCore: model wang buzsaki wb isolation."
+
+[[file]]
+path = "tests/test_model_wang_buzsaki_wb_parameters.py"
+rationale = "Exercise SC-NeuroCore: model wang buzsaki wb parameters."
+
+[[file]]
+path = "tests/test_model_wang_buzsaki_wb_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model wang buzsaki wb pipeline."
+
+[[file]]
+path = "tests/test_model_wang_buzsaki_wbfi.py"
+rationale = "Exercise SC-NeuroCore: model wang buzsaki wbfi."
+
+[[file]]
+path = "tests/test_model_wang_buzsaki_wbhh_properties.py"
+rationale = "Exercise SC-NeuroCore: model wang buzsaki wbhh properties."
+
+[[file]]
+path = "tests/test_model_wendling_wendling_eeg_output.py"
+rationale = "Exercise SC-NeuroCore: model wendling wendling eeg output."
+
+[[file]]
+path = "tests/test_model_wendling_wendling_four_populations.py"
+rationale = "Exercise SC-NeuroCore: model wendling wendling four populations."
+
+[[file]]
+path = "tests/test_model_wendling_wendling_isolation.py"
+rationale = "Exercise SC-NeuroCore: model wendling wendling isolation."
+
+[[file]]
+path = "tests/test_model_wendling_wendling_parameters.py"
+rationale = "Exercise SC-NeuroCore: model wendling wendling parameters."
+
+[[file]]
+path = "tests/test_model_wendling_wendling_performance.py"
+rationale = "Exercise SC-NeuroCore: model wendling wendling performance."
+
+[[file]]
+path = "tests/test_model_wendling_wendling_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model wendling wendling pipeline."
+
+[[file]]
+path = "tests/test_model_wendling_wendling_sigmoid.py"
+rationale = "Exercise SC-NeuroCore: model wendling wendling sigmoid."
+
+[[file]]
+path = "tests/test_model_wilson_cowan_wilson_cowan_ei_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model wilson cowan wilson cowan ei dynamics."
+
+[[file]]
+path = "tests/test_model_wilson_cowan_wilson_cowan_isolation.py"
+rationale = "Exercise SC-NeuroCore: model wilson cowan wilson cowan isolation."
+
+[[file]]
+path = "tests/test_model_wilson_cowan_wilson_cowan_oscillation.py"
+rationale = "Exercise SC-NeuroCore: model wilson cowan wilson cowan oscillation."
+
+[[file]]
+path = "tests/test_model_wilson_cowan_wilson_cowan_parameters.py"
+rationale = "Exercise SC-NeuroCore: model wilson cowan wilson cowan parameters."
+
+[[file]]
+path = "tests/test_model_wilson_cowan_wilson_cowan_performance.py"
+rationale = "Exercise SC-NeuroCore: model wilson cowan wilson cowan performance."
+
+[[file]]
+path = "tests/test_model_wilson_cowan_wilson_cowan_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model wilson cowan wilson cowan pipeline."
+
+[[file]]
+path = "tests/test_model_wilson_cowan_wilson_cowan_sigmoid.py"
+rationale = "Exercise SC-NeuroCore: model wilson cowan wilson cowan sigmoid."
+
+[[file]]
+path = "tests/test_model_yamada_yamada.py"
+rationale = "Exercise SC-NeuroCore: model yamada yamada."
+
+[[file]]
+path = "tests/test_model_yamada_yamada_fi.py"
+rationale = "Exercise SC-NeuroCore: model yamada yamada fi."
+
+[[file]]
+path = "tests/test_model_yamada_yamada_hh_properties.py"
+rationale = "Exercise SC-NeuroCore: model yamada yamada hh properties."
+
+[[file]]
+path = "tests/test_model_yamada_yamada_isolation.py"
+rationale = "Exercise SC-NeuroCore: model yamada yamada isolation."
+
+[[file]]
+path = "tests/test_model_yamada_yamada_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model yamada yamada pipeline."
+
+[[file]]
+path = "tests/test_model_yamada_yamada_slow_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model yamada yamada slow dynamics."
+
+[[file]]
+path = "tests/test_model_yamada_yamada_validation.py"
+rationale = "Exercise SC-NeuroCore: model yamada yamada validation."
+
+[[file]]
+path = "tests/test_model_zoo_auditory_processing.py"
+rationale = "Exercise SC-NeuroCore: model zoo auditory processing."
+
+[[file]]
+path = "tests/test_model_zoo_brunel_balanced_network.py"
+rationale = "Exercise SC-NeuroCore: model zoo brunel balanced network."
+
+[[file]]
+path = "tests/test_model_zoo_central_pattern_generator.py"
+rationale = "Exercise SC-NeuroCore: model zoo central pattern generator."
+
+[[file]]
+path = "tests/test_model_zoo_cortical_column.py"
+rationale = "Exercise SC-NeuroCore: model zoo cortical column."
+
+[[file]]
+path = "tests/test_model_zoo_cross_cutting.py"
+rationale = "Exercise SC-NeuroCore: model zoo cross cutting."
+
+[[file]]
+path = "tests/test_model_zoo_decision_making_circuit.py"
+rationale = "Exercise SC-NeuroCore: model zoo decision making circuit."
+
+[[file]]
+path = "tests/test_model_zoo_dvs_gesture_classifier.py"
+rationale = "Exercise SC-NeuroCore: model zoo dvs gesture classifier."
+
+[[file]]
+path = "tests/test_model_zoo_load_pretrained.py"
+rationale = "Exercise SC-NeuroCore: model zoo load pretrained."
+
+[[file]]
+path = "tests/test_model_zoo_mnist_classifier.py"
+rationale = "Exercise SC-NeuroCore: model zoo mnist classifier."
+
+[[file]]
+path = "tests/test_model_zoo_shd_speech_classifier.py"
+rationale = "Exercise SC-NeuroCore: model zoo shd speech classifier."
+
+[[file]]
+path = "tests/test_model_zoo_visual_cortex_v1.py"
+rationale = "Exercise SC-NeuroCore: model zoo visual cortex v1."
+
+[[file]]
+path = "tests/test_model_zoo_working_memory_circuit.py"
+rationale = "Exercise SC-NeuroCore: model zoo working memory circuit."

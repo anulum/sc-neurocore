@@ -10,18 +10,23 @@
 
 from __future__ import annotations
 
-from tests.model_wilson_cowan_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.wilson_cowan import (
+    WilsonCowanUnit,
+)
 
 
 class TestWilsonCowanOscillation:
-    def test_can_oscillate(self):
+    """Limit-cycle oscillation of the WilsonCowanUnit."""
+
+    def test_can_oscillate(self) -> None:
         """The enrolled feedback regime sustains a non-trivial E limit cycle."""
         n = WilsonCowanUnit(w_ee=16.0, w_ei=12.0, w_ie=15.0, theta=4.0)
-        es = []
+        trace: list[float] = []
         for _ in range(5000):
             n.step(1.5)
-            es.append(n.e)
-        es = np.array(es[1000:])
+            trace.append(n.e)
+        es = np.array(trace[1000:])
         mean_e = np.mean(es)
         crossings = np.sum(np.diff(np.sign(es - mean_e)) != 0)
         assert np.ptp(es) > 0.9

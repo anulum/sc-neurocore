@@ -10,11 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_tsodyks_markram_support import *  # noqa: F403
+from sc_neurocore.neurons.models.tsodyks_markram import (
+    TsodyksMarkramNeuron,
+)
 
 
 class TestTMSynapticCurrent:
-    def test_isyn_on_presyn_spike(self):
+    """The synaptic current of the TsodyksMarkramNeuron with and without presynaptic spikes."""
+
+    def test_isyn_on_presyn_spike(self) -> None:
         """I_syn = A · u · x when presynaptic spike occurs."""
         n = TsodyksMarkramNeuron()
         # At first spike: u = u_se + U*(1-u) = 0.2 + 0.2*0.8 = 0.36
@@ -26,7 +30,7 @@ class TestTMSynapticCurrent:
         # V should have increased from i_syn
         assert n.v > v_before
 
-    def test_no_isyn_without_presyn(self):
+    def test_no_isyn_without_presyn(self) -> None:
         """Without presynaptic spike, I_syn = 0."""
         n = TsodyksMarkramNeuron()
         n.step(0.0, presynaptic_spike=False)

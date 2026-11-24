@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_wilson_cowan_support import *  # noqa: F403
+from typing import Any
+import math
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.wilson_cowan import (
+    WilsonCowanUnit,
+)
 
 
 class TestWilsonCowanParameters:
-    def test_accepts_normalised_saturation_boundary(self):
+    """Parameter behaviour of the WilsonCowanUnit."""
+
+    def test_accepts_normalised_saturation_boundary(self) -> None:
+        """The model accepts normalised saturation boundary."""
         n = WilsonCowanUnit(e=1.0, i=1.0)
 
         n.step(2.0)
@@ -40,18 +49,22 @@ class TestWilsonCowanParameters:
             ("dt", 0.0),
         ],
     )
-    def test_rejects_invalid_numerical_configuration(self, field: str, value: float):
+    def test_rejects_invalid_numerical_configuration(self, field: str, value: float) -> None:
+        """An invalid numerical configuration is rejected."""
         with pytest.raises((ValueError, FloatingPointError)):
-            WilsonCowanUnit(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            WilsonCowanUnit(**kwargs)
 
-    def test_rejects_non_finite_input_before_state_mutation(self):
+    def test_rejects_non_finite_input_before_state_mutation(self) -> None:
+        """The model rejects non-finite input before state mutation."""
         n = WilsonCowanUnit()
         before = (n.e, n.i)
         with pytest.raises(ValueError, match="external input"):
             n.step(np.nan)
         assert (n.e, n.i) == before
 
-    def test_rejects_corrupted_runtime_state_before_mutation(self):
+    def test_rejects_corrupted_runtime_state_before_mutation(self) -> None:
+        """Corrupted runtime state is rejected before any change."""
         n = WilsonCowanUnit()
         n.e = 1.5
         before = (n.e, n.i)
@@ -75,7 +88,8 @@ class TestWilsonCowanParameters:
     )
     def test_rejects_runtime_parameter_corruption_before_state_mutation(
         self, field: str, value: float
-    ):
+    ) -> None:
+        """The model rejects runtime parameter corruption before state mutation."""
         n = WilsonCowanUnit()
         setattr(n, field, value)
         before = (n.e, n.i)
@@ -85,19 +99,22 @@ class TestWilsonCowanParameters:
 
         assert (n.e, n.i) == before
 
-    def test_sigmoid_saturates_for_extreme_finite_drive(self):
+    def test_sigmoid_saturates_for_extreme_finite_drive(self) -> None:
+        """Sigmoid saturates for extreme finite drive."""
         n = WilsonCowanUnit()
         baseline = 1.0 / (1.0 + math.exp(n.a * n.theta))
         assert abs(n._sigmoid(1.0e308) - (1.0 - baseline)) < 1e-12
         assert abs(n._sigmoid(-1.0e308) + baseline) < 1e-12
 
-    def test_sigmoid_rejects_non_finite_drive(self):
+    def test_sigmoid_rejects_non_finite_drive(self) -> None:
+        """Sigmoid rejects non-finite drive."""
         n = WilsonCowanUnit()
 
         with pytest.raises(ValueError, match="sigmoid input"):
             n._sigmoid(math.nan)
 
-    def test_rejects_non_finite_derivative_before_state_mutation(self):
+    def test_rejects_non_finite_derivative_before_state_mutation(self) -> None:
+        """The model rejects non-finite derivative before state mutation."""
         n = WilsonCowanUnit(tau_e=1.0e-320)
         before = (n.e, n.i)
 
@@ -107,13 +124,15 @@ class TestWilsonCowanParameters:
         assert (n.e, n.i) == before
 
     @pytest.mark.parametrize("dt", [0.05, 0.1, 0.2])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = WilsonCowanUnit(dt=dt)
         for _ in range(10000):
             n.step(5.0)
         assert np.isfinite(n.e)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = WilsonCowanUnit()
