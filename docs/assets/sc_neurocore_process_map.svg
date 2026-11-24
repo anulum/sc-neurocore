@@ -14,10 +14,10 @@
 <rect x="0" y="0" width="3200" height="170" rx="16" fill="#122c45" stroke="none" stroke-width="2" />
 <text x="70" y="63" font-size="40" fill="#ffffff" font-weight="700">SC NEUROMORPHIC COMPUTING SYSTEMS</text>
 <text x="70" y="111" font-size="29" fill="#d5e4f4" font-weight="400">Processes, interfaces and feedback · all 58 programme entries</text>
-<text x="70" y="148" font-size="23" fill="#d5e4f4" font-weight="400">Read left → right within each lane, then follow the evidence and optional production paths below.</text>
+<text x="70" y="148" font-size="23" fill="#d5e4f4" font-weight="400">Read left → right within each lane, then follow the evidence and planned production paths below.</text>
 <rect x="70" y="198" width="3060" height="115" rx="16" fill="#e9eef5" stroke="none" stroke-width="2" />
 <text x="94" y="235" font-size="23" fill="#172c46" font-weight="700">ARCHITECTURAL HANDOFFS · IMPLEMENTATION AND QUALIFICATION TRACKED SEPARATELY</text>
-<text x="94" y="269" font-size="23" fill="#172c46" font-weight="400">Solid arrows: intended artefact handoff. Dashed brown arrows: optional integration or revision feedback. Neither is a package-import graph.</text>
+<text x="94" y="269" font-size="23" fill="#172c46" font-weight="400">Solid arrows: intended artefact handoff. Dashed brown arrows: optional adapters, planned production integration or revision feedback. Neither is a package-import graph.</text>
 <text x="94" y="298" font-size="21" fill="#172c46" font-weight="400">SC-NEUROCORE exists as an integrated beta workbench. Extraction destinations and the general circuit platform retain their documented delivery gates.</text>
 <rect x="70" y="345" width="1860" height="165" rx="16" fill="#e6f4eb" stroke="#126b68" stroke-width="2" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md">
@@ -294,7 +294,7 @@
 </a>
 <text x="820" y="2931" font-size="23" fill="#172c46" font-weight="400">Study, grade and promote models that propose design steps against a no-model reference; models never sign off.</text>
 <text x="94" y="2963" font-size="21" fill="#172c46" font-weight="400">All operations contribute original results → manifests and lineage → scoped assessment. A valid record alone does not qualify a physical claim.</text>
-<text x="70" y="3045" font-size="29" fill="#855025" font-weight="700">OPTIONAL MANUFACTURING AND EQUIPMENT PATH</text>
+<text x="70" y="3045" font-size="29" fill="#855025" font-weight="700">PLANNED MANUFACTURING AND EQUIPMENT PATH</text>
 <text x="70" y="3079" font-size="22" fill="#172c46" font-weight="400">Entered only with accepted design / technology / process evidence and the applicable supplier or site authority.</text>
 <rect x="70" y="3111" width="930" height="240" rx="16" fill="#fcf0e3" stroke="#855025" stroke-width="2" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md">

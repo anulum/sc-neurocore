@@ -49,8 +49,8 @@ exact inputs and tools. The dashed arrow is what makes it a loop: a
 comparison shows where model and implementation differ, and the next
 revision starts from there. The [group and project map](../ecosystem.md)
 shows the same loop across all four programme lines, including the planned
-general circuit platform and the optional laboratory and production
-integration.
+general circuit platform and the planned laboratory, manufacturing and
+equipment integration.
 
 ## What exists today: three tiers in one package
 
@@ -165,10 +165,10 @@ description. In short:
 - A general circuit-design platform is planned, for analogue, digital and
   mixed-signal designs. Neuromorphic designs would be one application of
   it.
-- An optional path to laboratory and production integration is planned. It
-  would connect design identities to approved processes, equipment and
-  measured hardware. Local controllers and manufacturing authorities keep
-  their responsibilities.
+- A path to laboratory, manufacturing and equipment integration is planned.
+  It would connect design identities to approved processes, equipment and
+  measured hardware; design and simulation remain usable without it. Local
+  controllers and manufacturing authorities keep their responsibilities.
 
 None of these is announced as available. Each project's actual state is on
 the map.

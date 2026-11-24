@@ -566,6 +566,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   brings in the timing witness's current status and drops a repeated
   provenance comment.
 
+- The manufacturing, laboratory and equipment path is now described as
+  planned rather than optional, on the group and project map, in the
+  architecture overview, in the Mermaid programme diagram and in the
+  programme, process, circuit-platform and lifecycle maps, the process
+  slide, their PNG and JPG renderings and the print page. Its delivery
+  status stays planned; design and simulation remain usable without a
+  laboratory, production line or manufacturing system. Optional adapters,
+  tools and install groups keep their wording.
+
 - The SC-NC rows of the group and project map list, under "Where it lives
   today", every top-level package and module of `src/sc_neurocore` that
   `tools/sc_nc_split_map.json` assigns to the destination. Neuron, synapse and

@@ -63,7 +63,7 @@ or a claim that every planned operation is implemented.
 engineering workflow: develop models, compare their behaviour, implement them
 on a selected target and trace measured results back to the original design.
 The intended scope extends from neuromorphic software to general circuit
-engineering and optional laboratory and production integration.
+engineering and planned laboratory, manufacturing and equipment integration.
 
 The programme has four connected parts. Each retains its own engineering
 semantics, implementation status and evidence requirements.
@@ -73,7 +73,7 @@ semantics, implementation status and evidence requirements.
 | Neuromorphic workbench and components | The existing workbench brings simulation, learning, analysis, acceleration, compilation and experimental Studio workflows together. Thirteen SC-NC repositories, published as scaffolds, are the planned extractions that would give these responsibilities focused releases and versioned interfaces. |
 | Evidence and measurement | LOOP-TIMING-WITNESS and 25 supporting tools, each a public repository, cover timing, data quality, numerical conformance, provenance, benchmarking, deployment and assurance. Shared records connect a claim to its actual source; they do not replace the domain or instrument checks. |
 | General circuit engineering | Eighteen adopted destinations, each a public scaffold repository, describe a platform for analogue, digital and mixed-signal designs, with specialist physical domains and technologies. Neuromorphic designs would be one application; the platform would also serve non-neural circuits. |
-| Laboratory and production integration | Optional manufacturing and automation paths would connect design identities, approved processes, materials, equipment providers and measured hardware. Local controllers and manufacturing authorities retain their operational responsibilities. |
+| Laboratory and production integration | Planned manufacturing, laboratory and equipment paths would connect design identities, approved processes, materials, equipment providers and measured hardware. Design and simulation remain usable without them. Local controllers and manufacturing authorities retain their operational responsibilities. |
 
 The split architecture is prepared, and every destination and tool on this page has a public
 repository. The current integrated package retains
@@ -197,7 +197,7 @@ of each result. SC-NC-BENCH owns neuromorphic workloads; NEURO-EVIDENCE-BENCH
 provides a shared execution and result protocol. CIRCUIT-ACCEPTANCE aggregates
 circuit requirement results without replacing domain checks or human approval.
 
-The optional production branch binds accepted design and process identities to
+The planned production branch would bind accepted design and process identities to
 supplier handoff or admitted local equipment. Original material, inspection and
 measurement records return through laboratory and evidence contracts. Failures,
 measured divergence and field incidents inform a new revision of the owning
@@ -210,7 +210,7 @@ controllers and site authorities retain physical timing and protective control.
 flowchart LR
     N["Neuromorphic workbench<br/>and components"]
     C["General circuit<br/>engineering"]
-    P["Optional laboratory<br/>and production<br/>integration"]
+    P["Planned laboratory<br/>and production<br/>integration"]
     E["Evidence and<br/>measurement"]
     N -. "optional design and<br/>target adapters" .-> C
     C -. "accepted design and<br/>process identities" .-> P
@@ -478,7 +478,7 @@ its destination is implemented.
 
 ### Integration model
 
-![Intended circuit lifecycle from specifications through simulation, implementation and physical verification to optional assembly, manufacturing and laboratory measurements. Measured feedback creates a new design revision. General circuit stages remain planned; existing bounded SC-NeuroCore workflows are shown separately.](assets/sc_neurocore_design_lifecycle.svg)
+![Intended circuit lifecycle from specifications through simulation, implementation and physical verification to planned assembly, manufacturing and laboratory measurements. Measured feedback creates a new design revision. General circuit stages remain planned; existing bounded SC-NeuroCore workflows are shown separately.](assets/sc_neurocore_design_lifecycle.svg)
 
 [Open the lifecycle SVG](assets/sc_neurocore_design_lifecycle.svg),
 [download PNG](assets/sc_neurocore_design_lifecycle.png), or
@@ -520,7 +520,7 @@ specialist physics would retain separate acceptance criteria.
 
 ### Manufacturing and laboratory automation
 
-Manufacturing is an optional integration path. Circuit design and simulation
+Manufacturing is a planned integration path. Circuit design and simulation
 would remain usable without a laboratory, production line or manufacturing
 execution system. The supported modes would distinguish supplier handoff,
 operator-owned equipment and non-actuating qualification or replay.
