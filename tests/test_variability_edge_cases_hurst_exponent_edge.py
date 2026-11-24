@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from tests.variability_edge_cases_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.variability import (
+    hurst_exponent,
+)
 
 
 class TestHurstExponentEdge:
-    def test_short(self):
+    """Edge cases of the Hurst exponent."""
+
+    def test_short(self) -> None:
+        """The Hurst exponent of a five-sample train is computed (the check only excludes infinity)."""
         result = hurst_exponent(np.zeros(5, dtype=np.int8))
         assert np.isnan(result) or np.isfinite(result)
 
-    def test_normal(self):
+    def test_normal(self) -> None:
+        """The Hurst exponent of a regular train is computed (the check only excludes infinity)."""
         train = np.zeros(500, dtype=np.int8)
         train[::10] = 1
         result = hurst_exponent(train)

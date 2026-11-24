@@ -10,19 +10,27 @@
 
 from __future__ import annotations
 
-from tests.variability_edge_cases_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.variability import (
+    sample_entropy,
+)
 
 
 class TestSampleEntropyEdge:
-    def test_short(self):
+    """Edge cases of sample entropy."""
+
+    def test_short(self) -> None:
+        """Sample entropy of a three-sample train is computed (the check only excludes infinity)."""
         result = sample_entropy(np.zeros(3, dtype=np.int8))
         assert np.isnan(result) or np.isfinite(result)
 
-    def test_constant(self):
+    def test_constant(self) -> None:
+        """Sample entropy of a silent train is computed (the check only excludes infinity)."""
         result = sample_entropy(np.zeros(100, dtype=np.int8))
         assert np.isfinite(result) or np.isnan(result)
 
-    def test_normal(self):
+    def test_normal(self) -> None:
+        """Sample entropy of a regular train is computed (the check only excludes infinity)."""
         train = np.zeros(200, dtype=np.int8)
         train[::7] = 1
         result = sample_entropy(train)

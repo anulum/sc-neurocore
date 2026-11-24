@@ -10,19 +10,27 @@
 
 from __future__ import annotations
 
-from tests.variability_edge_cases_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.variability import (
+    lempel_ziv_complexity,
+)
 
 
 class TestLempelZivEdge:
-    def test_empty(self):
+    """Edge cases of the Lempel-Ziv complexity."""
+
+    def test_empty(self) -> None:
+        """The Lempel-Ziv complexity of a silent train is finite."""
         result = lempel_ziv_complexity(np.zeros(50, dtype=np.int8))
         assert np.isfinite(result)
 
-    def test_all_ones(self):
+    def test_all_ones(self) -> None:
+        """The Lempel-Ziv complexity of an always-firing train is finite."""
         result = lempel_ziv_complexity(np.ones(50, dtype=np.int8))
         assert np.isfinite(result)
 
-    def test_alternating(self):
+    def test_alternating(self) -> None:
+        """The Lempel-Ziv complexity of an alternating train is finite."""
         train = np.zeros(100, dtype=np.int8)
         train[::2] = 1
         result = lempel_ziv_complexity(train)

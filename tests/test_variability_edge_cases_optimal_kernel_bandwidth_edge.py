@@ -10,21 +10,29 @@
 
 from __future__ import annotations
 
-from tests.variability_edge_cases_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.variability import (
+    optimal_kernel_bandwidth,
+)
 
 
 class TestOptimalKernelBandwidthEdge:
-    def test_empty(self):
+    """Edge cases of the optimal kernel bandwidth."""
+
+    def test_empty(self) -> None:
+        """The optimal kernel bandwidth of a silent train is NaN."""
         result = optimal_kernel_bandwidth(np.zeros(50, dtype=np.int8))
         assert np.isnan(result)
 
-    def test_single_spike(self):
+    def test_single_spike(self) -> None:
+        """The optimal kernel bandwidth of a single spike is NaN."""
         train = np.zeros(50, dtype=np.int8)
         train[25] = 1
         result = optimal_kernel_bandwidth(train)
         assert np.isnan(result)
 
-    def test_normal(self):
+    def test_normal(self) -> None:
+        """The optimal kernel bandwidth of a regular train is finite."""
         train = np.zeros(200, dtype=np.int8)
         train[::10] = 1
         result = optimal_kernel_bandwidth(train)

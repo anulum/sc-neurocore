@@ -10,19 +10,27 @@
 
 from __future__ import annotations
 
-from tests.variability_edge_cases_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.variability import (
+    cv_isi,
+)
 
 
 class TestCvIsiEdge:
-    def test_empty_train(self):
+    """Edge cases of the ISI coefficient of variation."""
+
+    def test_empty_train(self) -> None:
+        """The ISI CV of a silent train is NaN."""
         assert np.isnan(cv_isi(np.zeros(100, dtype=np.int8)))
 
-    def test_single_spike(self):
+    def test_single_spike(self) -> None:
+        """The ISI CV of a single spike is NaN."""
         train = np.zeros(100, dtype=np.int8)
         train[50] = 1
         assert np.isnan(cv_isi(train))
 
-    def test_two_spikes(self):
+    def test_two_spikes(self) -> None:
+        """The ISI CV of two spikes is computed (the check only excludes infinity)."""
         train = np.zeros(100, dtype=np.int8)
         train[20] = 1
         train[60] = 1

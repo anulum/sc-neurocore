@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from tests.variability_edge_cases_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.variability import (
+    complexity_pdf,
+)
 
 
 class TestComplexityPdfEdge:
-    def test_empty(self):
+    """Edge cases of the complexity distribution."""
+
+    def test_empty(self) -> None:
+        """The complexity distribution of a silent train returns an array (the check is on the type only)."""
         result = complexity_pdf(np.zeros(50, dtype=np.int8))
         assert isinstance(result, np.ndarray)
 
-    def test_normal(self):
+    def test_normal(self) -> None:
+        """The complexity distribution of a regular train returns an array (the check is on the type only)."""
         train = np.zeros(100, dtype=np.int8)
         train[::5] = 1
         result = complexity_pdf(train)

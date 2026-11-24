@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4614
+expected_file_count = 4636
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -18500,3 +18500,91 @@ rationale = "Exercise SC-NeuroCore: torch training training loops."
 [[file]]
 path = "tests/test_torch_training_utilities.py"
 rationale = "Exercise SC-NeuroCore: torch training utilities."
+
+[[file]]
+path = "tests/test_variability_edge_cases_allan_factor_edge.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases allan factor edge."
+
+[[file]]
+path = "tests/test_variability_edge_cases_approx_entropy_edge.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases approx entropy edge."
+
+[[file]]
+path = "tests/test_variability_edge_cases_complexity_pdf_edge.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases complexity pdf edge."
+
+[[file]]
+path = "tests/test_variability_edge_cases_cv2_edge.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases cv2 edge."
+
+[[file]]
+path = "tests/test_variability_edge_cases_cv_isi_edge.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases cv isi edge."
+
+[[file]]
+path = "tests/test_variability_edge_cases_fano_factor_edge.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases fano factor edge."
+
+[[file]]
+path = "tests/test_variability_edge_cases_hurst_exponent_edge.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases hurst exponent edge."
+
+[[file]]
+path = "tests/test_variability_edge_cases_hurst_single_scale.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases hurst single scale."
+
+[[file]]
+path = "tests/test_variability_edge_cases_isi_entropy_edge.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases isi entropy edge."
+
+[[file]]
+path = "tests/test_variability_edge_cases_isi_entropy_zero_range.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases isi entropy zero range."
+
+[[file]]
+path = "tests/test_variability_edge_cases_lempel_ziv_edge.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases lempel ziv edge."
+
+[[file]]
+path = "tests/test_variability_edge_cases_local_variation_edge.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases local variation edge."
+
+[[file]]
+path = "tests/test_variability_edge_cases_lvr_edge.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases lvr edge."
+
+[[file]]
+path = "tests/test_variability_edge_cases_optimal_bin_width_edge.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases optimal bin width edge."
+
+[[file]]
+path = "tests/test_variability_edge_cases_optimal_kernel_bandwidth_edge.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases optimal kernel bandwidth edge."
+
+[[file]]
+path = "tests/test_variability_edge_cases_permutation_entropy_edge.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases permutation entropy edge."
+
+[[file]]
+path = "tests/test_variability_edge_cases_pure_python_fallbacks.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases pure python fallbacks."
+
+[[file]]
+path = "tests/test_variability_edge_cases_rescaled_range_degenerate_scale.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases rescaled range degenerate scale."
+
+[[file]]
+path = "tests/test_variability_edge_cases_rescaled_range_edge.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases rescaled range edge."
+
+[[file]]
+path = "tests/test_variability_edge_cases_sample_entropy_edge.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases sample entropy edge."
+
+[[file]]
+path = "tests/test_variability_edge_cases_zero_timestep_guards.py"
+rationale = "Exercise SC-NeuroCore: variability edge cases zero timestep guards."
+
+[[file]]
+path = "tests/variability_edge_cases_support.py"
+rationale = "Provide the Python-fallback fixture, the seeded Bernoulli train and the Rust flag of the variability edge-case tests."

@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from tests.variability_edge_cases_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.variability import (
+    rescaled_range,
+)
 
 
 class TestRescaledRangeEdge:
-    def test_short(self):
+    """Edge cases of the rescaled range."""
+
+    def test_short(self) -> None:
+        """The rescaled range of a five-sample train is computed (the check only excludes infinity)."""
         result = rescaled_range(np.zeros(5, dtype=np.int8))
         assert np.isnan(result) or np.isfinite(result)
 
-    def test_normal(self):
+    def test_normal(self) -> None:
+        """The rescaled range of a regular train is computed (the check only excludes infinity)."""
         train = np.zeros(500, dtype=np.int8)
         train[::10] = 1
         result = rescaled_range(train)

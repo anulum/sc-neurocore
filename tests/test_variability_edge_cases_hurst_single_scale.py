@@ -10,14 +10,21 @@
 
 from __future__ import annotations
 
-from tests.variability_edge_cases_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.variability import (
+    hurst_exponent,
+)
 
 
 class TestHurstSingleScale:
-    """When only one DFA scale fits the train length, the log-log fit has too
-    few points and the Hurst exponent is undefined."""
+    """A single DFA scale leaves the Hurst exponent undefined.
 
-    def test_single_usable_scale_returns_nan(self):
+    When only one DFA scale fits the train length, the log-log fit has too
+    few points and the Hurst exponent is undefined.
+    """
+
+    def test_single_usable_scale_returns_nan(self) -> None:
+        """A 40-sample train with a minimum window of 10 gives NaN."""
         # n == 4*min_window admits exactly one scale (s=min_window); the next
         # 1.5x step exceeds n//4, leaving a single (log s, log F) point.
         train = np.zeros(40, dtype=np.int8)

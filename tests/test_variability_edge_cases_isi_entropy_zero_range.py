@@ -10,14 +10,21 @@
 
 from __future__ import annotations
 
-from tests.variability_edge_cases_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.variability import (
+    isi_entropy,
+)
 
 
 class TestIsiEntropyZeroRange:
-    """A perfectly regular train has a single ISI value; the zero-range check
-    must short-circuit to 0.0 before np.histogram, which rejects a zero range."""
+    """A perfectly regular train has an ISI entropy of zero.
 
-    def test_regular_train_returns_zero_without_histogram_error(self):
+    A perfectly regular train has a single ISI value; the zero-range check
+    must short-circuit to 0.0 before np.histogram, which rejects a zero range.
+    """
+
+    def test_regular_train_returns_zero_without_histogram_error(self) -> None:
+        """A regular train gives an ISI entropy of zero without a histogram error."""
         train = np.zeros(100, dtype=np.int8)
         train[::10] = 1
         assert isi_entropy(train) == 0.0

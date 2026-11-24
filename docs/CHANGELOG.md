@@ -1378,6 +1378,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 21 top-level variability edge-case test modules import their names
+  explicitly instead of through a suppressed star import, keep the
+  support's fixture in their namespace through a redundant-alias import,
+  gain their missing docstrings and type annotations and are enrolled in
+  the docstring policy; the variability support is typed and documented.
+
 - The 39 top-level surrogate, swarm, TCBO and torch-training test
   modules import their names explicitly instead of through a suppressed
   star import, take every name bound after a support's skip guard from

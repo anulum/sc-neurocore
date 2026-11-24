@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from tests.variability_edge_cases_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.variability import (
+    isi_entropy,
+)
 
 
 class TestIsiEntropyEdge:
-    def test_empty(self):
+    """Edge cases of the ISI entropy."""
+
+    def test_empty(self) -> None:
+        """The ISI entropy of a silent train is NaN or zero."""
         result = isi_entropy(np.zeros(50, dtype=np.int8))
         assert np.isnan(result) or result == 0.0
 
-    def test_single_isi(self):
+    def test_single_isi(self) -> None:
+        """The ISI entropy of a single interval is computed (the check only excludes infinity)."""
         train = np.zeros(50, dtype=np.int8)
         train[10] = 1
         train[20] = 1

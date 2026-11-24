@@ -10,14 +10,21 @@
 
 from __future__ import annotations
 
-from tests.variability_edge_cases_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.variability import (
+    rescaled_range,
+)
 
 
 class TestRescaledRangeDegenerateScale:
-    """min_window == 1 makes the first 1.5x step stall at 1; the unit-step guard
-    must force progress so the analysis terminates instead of looping forever."""
+    """The rescaled range terminates when its first window step stalls.
 
-    def test_min_window_one_terminates(self):
+    min_window == 1 makes the first 1.5x step stall at 1; the unit-step guard
+    must force progress so the analysis terminates instead of looping forever.
+    """
+
+    def test_min_window_one_terminates(self) -> None:
+        """A minimum window of one terminates with a finite rescaled range."""
         train = np.zeros(300, dtype=np.int8)
         train[::3] = 1
         result = rescaled_range(train, min_window=1)

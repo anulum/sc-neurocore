@@ -6,10 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_variability_edge_cases.py
 
+"""The Python-fallback fixture, a seeded Bernoulli train and the Rust flag for the variability edge-case tests."""
+
 from __future__ import annotations
 
-"""Tests targeting every uncovered branch in variability.py:
-empty trains, single spikes, zero ISI, degenerate inputs."""
+from typing import Any
+
 import numpy as np
 import pytest
 from sc_neurocore.analysis.spike_stats import variability as variability_module
@@ -36,13 +38,13 @@ _RUST_AVAILABLE = variability_module._HAS_RUST and variability_module._ssc is no
 
 
 @pytest.fixture
-def force_python_fallback(monkeypatch):
+def force_python_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     """Disable the Rust acceleration so the pure-Python reference path executes."""
     monkeypatch.setattr(variability_module, "_HAS_RUST", False)
 
 
-def _bernoulli_train(p, n, seed):
-    """A reproducible Bernoulli spike train for the fallback exercises."""
+def _bernoulli_train(p: float, n: int, seed: int) -> np.ndarray[Any, Any]:
+    """Return a reproducible Bernoulli spike train for the fallback exercises."""
     rng = np.random.default_rng(seed)
     return (rng.random(n) < p).astype(np.int8)
 
