@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.nir_fpga_pipeline_support import *  # noqa: F403
+import re
+from tests.nir_fpga_pipeline_support import (
+    _build_lif_feedforward,
+    _full_pipeline,
+)
 
 
 class TestE2ELIFFeedforward:
     """Full pipeline: Input→Affine→LIF→Affine→LIF→Output → Verilog."""
 
-    def test_pipeline_produces_valid_artefacts(self):
+    def test_pipeline_produces_valid_artefacts(self) -> None:
+        """The LIF feed-forward network compiles to valid neuron, ROM and top-level artefacts."""
         graph = _build_lif_feedforward()
         result = _full_pipeline(graph, module_name="lif_ff")
 
@@ -32,7 +37,8 @@ class TestE2ELIFFeedforward:
         assert "module sc_nir_weight_rom" in result.weight_rom
         assert "endmodule" in result.weight_rom
 
-    def test_neuron_module_contains_ode(self):
+    def test_neuron_module_contains_ode(self) -> None:
+        """The LIF neuron module has a voltage register, a spike output, a clock and a reset."""
         graph = _build_lif_feedforward()
         result = _full_pipeline(graph)
 
@@ -46,7 +52,8 @@ class TestE2ELIFFeedforward:
         # Must contain clk
         assert "clk" in lif_v
 
-    def test_weight_rom_has_correct_entries(self):
+    def test_weight_rom_has_correct_entries(self) -> None:
+        """The weight ROM holds all 48 synapses of the 4-8-2 network."""
         graph = _build_lif_feedforward(n_in=4, n_hidden=8, n_out=2)
         result = _full_pipeline(graph)
 
@@ -57,7 +64,8 @@ class TestE2ELIFFeedforward:
         # +1 for default
         assert len(case_entries) >= 48
 
-    def test_top_module_instantiates_populations(self):
+    def test_top_module_instantiates_populations(self) -> None:
+        """The top module instantiates the LIF populations."""
         graph = _build_lif_feedforward()
         result = _full_pipeline(graph, module_name="ff_net")
 
@@ -67,14 +75,16 @@ class TestE2ELIFFeedforward:
         assert "p0_n0_inst" in result.top_module
         assert "p1_n1_inst" in result.top_module
 
-    def test_top_module_preserves_input_vector_and_spike_width(self):
+    def test_top_module_preserves_input_vector_and_spike_width(self) -> None:
+        """The top module keeps the flattened input vector and spike widths."""
         graph = _build_lif_feedforward(n_in=4, n_hidden=8, n_out=2)
         result = _full_pipeline(graph, module_name="ff_net")
 
         assert "input  wire signed [63:0] I_ext_flat" in result.top_module
         assert "output wire [9:0] spike_bus" in result.top_module
 
-    def test_resource_counts(self):
+    def test_resource_counts(self) -> None:
+        """The 4-8-2 network reports 10 neurons, 48 synapses, Q8.8 and direct wiring."""
         graph = _build_lif_feedforward(n_in=4, n_hidden=8, n_out=2)
         result = _full_pipeline(graph)
 

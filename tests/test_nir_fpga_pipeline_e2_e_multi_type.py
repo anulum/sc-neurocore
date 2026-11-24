@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.nir_fpga_pipeline_support import *  # noqa: F403
+from tests.nir_fpga_pipeline_support import (
+    _build_mixed_type_network,
+    _full_pipeline,
+)
 
 
 class TestE2EMultiType:
     """Network mixing IF and LIF neurons → two distinct Verilog modules."""
 
-    def test_mixed_if_lif(self):
+    def test_mixed_if_lif(self) -> None:
+        """A network mixing IF and LIF layers compiles both neuron modules."""
         graph = _build_mixed_type_network()
         result = _full_pipeline(graph, module_name="mixed_net")
 
@@ -39,7 +43,8 @@ class TestE2EMultiType:
         assert "sc_nir_if" in result.top_module
         assert "sc_nir_lif" in result.top_module
 
-    def test_mixed_type_resource_counts(self):
+    def test_mixed_type_resource_counts(self) -> None:
+        """The mixed IF and LIF network reports its 9 neurons."""
         graph = _build_mixed_type_network(n_in=4)
         result = _full_pipeline(graph)
 

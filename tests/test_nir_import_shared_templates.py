@@ -10,15 +10,25 @@
 
 from __future__ import annotations
 
-from tests.nir_import_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.intelligence.nir_import import (
+    import_nir_graph,
+)
+from tests.nir_import_support import (
+    _one,
+)
 from sc_neurocore.nir_bridge.neuron_templates import (
+    NEURON_TEMPLATES,
     NIR_PRIMITIVE_TEMPLATES,
     STUDIO_PROFILE_TEMPLATES,
 )
 
 
 class TestSharedTemplates:
-    def test_equations_come_from_the_authoritative_bridge_table(self):
+    """The importer's use of the shared NIR bridge templates."""
+
+    def test_equations_come_from_the_authoritative_bridge_table(self) -> None:
+        """LIF equations, threshold and reset come from the shared bridge template."""
         # The importer must not carry its own divergent LIF dynamics: the leak
         # term and reset come straight from the shared template.
         g = _one("LIF", tau=20)
@@ -26,13 +36,15 @@ class TestSharedTemplates:
         assert g.thresholds["n0"] == "v > 1.0"
         assert g.resets["n0"] == "v = 0.0"
 
-    def test_bridge_nir_types_are_all_recognised(self):
+    def test_bridge_nir_types_are_all_recognised(self) -> None:
+        """Every NIR primitive type of the bridge table is recognised."""
         assert {"lif", "if", "li", "cuba_lif", "cuba_li", "integrator"} == NIR_PRIMITIVE_TEMPLATES
         for canonical in NIR_PRIMITIVE_TEMPLATES:
             g = import_nir_graph({"nodes": {"n": {"type": canonical}}, "edges": []})
             assert g.node_types["n"] == canonical
 
-    def test_studio_profiles_are_not_nir_types_and_are_refused(self):
+    def test_studio_profiles_are_not_nir_types_and_are_refused(self) -> None:
+        """Studio profile templates are not NIR types and are refused."""
         # The Studio's lowering selects these for catalogue models; a NIR graph
         # never names them, and sc_lif is a per-step map that the importer's
         # derivative form would misstate.

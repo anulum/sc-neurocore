@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.nir_import_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.intelligence.nir_import import (
+    import_nir_graph,
+)
 
 
 class TestGraphStructure:
-    def test_edges_and_framework(self):
+    """Edges, framework and empty graphs in the dict-form importer."""
+
+    def test_edges_and_framework(self) -> None:
+        """Edges and the source framework are carried into the imported graph."""
         g = import_nir_graph(
             {"nodes": {"a": {"type": "LIF"}, "b": {"type": "LI"}}, "edges": [["a", "b"]]},
             framework="Norse",
@@ -23,7 +29,8 @@ class TestGraphStructure:
         assert g.framework == "Norse"
         assert set(g.node_types) == {"a", "b"}
 
-    def test_empty_graph(self):
+    def test_empty_graph(self) -> None:
+        """An empty document imports as a graph without equations or edges."""
         g = import_nir_graph({})
         assert g.equations == {} and g.edges == []
 
@@ -35,6 +42,7 @@ class TestGraphStructure:
             (["a", "ghost"], "names nodes not in the graph: \\['ghost'\\]"),
         ],
     )
-    def test_an_edge_must_join_two_nodes_of_the_graph(self, edge, message):
+    def test_an_edge_must_join_two_nodes_of_the_graph(self, edge: object, message: str) -> None:
+        """An edge that is not a pair of graph nodes is refused."""
         with pytest.raises(ValueError, match=message):
             import_nir_graph({"nodes": {"a": {"type": "LIF"}}, "edges": [edge]})

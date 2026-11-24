@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.nir_fpga_pipeline_support import *  # noqa: F403
+import numpy as np
+from tests.nir_fpga_pipeline_support import (
+    _full_pipeline,
+    nir,
+)
 
 
 class TestE2EOverflowDetection:
     """Extreme parameter values must produce warnings."""
 
-    def test_large_tau_overflow_warning(self):
+    def test_large_tau_overflow_warning(self) -> None:
         """tau=50000 overflows Q8.8 max=127.996 — must warn."""
         graph = nir.NIRGraph(
             nodes={
@@ -42,7 +46,7 @@ class TestE2EOverflowDetection:
         overflow_warns = [w for w in result.warnings if "Overflow" in w or "clamped" in w]
         assert len(overflow_warns) > 0, f"Expected overflow warnings, got: {result.warnings}"
 
-    def test_large_weight_overflow(self):
+    def test_large_weight_overflow(self) -> None:
         """Weights=500 overflows Q8.8 — must warn."""
         graph = nir.NIRGraph(
             nodes={

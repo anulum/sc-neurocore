@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.nir_import_support import *  # noqa: F403
+import pytest
+from tests.nir_import_support import (
+    _one,
+)
 
 
 class TestAliasesAndFallback:
+    """Node-type aliases and the refusal of unknown types."""
+
     @pytest.mark.parametrize(
         "alias,canonical",
         [
@@ -25,10 +30,12 @@ class TestAliasesAndFallback:
             ("Integrator", "integrator"),
         ],
     )
-    def test_alias_resolution(self, alias, canonical):
+    def test_alias_resolution(self, alias: str, canonical: str) -> None:
+        """Each alias resolves to its canonical node type."""
         assert _one(alias).node_types["n0"] == canonical
 
-    def test_unknown_type_is_refused_rather_than_replaced(self):
+    def test_unknown_type_is_refused_rather_than_replaced(self) -> None:
+        """An unknown node type is refused, with the supported types listed."""
         # Substituting a leaky integrator would silently change the network.
         with pytest.raises(ValueError, match=r"unsupported type 'Mystery'.*supported: cuba_li"):
             _one("Mystery", tau=5.0)

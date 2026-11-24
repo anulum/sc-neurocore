@@ -10,13 +10,25 @@
 
 from __future__ import annotations
 
-from tests.nir_fpga_pipeline_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.compiler.equation_compiler import (
+    Q88,
+)
+from sc_neurocore.nir_bridge import (
+    compile_network_to_fpga,
+    from_nir,
+    from_scnetwork,
+    quantise_graph,
+)
+from tests.nir_fpga_pipeline_support import (
+    _build_lif_feedforward,
+)
 
 
 class TestE2ERoundTrip:
     """Parse NIR → simulate → compile → verify quantised params."""
 
-    def test_quantised_simulation_matches(self):
+    def test_quantised_simulation_matches(self) -> None:
         """Simulate with fp32 and Q8.8-quantised params, compare spike patterns."""
         graph = _build_lif_feedforward(n_in=3, n_hidden=6, n_out=2, seed=123)
         net = from_nir(graph, dt=1.0)

@@ -10,18 +10,26 @@
 
 from __future__ import annotations
 
-from tests.nir_import_support import *  # noqa: F403
+from tests.nir_import_support import (
+    _one,
+)
 
 
 class TestIzhikevichExtension:
-    def test_izhikevich_full_model(self):
+    """The Izhikevich extension of the dict-form importer."""
+
+    def test_izhikevich_full_model(self) -> None:
+        """An Izhikevich node imports with its u and v equations, threshold and reset."""
         g = _one("Izhikevich")
         assert set(g.state_equations["n0"]) == {"u", "v"}
         assert "0.04" in g.equations["n0"]
         assert g.thresholds["n0"] == "v > 30"
         assert g.resets["n0"] == "v = -65.0; u = u + 8.0"
 
-    def test_izhikevich_params_override(self):
+    def test_izhikevich_params_override(self) -> None:
+        """Node parameters override the Izhikevich defaults and the reset keeps d = 8."""
         g = _one("izh", a=0.1, b=0.25)
         assert g.parameters["n0"]["a"] == 0.1 and g.parameters["n0"]["b"] == 0.25
-        assert "u = u + 8.0" in g.resets["n0"]
+        reset = g.resets["n0"]
+        assert reset is not None
+        assert "u = u + 8.0" in reset

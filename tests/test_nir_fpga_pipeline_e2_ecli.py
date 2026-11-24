@@ -10,13 +10,36 @@
 
 from __future__ import annotations
 
-from tests.nir_fpga_pipeline_support import *  # noqa: F403
+from collections.abc import Iterator
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+from uuid import uuid4
+
+import pytest
+
+from tests.nir_fpga_pipeline_support import _build_lif_feedforward, nir
+
+
+@pytest.fixture
+def local_tmp_path() -> Iterator[Path]:
+    """Yield a fresh directory under the repository's .pytest_tmp and remove it afterwards."""
+    root = Path(__file__).resolve().parents[1] / ".pytest_tmp"
+    root.mkdir(exist_ok=True)
+    path = root / uuid4().hex
+    path.mkdir()
+    try:
+        yield path
+    finally:
+        shutil.rmtree(path)
 
 
 class TestE2ECLI:
     """Write .nir file → invoke compile-nir → verify output files."""
 
-    def test_cli_compile_nir(self, local_tmp_path):
+    def test_cli_compile_nir(self, local_tmp_path: Path) -> None:
         """Full CLI E2E: write NIR file, run compile-nir, check outputs."""
         graph = _build_lif_feedforward(n_in=3, n_hidden=4, n_out=2)
 

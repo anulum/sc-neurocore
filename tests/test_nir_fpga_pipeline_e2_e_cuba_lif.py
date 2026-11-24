@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.nir_fpga_pipeline_support import *  # noqa: F403
+from tests.nir_fpga_pipeline_support import (
+    _build_cubalif_network,
+    _full_pipeline,
+)
 
 
 class TestE2ECubaLIF:
     """Full pipeline with CubaLIF neurons (dual time constants)."""
 
-    def test_cubalif_verilog_dual_dynamics(self):
+    def test_cubalif_verilog_dual_dynamics(self) -> None:
+        """A CubaLIF network compiles to a cuba_lif neuron module with registers and a spike output."""
         graph = _build_cubalif_network()
         result = _full_pipeline(graph, module_name="cuba_net")
 
@@ -26,7 +30,8 @@ class TestE2ECubaLIF:
         assert "i_syn_reg" in cuba_v or "i__syn_reg" in cuba_v or "reg" in cuba_v
         assert "spike_out" in cuba_v
 
-    def test_cubalif_weight_rom(self):
+    def test_cubalif_weight_rom(self) -> None:
+        """The CubaLIF network's weight ROM holds its 12 synapses."""
         graph = _build_cubalif_network(n_in=3, n_out=4)
         result = _full_pipeline(graph)
 

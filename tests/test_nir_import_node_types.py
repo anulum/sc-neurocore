@@ -10,39 +10,53 @@
 
 from __future__ import annotations
 
-from tests.nir_import_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.intelligence.nir_import import (
+    import_nir_graph,
+)
+from tests.nir_import_support import (
+    _one,
+)
 
 
 class TestNodeTypes:
+    """The NIR point-neuron node types the importer recognises."""
+
     @pytest.mark.parametrize("missing", [None, "", "  ", 7])
-    def test_a_node_without_a_type_is_refused(self, missing):
+    def test_a_node_without_a_type_is_refused(self, missing: object) -> None:
+        """A node with a missing or blank type is refused."""
         spec = {} if missing is None else {"type": missing}
         with pytest.raises(ValueError, match="NIR node 'n0' has no type"):
             import_nir_graph({"nodes": {"n0": spec}, "edges": []})
 
-    def test_if_has_threshold_no_leak(self):
+    def test_if_has_threshold_no_leak(self) -> None:
+        """An IF node has a threshold and no leak term."""
         g = _one("IF")
         assert g.thresholds["n0"] == "v > 1.0"
         assert "tau" not in g.equations["n0"]
 
-    def test_li_has_no_threshold(self):
+    def test_li_has_no_threshold(self) -> None:
+        """An LI node has no threshold or reset and carries its tau."""
         g = _one("LI", tau=15)
         assert g.thresholds["n0"] is None and g.resets["n0"] is None
         assert "15.0" in g.equations["n0"]
 
-    def test_integrator_pure(self):
+    def test_integrator_pure(self) -> None:
+        """An integrator node has no threshold."""
         g = _one("I")
         assert g.node_types["n0"] == "integrator"
         assert g.thresholds["n0"] is None
 
-    def test_cuba_lif_is_two_compartment(self):
+    def test_cuba_lif_is_two_compartment(self) -> None:
+        """A CubaLIF node has i_syn and v equations and a threshold."""
         g = _one("CubaLIF")
         assert set(g.state_equations["n0"]) == {"i_syn", "v"}
         assert g.thresholds["n0"] == "v > 1.0"
         # membrane equation is the one exposed flat
         assert g.equations["n0"] == g.state_equations["n0"]["v"]
 
-    def test_cuba_li_has_no_threshold(self):
+    def test_cuba_li_has_no_threshold(self) -> None:
+        """A CubaLI node has i_syn and v equations and no threshold."""
         g = _one("CubaLI")
         assert set(g.state_equations["n0"]) == {"i_syn", "v"}
         assert g.thresholds["n0"] is None

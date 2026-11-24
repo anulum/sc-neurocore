@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4354
+expected_file_count = 4370
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -17460,3 +17460,67 @@ rationale = "Exercise SC-NeuroCore: new neurons theta neuron."
 [[file]]
 path = "tests/test_new_neurons_training_cells.py"
 rationale = "Exercise SC-NeuroCore: new neurons training cells."
+
+[[file]]
+path = "tests/nir_fpga_pipeline_support.py"
+rationale = "Provide the NIR graph builders and the NIR to FPGA pipeline helper, behind the nir import guard."
+
+[[file]]
+path = "tests/nir_import_support.py"
+rationale = "Provide the one-node graph helper for the dict-form NIR importer tests."
+
+[[file]]
+path = "tests/test_nir_fpga_pipeline_e2_e_auto_interconnect.py"
+rationale = "Exercise SC-NeuroCore: nir fpga pipeline e2 e auto interconnect."
+
+[[file]]
+path = "tests/test_nir_fpga_pipeline_e2_e_cuba_lif.py"
+rationale = "Exercise SC-NeuroCore: nir fpga pipeline e2 e cuba lif."
+
+[[file]]
+path = "tests/test_nir_fpga_pipeline_e2_e_high_precision.py"
+rationale = "Exercise SC-NeuroCore: nir fpga pipeline e2 e high precision."
+
+[[file]]
+path = "tests/test_nir_fpga_pipeline_e2_e_multi_type.py"
+rationale = "Exercise SC-NeuroCore: nir fpga pipeline e2 e multi type."
+
+[[file]]
+path = "tests/test_nir_fpga_pipeline_e2_e_overflow_detection.py"
+rationale = "Exercise SC-NeuroCore: nir fpga pipeline e2 e overflow detection."
+
+[[file]]
+path = "tests/test_nir_fpga_pipeline_e2_e_round_trip.py"
+rationale = "Exercise SC-NeuroCore: nir fpga pipeline e2 e round trip."
+
+[[file]]
+path = "tests/test_nir_fpga_pipeline_e2_ecli.py"
+rationale = "Exercise SC-NeuroCore: nir fpga pipeline e2 ecli."
+
+[[file]]
+path = "tests/test_nir_fpga_pipeline_e2_elif_feedforward.py"
+rationale = "Exercise SC-NeuroCore: nir fpga pipeline e2 elif feedforward."
+
+[[file]]
+path = "tests/test_nir_import_aliases_and_fallback.py"
+rationale = "Exercise SC-NeuroCore: nir import aliases and fallback."
+
+[[file]]
+path = "tests/test_nir_import_graph_structure.py"
+rationale = "Exercise SC-NeuroCore: nir import graph structure."
+
+[[file]]
+path = "tests/test_nir_import_izhikevich_extension.py"
+rationale = "Exercise SC-NeuroCore: nir import izhikevich extension."
+
+[[file]]
+path = "tests/test_nir_import_node_types.py"
+rationale = "Exercise SC-NeuroCore: nir import node types."
+
+[[file]]
+path = "tests/test_nir_import_parameter_resolution.py"
+rationale = "Exercise SC-NeuroCore: nir import parameter resolution."
+
+[[file]]
+path = "tests/test_nir_import_shared_templates.py"
+rationale = "Exercise SC-NeuroCore: nir import shared templates."

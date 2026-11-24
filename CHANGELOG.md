@@ -1378,6 +1378,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 14 top-level NIR test modules (the NIR to FPGA pipeline and the
+  dict-form NIR importer) import their names explicitly instead of
+  through a suppressed star import; the single-user temporary-directory
+  fixture moves into its module, both supports are typed, documented and
+  enrolled, and the modules gain their missing docstrings and type
+  annotations and are enrolled in the docstring policy.
+
 - The 16 top-level test modules of the newer neuron models import their
   names explicitly instead of through a suppressed star import, keep the
   torch skip of their support as an explicit pytest.importorskip, gain

@@ -6,21 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_nir_fpga_pipeline.py
 
+"""Graph builders and the pipeline helper for the NIR to FPGA end-to-end tests.
+
+Importing this module skips the importer when the ``nir`` package is missing.
+"""
+
 from __future__ import annotations
 
-"""End-to-end tests for the NIR → FPGA compilation pipeline.
+from typing import Any
 
-Every test in this module is a full end-to-end pipeline execution:
-NIR graph construction → from_nir() → from_scnetwork() →
-compile_network_to_fpga() → Verilog artefact verification.
-"""
-import os
-import re
-import shutil
-import subprocess
-import sys
-from pathlib import Path
-from uuid import uuid4
 import numpy as np
 import pytest
 
@@ -32,22 +26,10 @@ from sc_neurocore.nir_bridge import (
     from_scnetwork,
     quantise_graph,
 )
-from sc_neurocore.nir_bridge.fpga_compiler import _AER_THRESHOLD
+from sc_neurocore.nir_bridge.fpga_compiler import _AER_THRESHOLD, NetworkCompilationResult
 
 
-@pytest.fixture
-def local_tmp_path():
-    root = Path(__file__).resolve().parents[1] / ".pytest_tmp"
-    root.mkdir(exist_ok=True)
-    path = root / uuid4().hex
-    path.mkdir()
-    try:
-        yield path
-    finally:
-        shutil.rmtree(path)
-
-
-def _build_lif_feedforward(n_in=4, n_hidden=8, n_out=2, seed=42):
+def _build_lif_feedforward(n_in: int = 4, n_hidden: int = 8, n_out: int = 2, seed: int = 42) -> Any:
     """Build: Input → Affine → LIF → Affine → LIF → Output."""
     rng = np.random.RandomState(seed)
     return nir.NIRGraph(
@@ -85,7 +67,7 @@ def _build_lif_feedforward(n_in=4, n_hidden=8, n_out=2, seed=42):
     )
 
 
-def _build_cubalif_network(n_in=3, n_out=4, seed=99):
+def _build_cubalif_network(n_in: int = 3, n_out: int = 4, seed: int = 99) -> Any:
     """Build: Input → Affine → CubaLIF → Output."""
     rng = np.random.RandomState(seed)
     return nir.NIRGraph(
@@ -109,7 +91,7 @@ def _build_cubalif_network(n_in=3, n_out=4, seed=99):
     )
 
 
-def _build_mixed_type_network(n_in=4, seed=77):
+def _build_mixed_type_network(n_in: int = 4, seed: int = 77) -> Any:
     """Build: Input → Affine → IF → Affine → LIF → Output."""
     rng = np.random.RandomState(seed)
     return nir.NIRGraph(
@@ -142,7 +124,13 @@ def _build_mixed_type_network(n_in=4, seed=77):
     )
 
 
-def _full_pipeline(nir_graph, dt=1.0, data_width=16, fraction=8, module_name="sc_test"):
+def _full_pipeline(
+    nir_graph: Any,
+    dt: float = 1.0,
+    data_width: int = 16,
+    fraction: int = 8,
+    module_name: str = "sc_test",
+) -> NetworkCompilationResult:
     """Run the full NIR → FPGA pipeline and return the result."""
     net = from_nir(nir_graph, dt=dt)
     ng = from_scnetwork(net, dt=dt)
@@ -155,13 +143,6 @@ def _full_pipeline(nir_graph, dt=1.0, data_width=16, fraction=8, module_name="sc
 
 
 __all__ = [
-    "os",
-    "re",
-    "shutil",
-    "subprocess",
-    "sys",
-    "Path",
-    "uuid4",
     "np",
     "pytest",
     "nir",
@@ -171,7 +152,6 @@ __all__ = [
     "from_scnetwork",
     "quantise_graph",
     "_AER_THRESHOLD",
-    "local_tmp_path",
     "_build_lif_feedforward",
     "_build_cubalif_network",
     "_build_mixed_type_network",

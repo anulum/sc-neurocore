@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.nir_fpga_pipeline_support import *  # noqa: F403
+from tests.nir_fpga_pipeline_support import (
+    _build_lif_feedforward,
+    _full_pipeline,
+)
 
 
 class TestE2EHighPrecision:
     """Full pipeline at Q16.16 (32-bit) precision."""
 
-    def test_q16_16_wire_widths(self):
+    def test_q16_16_wire_widths(self) -> None:
+        """A 32-bit, 16-fraction build reports Q16.16 and widens its wires."""
         graph = _build_lif_feedforward()
         result = _full_pipeline(graph, data_width=32, fraction=16, module_name="hd_net")
 
@@ -30,7 +34,8 @@ class TestE2EHighPrecision:
         assert "localparam integer DATA_WIDTH = 32;" in result.top_module
         assert "input  wire signed [127:0] I_ext_flat" in result.top_module
 
-    def test_q16_16_weight_precision(self):
+    def test_q16_16_weight_precision(self) -> None:
+        """A Q16.16 build stores 32-bit weights in its ROM."""
         graph = _build_lif_feedforward(n_in=2, n_hidden=3, n_out=1)
         result = _full_pipeline(graph, data_width=32, fraction=16)
 

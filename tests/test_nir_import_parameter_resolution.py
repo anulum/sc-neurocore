@@ -10,29 +10,37 @@
 
 from __future__ import annotations
 
-from tests.nir_import_support import *  # noqa: F403
+from tests.nir_import_support import (
+    _one,
+)
 
 
 class TestParameterResolution:
-    def test_defaults_are_applied_and_reported(self):
+    """How node parameters, defaults and unknown parameters are resolved."""
+
+    def test_defaults_are_applied_and_reported(self) -> None:
+        """Missing parameters take the template defaults."""
         g = _one("LIF", tau=7.0)
         assert g.parameters["n0"]["tau"] == 7.0
         assert g.parameters["n0"]["v_threshold"] == 1.0
         assert "v_threshold" in g.defaulted_parameters["n0"]
         assert "tau" not in g.defaulted_parameters["n0"]
 
-    def test_node_params_override_defaults(self):
+    def test_node_params_override_defaults(self) -> None:
+        """Node parameters override the template defaults."""
         g = _one("LIF", tau=7.0, v_threshold=2.0)
         assert g.parameters["n0"]["tau"] == 7.0
         assert "7.0" in g.equations["n0"]
         assert g.thresholds["n0"] == "v > 2.0"
 
-    def test_unknown_params_are_not_applied_and_are_reported(self):
+    def test_unknown_params_are_not_applied_and_are_reported(self) -> None:
+        """Unknown parameters are not applied and are reported as unused."""
         g = _one("LIF", not_a_param=99.0)
         assert "not_a_param" not in g.parameters["n0"]
         assert g.unused_parameters["n0"] == ("not_a_param",)
 
-    def test_distinct_time_constants_substituted_independently(self):
+    def test_distinct_time_constants_substituted_independently(self) -> None:
+        """tau_syn and tau_mem are substituted into their own equations."""
         # tau_syn and tau_mem must not clobber one another (longest-first).
         g = _one("CubaLIF", tau_syn=3.0, tau_mem=17.0)
         assert "3.0" in g.state_equations["n0"]["i_syn"]

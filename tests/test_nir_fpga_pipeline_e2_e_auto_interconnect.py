@@ -10,13 +10,22 @@
 
 from __future__ import annotations
 
-from tests.nir_fpga_pipeline_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.nir_bridge.fpga_compiler import (
+    _AER_THRESHOLD,
+)
+from tests.nir_fpga_pipeline_support import (
+    _build_lif_feedforward,
+    _full_pipeline,
+    nir,
+)
 
 
 class TestE2EAutoInterconnect:
     """Verify direct and weighted event interconnect selection."""
 
-    def test_small_network_uses_direct(self):
+    def test_small_network_uses_direct(self) -> None:
+        """A small network compiles with direct wiring and the expected neuron count."""
         graph = _build_lif_feedforward(n_in=4, n_hidden=8, n_out=2)
         result = _full_pipeline(graph)
 
@@ -26,7 +35,7 @@ class TestE2EAutoInterconnect:
         # No AER bus signals
         assert "aer_addr" not in result.top_module
 
-    def test_large_network_uses_weighted_event_interconnect(self):
+    def test_large_network_uses_weighted_event_interconnect(self) -> None:
         """Large networks use audited weighted event routing instead of warning-only direct fallback."""
         rng = np.random.RandomState(42)
         n_big = _AER_THRESHOLD + 10  # >64
@@ -56,7 +65,7 @@ class TestE2EAutoInterconnect:
         assert "aer_event_valid" in result.top_module
         assert f"output wire [{n_big - 1}:0] spike_bus" in result.top_module
 
-    def test_large_two_layer_network_emits_weighted_event_fanout(self):
+    def test_large_two_layer_network_emits_weighted_event_fanout(self) -> None:
         """Spiking source populations must contribute signed event weights to destinations."""
         rng = np.random.RandomState(11)
         n_hidden = _AER_THRESHOLD
