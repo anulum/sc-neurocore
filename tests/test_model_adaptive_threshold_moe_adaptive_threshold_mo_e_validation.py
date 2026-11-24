@@ -10,22 +10,31 @@
 
 from __future__ import annotations
 
-from tests.model_adaptive_threshold_moe_support import *  # noqa: F403
+import math
+import pytest
+from sc_neurocore.neurons.models.adaptive_threshold_moe import (
+    AdaptiveThresholdMoENeuron,
+)
 
 
 class TestAdaptiveThresholdMoEValidation:
+    """Input and state validation of the adaptive-threshold MoE neuron."""
+
     @pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf, 0.0, -1.0])
-    def test_rejects_non_positive_or_non_finite_k(self, value: float):
+    def test_rejects_non_positive_or_non_finite_k(self, value: float) -> None:
+        """A k that is not positive and finite is rejected."""
         with pytest.raises(ValueError, match="k"):
             AdaptiveThresholdMoENeuron(k=value)
 
     @pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf, 0.0, -0.1, 1.1])
-    def test_rejects_out_of_range_ema_alpha(self, value: float):
+    def test_rejects_out_of_range_ema_alpha(self, value: float) -> None:
+        """An EMA alpha out of range is rejected."""
         with pytest.raises(ValueError, match="ema_alpha"):
             AdaptiveThresholdMoENeuron(ema_alpha=value)
 
     @pytest.mark.parametrize("current", [math.nan, math.inf, -math.inf])
-    def test_rejects_non_finite_current_before_state_mutation(self, current: float):
+    def test_rejects_non_finite_current_before_state_mutation(self, current: float) -> None:
+        """A non-finite current is rejected before any state change."""
         n = AdaptiveThresholdMoENeuron()
         before = (n.v, n.v_th, n._mean_abs_x)
         with pytest.raises(ValueError, match="current"):
@@ -33,7 +42,10 @@ class TestAdaptiveThresholdMoEValidation:
         assert (n.v, n.v_th, n._mean_abs_x) == before
 
     @pytest.mark.parametrize("activation", [math.nan, math.inf, -math.inf])
-    def test_rejects_non_finite_collapsed_activation_before_state_mutation(self, activation: float):
+    def test_rejects_non_finite_collapsed_activation_before_state_mutation(
+        self, activation: float
+    ) -> None:
+        """A non-finite collapsed activation is rejected without changing state."""
         n = AdaptiveThresholdMoENeuron()
         before = (n.v, n.v_th, n._mean_abs_x)
         with pytest.raises(ValueError, match="activation"):
@@ -48,21 +60,24 @@ class TestAdaptiveThresholdMoEValidation:
             ("_mean_abs_x", "runtime mean absolute input state"),
         ],
     )
-    def test_rejects_corrupted_runtime_state_before_step(self, field: str, message: str):
+    def test_rejects_corrupted_runtime_state_before_step(self, field: str, message: str) -> None:
+        """Corrupted runtime state is rejected before a step."""
         n = AdaptiveThresholdMoENeuron()
         setattr(n, field, math.nan)
         with pytest.raises(ValueError, match=message):
             n.step(1.0)
         assert math.isnan(getattr(n, field))
 
-    def test_rejects_non_finite_adaptive_threshold_before_step_mutation(self):
+    def test_rejects_non_finite_adaptive_threshold_before_step_mutation(self) -> None:
+        """A non-finite adaptive threshold is rejected without changing state."""
         n = AdaptiveThresholdMoENeuron(k=1.0e-308)
         before = (n.v, n.v_th, n._mean_abs_x)
         with pytest.raises(ValueError, match="adaptive threshold"):
             n.step(1.0e308)
         assert (n.v, n.v_th, n._mean_abs_x) == before
 
-    def test_rejects_non_finite_soft_reset_residual_before_mutation(self):
+    def test_rejects_non_finite_soft_reset_residual_before_mutation(self) -> None:
+        """A non-finite soft-reset residual is rejected without changing state."""
         n = AdaptiveThresholdMoENeuron(k=1.0, ema_alpha=1.0)
         n.v = 1.7e308
         n.v_th = 1.0
@@ -72,7 +87,8 @@ class TestAdaptiveThresholdMoEValidation:
             n.step(1.0e308)
         assert (n.v, n.v_th, n._mean_abs_x) == before
 
-    def test_rejects_non_finite_collapsed_threshold_before_state_mutation(self):
+    def test_rejects_non_finite_collapsed_threshold_before_state_mutation(self) -> None:
+        """A non-finite collapsed threshold is rejected without changing state."""
         n = AdaptiveThresholdMoENeuron(k=1.0e-308)
         before = (n.v, n.v_th, n._mean_abs_x)
         with pytest.raises(ValueError, match="adaptive threshold"):

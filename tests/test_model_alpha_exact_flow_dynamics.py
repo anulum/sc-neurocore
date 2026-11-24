@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_alpha_support import *  # noqa: F403
+import math
+import pytest
+from sc_neurocore.neurons.models.alpha import (
+    AlphaNeuron,
+)
 
 
 class TestExactFlowDynamics:
     """Each step is the exact constant-input flow, never an Euler step."""
 
     def test_filter_matches_exact_alpha_cascade(self) -> None:
+        """The synaptic filter follows the exact alpha cascade."""
         n = AlphaNeuron(a_exc=0.25, i_exc=0.1, v_threshold=100.0, dt=0.5)
         steady = 5.0 * 2.0
         decay = math.exp(-0.5 / 5.0)
@@ -27,12 +32,14 @@ class TestExactFlowDynamics:
         assert n.i_exc == pytest.approx(expected_i, rel=0.0, abs=1e-14)
 
     def test_step_is_not_forward_euler(self) -> None:
+        """The step is not a forward-Euler step."""
         n = AlphaNeuron(v=0.5, v_threshold=100.0, dt=0.5)
         n.step(0.0)
         euler_v = 0.5 + (-(0.5 - 0.0)) / 20.0 * 0.5
         assert abs(n.v - euler_v) > 1.0e-4
 
     def test_equal_time_constant_limit_is_analytic(self) -> None:
+        """Equal time constants follow the analytic limit."""
         n = AlphaNeuron(i_exc=0.3, a_exc=0.2, tau_v=20.0, tau_exc=20.0, v_threshold=100.0, dt=0.5)
         rate = 1.0 / 20.0
         decay = math.exp(-0.5 / 20.0)
@@ -42,11 +49,13 @@ class TestExactFlowDynamics:
         assert n.v == pytest.approx(expected_v, rel=0.0, abs=1e-14)
 
     def test_large_timestep_remains_bounded(self) -> None:
+        """A large time step stays bounded."""
         n = AlphaNeuron(v=0.5, tau_v=0.04, tau_exc=0.04, tau_inh=0.04, dt=1.0)
         assert n.step(0.0) == 0
         assert n.v == pytest.approx(n.v_rest, rel=0.0, abs=1e-8)
 
     def test_steady_state_is_a_fixed_point(self) -> None:
+        """The steady state is a fixed point."""
         n = AlphaNeuron(v_threshold=100.0)
         n.v = n.v_rest + 5.0 * 2.0 - 10.0 * 1.0
         n.a_exc = 5.0 * 2.0

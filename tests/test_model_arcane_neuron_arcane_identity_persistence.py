@@ -10,13 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_arcane_neuron_support import *  # noqa: F403
+from sc_neurocore.neurons.models.arcane_neuron import (
+    ArcaneNeuron,
+)
 
 
 class TestArcaneIdentityPersistence:
     """CORE: v_deep is the identity — it PERSISTS through reset."""
 
-    def test_deep_persists_through_reset(self):
+    def test_deep_persists_through_reset(self) -> None:
         """reset() zeros v_fast and v_work but NOT v_deep."""
         n = ArcaneNeuron()
         for _ in range(10000):
@@ -27,7 +29,7 @@ class TestArcaneIdentityPersistence:
         assert n.v_deep == deep_before, f"v_deep changed from {deep_before} to {n.v_deep} on reset"
         assert n.v_fast == 0.0 and n.v_work == 0.0
 
-    def test_deep_accumulates_slowly(self):
+    def test_deep_accumulates_slowly(self) -> None:
         """v_deep changes on tau_deep=10000 timescale — ultra-slow."""
         n = ArcaneNeuron()
         for _ in range(100):
@@ -39,7 +41,7 @@ class TestArcaneIdentityPersistence:
         assert abs(d10k) > abs(d100), "v_deep should grow over long runs"
         assert abs(d10k) < 0.1, f"v_deep = {d10k} — should be small (tau=10k)"
 
-    def test_deep_requires_novelty(self):
+    def test_deep_requires_novelty(self) -> None:
         """v_deep updates proportional to novelty: dv_deep ∝ v_work * novelty."""
         n = ArcaneNeuron()
         n.alpha_d = 0.0  # disable deep accumulation

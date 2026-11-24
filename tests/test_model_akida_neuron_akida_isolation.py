@@ -10,33 +10,41 @@
 
 from __future__ import annotations
 
-from tests.model_akida_neuron_support import *  # noqa: F403
+from sc_neurocore.neurons.models.akida_neuron import (
+    AkidaNeuron,
+)
 
 
 class TestAkidaIsolation:
-    def test_defaults(self):
+    """The Akida neuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the Akida model."""
         n = AkidaNeuron()
         assert n.v == 0 and n.threshold == 100
         assert n.modulation == 0.75
         assert n._rank == 0 and n._spiked is False
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert AkidaNeuron().step(0) in (0, 1)
 
-    def test_integer_voltage(self):
+    def test_integer_voltage(self) -> None:
         """V is integer — neuromorphic hardware constraint."""
         n = AkidaNeuron()
         n.step(50)
         assert isinstance(n.v, int)
 
-    def test_reset_restores_defaults(self):
+    def test_reset_restores_defaults(self) -> None:
+        """A reset restores the defaults."""
         n = AkidaNeuron()
         for _ in range(10):
             n.step(50)
         n.reset()
         assert n.v == 0 and n._rank == 0 and n._spiked is False
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = AkidaNeuron()

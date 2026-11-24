@@ -10,12 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_arcane_neuron_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.arcane_neuron import (
+    ArcaneNeuron,
+)
 
 
 class TestArcaneAttentionGate:
-    def test_gate_sigmoid(self):
-        """gate = sigmoid(w_g · [I, v_fast, v_work, confidence]). Bounded (0, 1)."""
+    """The attention gate of the Arcane neuron."""
+
+    def test_gate_sigmoid(self) -> None:
+        """The gate is sigmoid(w_g · [I, v_fast, v_work, confidence]), bounded in (0, 1)."""
         n = ArcaneNeuron()
         # Gate output is internal — verify indirectly: higher I → more v_fast
         n_low = ArcaneNeuron(theta=100.0)
@@ -24,7 +29,7 @@ class TestArcaneAttentionGate:
         n_high.step(5.0)
         assert n_high.v_fast > n_low.v_fast
 
-    def test_gate_modulates_effective_input(self):
+    def test_gate_modulates_effective_input(self) -> None:
         """Gate filters input before fast compartment."""
         # With zero gate weights → no input passes
         n = ArcaneNeuron(theta=100.0)

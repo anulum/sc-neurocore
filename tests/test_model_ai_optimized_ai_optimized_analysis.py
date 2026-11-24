@@ -10,16 +10,27 @@
 
 from __future__ import annotations
 
-from tests.model_ai_optimized_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    spike_count,
+)
+from sc_neurocore.neurons.models.ai_optimized import (
+    MultiTimescaleNeuron,
+    SelfReferentialNeuron,
+)
 
 
 class TestAIOptimizedAnalysis:
-    def test_spike_count_multitimescale(self):
+    """Spike analysis of the AI-optimised neurons."""
+
+    def test_spike_count_multitimescale(self) -> None:
+        """The multi-timescale neuron fires at least 50 times."""
         n = MultiTimescaleNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(5000)])
         assert spike_count(train) >= 50
 
-    def test_spike_count_self_referential(self):
+    def test_spike_count_self_referential(self) -> None:
+        """The self-referential neuron fires at least 10 times."""
         n = SelfReferentialNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(5000)])
         assert spike_count(train) >= 10

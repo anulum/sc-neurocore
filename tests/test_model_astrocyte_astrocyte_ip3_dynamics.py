@@ -10,24 +10,31 @@
 
 from __future__ import annotations
 
-from tests.model_astrocyte_support import *  # noqa: F403
+from sc_neurocore.neurons.models.astrocyte import (
+    AstrocyteModel,
+)
 
 
 class TestAstrocyteIP3Dynamics:
-    def test_ip3_increases_with_input(self):
+    """IP3 dynamics of the astrocyte model."""
+
+    def test_ip3_increases_with_input(self) -> None:
+        """Glutamate input raises IP3."""
         n = AstrocyteModel()
         for _ in range(1000):
             n.step(1.0)
         assert n.ip3 > 0.5  # initial was 0.5, input adds more
 
-    def test_ip3_decays_without_input(self):
+    def test_ip3_decays_without_input(self) -> None:
+        """IP3 decays without input."""
         n = AstrocyteModel()
         n.ip3 = 5.0
         for _ in range(10000):
             n.step(0.0)
         assert n.ip3 < 5.0
 
-    def test_ip3_non_negative(self):
+    def test_ip3_non_negative(self) -> None:
+        """IP3 stays non-negative."""
         n = AstrocyteModel()
         for _ in range(50000):
             n.step(0.0)

@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_amari_field_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.amari_field import (
+    AmariNeuralField,
+)
+from tests.model_amari_field_support import (
+    amari_state,
+)
 
 
 class TestAmariIsolation:
+    """The Amari neural field in isolation."""
+
     def test_defaults(self) -> None:
+        """The defaults match the published field."""
         n = AmariNeuralField()
         assert n.n == 64 and n.tau == 10.0
         assert n.a_exc == 1.5 and n.b_inh == 0.75
@@ -22,19 +31,23 @@ class TestAmariIsolation:
         assert n._w.shape == (64,)
 
     def test_step_takes_array_returns_float(self) -> None:
+        """A step takes an input field and returns a float."""
         n = AmariNeuralField()
         result = n.step(np.zeros(64))
         assert isinstance(result, float)
 
     def test_step_broadcasts_scalar_field_level(self) -> None:
+        """A scalar input is broadcast over the field."""
         n = AmariNeuralField(n=8)
         assert n.step(0.5) == 1.0
 
     def test_state_is_array(self) -> None:
+        """The field state is an array of the field size."""
         n = AmariNeuralField()
         assert isinstance(n.u, np.ndarray) and n.u.shape == (64,)
 
     def test_reset_zeros_field(self) -> None:
+        """A reset zeroes the field."""
         n = AmariNeuralField()
         n.step(np.ones(64))
         n.reset()

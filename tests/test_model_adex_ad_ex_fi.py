@@ -10,15 +10,24 @@
 
 from __future__ import annotations
 
-from tests.model_adex_support import *  # noqa: F403
+from sc_neurocore.neurons.models.adex import (
+    AdExNeuron,
+)
+from tests.model_adex_support import (
+    _run,
+)
 
 
 class TestAdExFI:
-    def test_subthreshold_silent(self):
+    """The frequency-current curve of the AdEx neuron."""
+
+    def test_subthreshold_silent(self) -> None:
+        """Zero current gives no spikes."""
         n = AdExNeuron()
         assert len(_run(n, current=0.0, steps=10000)) == 0
 
-    def test_monotonic_fi(self):
+    def test_monotonic_fi(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [200.0, 500.0, 1000.0, 2000.0]:
             n = AdExNeuron()

@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_alpha_support import *  # noqa: F403
+import numpy as np
+import numpy.typing as npt
+from sc_neurocore.analysis.spike_stats.basic import (
+    firing_rate,
+    spike_count,
+)
+from sc_neurocore.neurons.models.alpha import (
+    AlphaNeuron,
+)
 
 
 class TestAlphaAnalysis:
@@ -24,10 +32,12 @@ class TestAlphaAnalysis:
         return train
 
     def test_firing_rate(self) -> None:
+        """Driven firing gives a positive firing rate."""
         train = self._get_binary_train()
         rate = firing_rate(train, dt=0.001)
         assert rate > 0
 
     def test_spike_count(self) -> None:
+        """A driven spike train has spikes."""
         train = self._get_binary_train()
         assert spike_count(train) > 0

@@ -10,19 +10,29 @@
 
 from __future__ import annotations
 
-from tests.model_arcane_neuron_support import *  # noqa: F403
+from sc_neurocore.neurons.models.arcane_neuron import (
+    ArcaneNeuron,
+)
+from tests.model_arcane_neuron_support import (
+    _run,
+)
 
 
 class TestArcaneFI:
-    def test_zero_silent(self):
+    """The frequency-current curve of the Arcane neuron."""
+
+    def test_zero_silent(self) -> None:
+        """Zero current gives no spikes."""
         n = ArcaneNeuron()
         assert len(_run(n, current=0.0, steps=5000)) == 0
 
-    def test_suprathreshold_fires(self):
+    def test_suprathreshold_fires(self) -> None:
+        """Suprathreshold current fires at least 100 times."""
         n = ArcaneNeuron()
         assert len(_run(n, current=2.0, steps=5000)) >= 100
 
-    def test_monotonic_fi(self):
+    def test_monotonic_fi(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [2.0, 3.0, 5.0]:
             n = ArcaneNeuron()

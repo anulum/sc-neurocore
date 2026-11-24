@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_adaptive_threshold_if_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.adaptive_threshold_if import (
+    AdaptiveThresholdIFNeuron,
+)
 
 
 class TestBatchAndDispatch:
     """The maintained batch lane matches the scalar golden loop."""
 
     def test_batch_matches_scalar_step_loop(self) -> None:
+        """The batch run matches a loop of single steps."""
         drive = 12.0 + 6.0 * np.sin(np.arange(256) * 0.037)
         scalar = AdaptiveThresholdIFNeuron()
         expected_v = []
@@ -32,19 +36,24 @@ class TestBatchAndDispatch:
         assert batch["spike_count"] == expected_spikes
 
     def test_empty_batch_returns_initial_state(self) -> None:
+        """An empty batch returns the initial state."""
         result = AdaptiveThresholdIFNeuron(v=-60.0, theta=-48.0).simulate([], backend="python")
-        assert result["v"].size == 0
+        v = result["v"]
+        assert isinstance(v, np.ndarray)
+        assert v.size == 0
         assert result["v_final"] == -60.0
         assert result["theta_final"] == -48.0
         assert result["spike_count"] == 0
 
     def test_simulate_writes_back_final_state(self) -> None:
+        """A simulation writes its final state back."""
         n = AdaptiveThresholdIFNeuron()
         result = n.simulate(np.full(200, 20.0), backend="python")
         assert n.v == result["v_final"]
         assert n.theta == result["theta_final"]
 
     def test_long_varied_run_is_finite_and_deterministic(self) -> None:
+        """A long varied run stays finite and deterministic."""
         drive = 14.0 + 5.0 * np.sin(np.arange(20_000, dtype=np.float64) * 0.013)
         first = AdaptiveThresholdIFNeuron()
         second = AdaptiveThresholdIFNeuron()

@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_adex_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.adex import (
+    AdExNeuron,
+)
 
 
 class TestAdExIsolation:
-    def test_construction_defaults(self):
+    """The AdEx neuron in isolation."""
+
+    def test_construction_defaults(self) -> None:
+        """The defaults match the published values."""
         n = AdExNeuron()
         assert n.v == -65.0
         assert n.w == 0.0
@@ -23,30 +29,34 @@ class TestAdExIsolation:
         assert n.b == 7.0
         assert n.c_m == 200.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert AdExNeuron().step(0.0) in (0, 1)
 
-    def test_two_variables_evolve(self):
+    def test_two_variables_evolve(self) -> None:
+        """Both the voltage and the adaptation evolve."""
         n = AdExNeuron()
         v0, w0 = n.v, n.w
         for _ in range(100):
             n.step(500.0)
         assert n.v != v0 and n.w != w0
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = AdExNeuron()
         for _ in range(50000):
             n.step(500.0)
         assert np.isfinite(n.v) and np.isfinite(n.w)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset restores rest and clears the adaptation."""
         n = AdExNeuron()
         for _ in range(100):
             n.step(500.0)
         n.reset()
         assert n.v == n.v_rest and n.w == 0.0
 
-    def test_exp_clipped(self):
+    def test_exp_clipped(self) -> None:
         """Exponential term is clipped to avoid overflow."""
         n = AdExNeuron()
         n.v = 100.0  # far above threshold → should clip exp

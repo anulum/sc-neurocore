@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3677
+expected_file_count = 3735
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -8352,10 +8352,6 @@ path = "src/sc_neurocore/neurons/models/vip_neuron.py"
 rationale = "VIP interneuron; the Porter et al. citation carries its registry year, 1999."
 
 [[file]]
-path = "tests/model_astrocyte_support.py"
-rationale = "Astrocyte model test support; its docstring names the corrected Li & Rinzel 1994 citation."
-
-[[file]]
 path = "tests/model_lnm_support.py"
 rationale = "Learnable neuron model test support; its docstring names Jolivet et al. 2006, not a fabricated citation."
 
@@ -14752,3 +14748,239 @@ rationale = "Exercise SC-NeuroCore: ibm verification circuits thermal average."
 [[file]]
 path = "tests/test_ibm_verification_circuits_two_posner_transport.py"
 rationale = "Exercise SC-NeuroCore: ibm verification circuits two posner transport."
+
+[[file]]
+path = "tests/test_model_adaptive_threshold_if_adaptive_threshold_if_analysis.py"
+rationale = "Exercise SC-NeuroCore: model adaptive threshold if adaptive threshold if analysis."
+
+[[file]]
+path = "tests/test_model_adaptive_threshold_if_adaptive_threshold_if_network.py"
+rationale = "Exercise SC-NeuroCore: model adaptive threshold if adaptive threshold if network."
+
+[[file]]
+path = "tests/test_model_adaptive_threshold_if_atomicity.py"
+rationale = "Exercise SC-NeuroCore: model adaptive threshold if atomicity."
+
+[[file]]
+path = "tests/test_model_adaptive_threshold_if_batch_and_dispatch.py"
+rationale = "Exercise SC-NeuroCore: model adaptive threshold if batch and dispatch."
+
+[[file]]
+path = "tests/test_model_adaptive_threshold_if_construction_and_validation.py"
+rationale = "Exercise SC-NeuroCore: model adaptive threshold if construction and validation."
+
+[[file]]
+path = "tests/test_model_adaptive_threshold_if_exact_relaxation_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model adaptive threshold if exact relaxation dynamics."
+
+[[file]]
+path = "tests/test_model_adaptive_threshold_if_spike_semantics.py"
+rationale = "Exercise SC-NeuroCore: model adaptive threshold if spike semantics."
+
+[[file]]
+path = "tests/test_model_adaptive_threshold_moe_adaptive_threshold_mo_e_behaviour.py"
+rationale = "Exercise SC-NeuroCore: model adaptive threshold moe adaptive threshold mo e behaviour."
+
+[[file]]
+path = "tests/test_model_adaptive_threshold_moe_adaptive_threshold_mo_e_validation.py"
+rationale = "Exercise SC-NeuroCore: model adaptive threshold moe adaptive threshold mo e validation."
+
+[[file]]
+path = "tests/test_model_adex_ad_ex_adaptation.py"
+rationale = "Exercise SC-NeuroCore: model adex ad ex adaptation."
+
+[[file]]
+path = "tests/test_model_adex_ad_ex_exponential_spike.py"
+rationale = "Exercise SC-NeuroCore: model adex ad ex exponential spike."
+
+[[file]]
+path = "tests/test_model_adex_ad_ex_fi.py"
+rationale = "Exercise SC-NeuroCore: model adex ad ex fi."
+
+[[file]]
+path = "tests/test_model_adex_ad_ex_isolation.py"
+rationale = "Exercise SC-NeuroCore: model adex ad ex isolation."
+
+[[file]]
+path = "tests/test_model_adex_ad_ex_parameters.py"
+rationale = "Exercise SC-NeuroCore: model adex ad ex parameters."
+
+[[file]]
+path = "tests/test_model_adex_ad_ex_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model adex ad ex pipeline."
+
+[[file]]
+path = "tests/test_model_adex_ad_ex_simulate.py"
+rationale = "Exercise SC-NeuroCore: model adex ad ex simulate."
+
+[[file]]
+path = "tests/test_model_adex_ad_ex_validation.py"
+rationale = "Exercise SC-NeuroCore: model adex ad ex validation."
+
+[[file]]
+path = "tests/test_model_ai_optimized_ai_optimized_analysis.py"
+rationale = "Exercise SC-NeuroCore: model ai optimized ai optimized analysis."
+
+[[file]]
+path = "tests/test_model_ai_optimized_ai_optimized_common.py"
+rationale = "Exercise SC-NeuroCore: model ai optimized ai optimized common."
+
+[[file]]
+path = "tests/test_model_ai_optimized_ai_optimized_network.py"
+rationale = "Exercise SC-NeuroCore: model ai optimized ai optimized network."
+
+[[file]]
+path = "tests/test_model_ai_optimized_ai_optimized_performance.py"
+rationale = "Exercise SC-NeuroCore: model ai optimized ai optimized performance."
+
+[[file]]
+path = "tests/test_model_akida_neuron_akida_analytical.py"
+rationale = "Exercise SC-NeuroCore: model akida neuron akida analytical."
+
+[[file]]
+path = "tests/test_model_akida_neuron_akida_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model akida neuron akida dynamics."
+
+[[file]]
+path = "tests/test_model_akida_neuron_akida_isolation.py"
+rationale = "Exercise SC-NeuroCore: model akida neuron akida isolation."
+
+[[file]]
+path = "tests/test_model_akida_neuron_akida_parameters.py"
+rationale = "Exercise SC-NeuroCore: model akida neuron akida parameters."
+
+[[file]]
+path = "tests/test_model_akida_neuron_akida_performance.py"
+rationale = "Exercise SC-NeuroCore: model akida neuron akida performance."
+
+[[file]]
+path = "tests/test_model_akida_neuron_akida_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model akida neuron akida pipeline."
+
+[[file]]
+path = "tests/test_model_alpha_alpha_analysis.py"
+rationale = "Exercise SC-NeuroCore: model alpha alpha analysis."
+
+[[file]]
+path = "tests/test_model_alpha_alpha_network.py"
+rationale = "Exercise SC-NeuroCore: model alpha alpha network."
+
+[[file]]
+path = "tests/test_model_alpha_atomicity.py"
+rationale = "Exercise SC-NeuroCore: model alpha atomicity."
+
+[[file]]
+path = "tests/test_model_alpha_batch_and_dispatch.py"
+rationale = "Exercise SC-NeuroCore: model alpha batch and dispatch."
+
+[[file]]
+path = "tests/test_model_alpha_construction_and_validation.py"
+rationale = "Exercise SC-NeuroCore: model alpha construction and validation."
+
+[[file]]
+path = "tests/test_model_alpha_exact_flow_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model alpha exact flow dynamics."
+
+[[file]]
+path = "tests/test_model_alpha_spike_semantics.py"
+rationale = "Exercise SC-NeuroCore: model alpha spike semantics."
+
+[[file]]
+path = "tests/test_model_amari_field_amari_field_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model amari field amari field dynamics."
+
+[[file]]
+path = "tests/test_model_amari_field_amari_isolation.py"
+rationale = "Exercise SC-NeuroCore: model amari field amari isolation."
+
+[[file]]
+path = "tests/test_model_amari_field_amari_mexican_hat_kernel.py"
+rationale = "Exercise SC-NeuroCore: model amari field amari mexican hat kernel."
+
+[[file]]
+path = "tests/test_model_amari_field_amari_parameters.py"
+rationale = "Exercise SC-NeuroCore: model amari field amari parameters."
+
+[[file]]
+path = "tests/test_model_amari_field_amari_performance.py"
+rationale = "Exercise SC-NeuroCore: model amari field amari performance."
+
+[[file]]
+path = "tests/test_model_amari_field_amari_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model amari field amari pipeline."
+
+[[file]]
+path = "tests/test_model_arcane_neuron_arcane_attention_gate.py"
+rationale = "Exercise SC-NeuroCore: model arcane neuron arcane attention gate."
+
+[[file]]
+path = "tests/test_model_arcane_neuron_arcane_effective_threshold.py"
+rationale = "Exercise SC-NeuroCore: model arcane neuron arcane effective threshold."
+
+[[file]]
+path = "tests/test_model_arcane_neuron_arcane_fi.py"
+rationale = "Exercise SC-NeuroCore: model arcane neuron arcane fi."
+
+[[file]]
+path = "tests/test_model_arcane_neuron_arcane_identity_persistence.py"
+rationale = "Exercise SC-NeuroCore: model arcane neuron arcane identity persistence."
+
+[[file]]
+path = "tests/test_model_arcane_neuron_arcane_isolation.py"
+rationale = "Exercise SC-NeuroCore: model arcane neuron arcane isolation."
+
+[[file]]
+path = "tests/test_model_arcane_neuron_arcane_novelty_prediction.py"
+rationale = "Exercise SC-NeuroCore: model arcane neuron arcane novelty prediction."
+
+[[file]]
+path = "tests/test_model_arcane_neuron_arcane_performance.py"
+rationale = "Exercise SC-NeuroCore: model arcane neuron arcane performance."
+
+[[file]]
+path = "tests/test_model_arcane_neuron_arcane_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model arcane neuron arcane pipeline."
+
+[[file]]
+path = "tests/test_model_arcane_neuron_arcane_three_timescales.py"
+rationale = "Exercise SC-NeuroCore: model arcane neuron arcane three timescales."
+
+[[file]]
+path = "tests/test_model_astrocyte_adapter_astrocyte_adapter_isolation.py"
+rationale = "Exercise SC-NeuroCore: model astrocyte adapter astrocyte adapter isolation."
+
+[[file]]
+path = "tests/test_model_astrocyte_adapter_astrocyte_adapter_performance.py"
+rationale = "Exercise SC-NeuroCore: model astrocyte adapter astrocyte adapter performance."
+
+[[file]]
+path = "tests/test_model_astrocyte_adapter_astrocyte_adapter_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model astrocyte adapter astrocyte adapter pipeline."
+
+[[file]]
+path = "tests/test_model_astrocyte_adapter_astrocyte_adapter_spike_conversion.py"
+rationale = "Exercise SC-NeuroCore: model astrocyte adapter astrocyte adapter spike conversion."
+
+[[file]]
+path = "tests/test_model_astrocyte_astrocyte.py"
+rationale = "Exercise SC-NeuroCore: model astrocyte astrocyte."
+
+[[file]]
+path = "tests/test_model_astrocyte_astrocyte_ca_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model astrocyte astrocyte ca dynamics."
+
+[[file]]
+path = "tests/test_model_astrocyte_astrocyte_ip3_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model astrocyte astrocyte ip3 dynamics."
+
+[[file]]
+path = "tests/test_model_astrocyte_astrocyte_isolation.py"
+rationale = "Exercise SC-NeuroCore: model astrocyte astrocyte isolation."
+
+[[file]]
+path = "tests/test_model_astrocyte_astrocyte_performance.py"
+rationale = "Exercise SC-NeuroCore: model astrocyte astrocyte performance."
+
+[[file]]
+path = "tests/test_model_astrocyte_astrocyte_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model astrocyte astrocyte pipeline."

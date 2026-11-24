@@ -10,18 +10,37 @@
 
 from __future__ import annotations
 
-from tests.model_adaptive_threshold_if_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.adaptive_threshold_if import (
+    AdaptiveThresholdIFNeuron,
+)
 
 
 class TestAdaptiveThresholdIFNetwork:
     """Model works in the full SC-NeuroCore network pipeline."""
 
     def test_population_creation(self) -> None:
+        """A population of ten neurons keeps its model name."""
         pop = Population(AdaptiveThresholdIFNeuron, n=10, label="atif")
         assert pop.n == 10
         assert pop.model_name == "AdaptiveThresholdIFNeuron"
 
     def test_network_produces_spikes(self) -> None:
+        """A driven network produces spikes."""
         pop = Population(AdaptiveThresholdIFNeuron, n=20, label="atif")
         proj = Projection(pop, pop, weight=1.0, probability=0.2, seed=42)
         drive = PoissonInput(n=20, rate_hz=500.0, weight=100.0, dt=0.001, seed=42)
@@ -31,6 +50,7 @@ class TestAdaptiveThresholdIFNetwork:
         assert mon.count > 0, "network produced zero spikes"
 
     def test_spike_trains_extractable(self) -> None:
+        """The network spike trains can be read out."""
         pop = Population(AdaptiveThresholdIFNeuron, n=10, label="atif")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=100.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

@@ -10,12 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_arcane_neuron_support import *  # noqa: F403
+import time
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.arcane_neuron import (
+    ArcaneNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestArcanePerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the Arcane neuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = ArcaneNeuron()
         N = 10000
         t0 = time.perf_counter()
@@ -28,7 +46,8 @@ class TestArcanePerformance:
             strict_minimum_per_second=1_000.0,
         )
 
-    def test_network_throughput(self):
+    def test_network_throughput(self) -> None:
+        """The network meets its throughput floor."""
         pop = Population(ArcaneNeuron, n=10, label="bench")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=3.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

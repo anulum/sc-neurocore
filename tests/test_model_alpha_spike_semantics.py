@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.model_alpha_support import *  # noqa: F403
+import math
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.alpha import (
+    AlphaNeuron,
+)
 
 
 class TestSpikeSemantics:
     """Candidate crossing, somatic reset, cascade preservation."""
 
     def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         n = AlphaNeuron()
         assert n.step(0.0) in (0, 1)
 
     def test_spike_resets_only_the_membrane(self) -> None:
+        """A spike resets the membrane and keeps the synapses."""
         n = AlphaNeuron(v=0.9, a_exc=0.4, i_exc=0.6, a_inh=0.2, i_inh=0.1, v_threshold=0.5)
         before = (n.a_exc, n.i_exc, n.a_inh, n.i_inh)
         assert n.step(0.0) == 1
@@ -37,11 +44,13 @@ class TestSpikeSemantics:
         )
 
     def test_spikes_under_excitatory_drive(self) -> None:
+        """Excitatory drive produces spikes."""
         n = AlphaNeuron()
         spikes = sum(n.step(3.0) for _ in range(2000))
         assert spikes > 0
 
     def test_inhibition_suppresses_excitatory_drive(self) -> None:
+        """Inhibition lowers the spikes from excitatory drive."""
         exc_only = AlphaNeuron()
         dual = AlphaNeuron()
         exc_spikes = sum(exc_only.step(2.5) for _ in range(500))
@@ -49,6 +58,7 @@ class TestSpikeSemantics:
         assert dual_spikes < exc_spikes
 
     def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = AlphaNeuron()
         for index in range(5000):
             n.step(3.0 + math.sin(index * 0.01), 0.5)
@@ -59,6 +69,7 @@ class TestSpikeSemantics:
         assert np.isfinite(n.i_inh)
 
     def test_reset_restores_documented_state_preserving_configuration(self) -> None:
+        """A reset restores the documented state and keeps the configuration."""
         n = AlphaNeuron()
         for _ in range(100):
             n.step(3.0)

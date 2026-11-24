@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_astrocyte_support import *  # noqa: F403
+from sc_neurocore.neurons.models.astrocyte import (
+    AstrocyteModel,
+)
 
 
 class TestAstrocyte:
-    def test_calcium_dynamics(self):
-        from sc_neurocore.neurons.models.astrocyte import AstrocyteModel
+    """The astrocyte calcium model."""
 
+    def test_calcium_dynamics(self) -> None:
+        """A step returns a positive calcium level."""
         n = AstrocyteModel()
         for _ in range(200):
             ca = n.step(1.0)

@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_adex_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.adex import (
+    AdExNeuron,
+)
+from tests.model_adex_support import (
+    _run,
+)
 
 
 class TestAdExAdaptation:
-    def test_w_increments_on_spike(self):
+    """Spike-frequency adaptation of the AdEx neuron."""
+
+    def test_w_increments_on_spike(self) -> None:
         """Each spike adds b to w."""
         n = AdExNeuron()
         w_before = n.w
@@ -26,7 +35,7 @@ class TestAdExAdaptation:
         else:
             pytest.fail("No spike")
 
-    def test_isi_lengthens(self):
+    def test_isi_lengthens(self) -> None:
         """Adaptation: early ISIs shorter than late ISIs."""
         n = AdExNeuron()
         spikes = _run(n, current=500.0, steps=10000)
@@ -36,8 +45,8 @@ class TestAdExAdaptation:
         late = np.mean(isis_arr[-3:])
         assert late > early, f"early={early:.0f}, late={late:.0f}"
 
-    def test_w_decays_between_spikes(self):
-        """w decays toward a·(V-V_rest) between spikes (tau_w timescale)."""
+    def test_w_decays_between_spikes(self) -> None:
+        """The adaptation w decays toward a·(V-V_rest) between spikes (tau_w timescale)."""
         n = AdExNeuron()
         n.w = 50.0
         # Subthreshold: w should decay
@@ -45,7 +54,7 @@ class TestAdExAdaptation:
             n.step(0.0)
         assert n.w < 50.0
 
-    def test_no_adaptation_when_b_zero(self):
+    def test_no_adaptation_when_b_zero(self) -> None:
         """b=0: no w increment on spike → constant ISI (like EIF)."""
         n = AdExNeuron(b=0.0, a=0.0)
         spikes = _run(n, current=500.0, steps=10000)
@@ -54,7 +63,7 @@ class TestAdExAdaptation:
             cv = np.std(isis_arr) / np.mean(isis_arr)
             assert cv < 0.05, f"CV(ISI) = {cv:.4f} without adaptation"
 
-    def test_stronger_adaptation_fewer_spikes(self):
+    def test_stronger_adaptation_fewer_spikes(self) -> None:
         """Higher b → stronger per-spike w increment → fewer spikes."""
         n_weak = AdExNeuron(b=2.0)
         n_strong = AdExNeuron(b=20.0)

@@ -10,19 +10,27 @@
 
 from __future__ import annotations
 
-from tests.model_alpha_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.alpha import (
+    AlphaNeuron,
+)
+from typing import (
+    cast,
+)
 
 
 class TestConstructionAndValidation:
     """Construction normalises fields and rejects invalid configurations."""
 
     def test_catalogue_defaults(self) -> None:
+        """The defaults match the model catalogue."""
         n = AlphaNeuron()
         assert (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh) == (0.0, 0.0, 0.0, 0.0, 0.0)
         assert (n.v_rest, n.v_threshold) == (0.0, 1.0)
         assert (n.tau_v, n.tau_exc, n.tau_inh, n.dt) == (20.0, 5.0, 10.0, 1.0)
 
     def test_scalar_fields_are_normalised_to_float(self) -> None:
+        """Integer fields are normalised to floats."""
         n = AlphaNeuron(v=1, tau_v=15)
         assert isinstance(n.v, float) and isinstance(n.tau_v, float)
 
@@ -45,10 +53,12 @@ class TestConstructionAndValidation:
         ],
     )
     def test_rejects_non_physical_configuration(self, kwargs: dict[str, float]) -> None:
+        """Each non-physical configuration is rejected."""
         with pytest.raises(ValueError):
             AlphaNeuron(**kwargs)
 
     @pytest.mark.parametrize("field", ["v", "a_exc", "tau_v"])
     def test_rejects_non_numeric_fields(self, field: str) -> None:
+        """Non-numeric fields are rejected."""
         with pytest.raises(ValueError, match="must be numeric"):
             AlphaNeuron(**cast(dict[str, float], {field: "fast"}))

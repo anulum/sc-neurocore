@@ -10,11 +10,24 @@
 
 from __future__ import annotations
 
-from tests.model_amari_field_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.amari_field import (
+    AmariNeuralField,
+)
+from tests.model_amari_field_support import (
+    amari_state,
+)
+from typing import (
+    Any,
+)
 
 
 class TestAmariParameters:
+    """Parameter behaviour of the Amari neural field."""
+
     def test_custom_n(self) -> None:
+        """A custom field size sets the state and kernel sizes."""
         n = AmariNeuralField(n=128)
         assert amari_state(n).shape == (128,) and n._w.shape == (128,)
 
@@ -28,6 +41,7 @@ class TestAmariParameters:
         assert np.max(np.abs(amari_state(n_fast))) > np.max(np.abs(amari_state(n_slow)))
 
     def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = AmariNeuralField()
@@ -38,11 +52,13 @@ class TestAmariParameters:
 
     @pytest.mark.parametrize("field", ("tau", "a_width", "b_width", "dx", "dt"))
     def test_positive_parameters_are_enforced(self, field: str) -> None:
+        """Parameters that must be positive are enforced."""
         kwargs: Any = {field: 0.0}
         with pytest.raises(ValueError):
             AmariNeuralField(**kwargs)
 
     def test_failed_drive_is_atomic(self) -> None:
+        """A failed drive leaves the field unchanged."""
         neuron = AmariNeuralField(n=8)
         before = amari_state(neuron).copy()
         with pytest.raises(ValueError, match="finite"):

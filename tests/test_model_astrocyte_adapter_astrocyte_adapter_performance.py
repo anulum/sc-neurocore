@@ -10,7 +10,22 @@
 
 from __future__ import annotations
 
-from tests.model_astrocyte_adapter_support import *  # noqa: F403
+import time
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.astrocyte_adapter import (
+    AstrocyteNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 

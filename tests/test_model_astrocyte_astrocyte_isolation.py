@@ -10,21 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_astrocyte_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.astrocyte import (
+    AstrocyteModel,
+)
 
 
 class TestAstrocyteIsolation:
-    def test_defaults(self):
+    """The astrocyte model in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the Li-Rinzel model."""
         n = AstrocyteModel()
         assert n.ca == 0.05 and n.h == 0.8 and n.ip3 == 0.5
         assert n.c0 == 2.0 and n.dt == 0.01
 
-    def test_step_returns_float(self):
+    def test_step_returns_float(self) -> None:
         """Returns Ca concentration (float), not binary spike."""
         n = AstrocyteModel()
         assert isinstance(n.step(0.0), float)
 
-    def test_three_variables_evolve(self):
+    def test_three_variables_evolve(self) -> None:
+        """Calcium, h and IP3 all evolve."""
         n = AstrocyteModel()
         initial = (n.ca, n.h, n.ip3)
         for _ in range(500):
@@ -32,13 +41,15 @@ class TestAstrocyteIsolation:
         for name, v0, v1 in zip(["ca", "h", "ip3"], initial, (n.ca, n.h, n.ip3)):
             assert v0 != v1, f"{name} didn't evolve"
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = AstrocyteModel()
         for _ in range(100000):
             n.step(0.5)
         assert all(np.isfinite(v) for v in [n.ca, n.h, n.ip3])
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset restores the defaults."""
         n = AstrocyteModel()
         for _ in range(500):
             n.step(1.0)
@@ -68,13 +79,13 @@ class TestAstrocyteIsolation:
             {"dt": 0.0},
         ],
     )
-    def test_rejects_non_physical_configuration(self, kwargs):
+    def test_rejects_non_physical_configuration(self, kwargs: dict[str, Any]) -> None:
         """Li-Rinzel calcium/IP3 parameters must be finite and physical."""
         with pytest.raises(ValueError):
             AstrocyteModel(**kwargs)
 
     @pytest.mark.parametrize("current", [-0.1, float("nan"), float("inf")])
-    def test_rejects_non_physical_ip3_drive(self, current):
+    def test_rejects_non_physical_ip3_drive(self, current: float) -> None:
         """Glutamate-driven IP3 production must be finite and non-negative."""
         n = AstrocyteModel()
         with pytest.raises(ValueError, match="current"):

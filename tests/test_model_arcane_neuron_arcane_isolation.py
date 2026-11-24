@@ -10,20 +10,34 @@
 
 from __future__ import annotations
 
-from tests.model_arcane_neuron_support import *  # noqa: F403
+from collections.abc import Callable
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.arcane_neuron import (
+    ArcaneNeuron,
+)
+from tests.model_arcane_neuron_support import (
+    _exact_relaxation,
+    _stable_sigmoid,
+)
 
 
 class TestArcaneIsolation:
-    def test_defaults(self):
+    """The Arcane neuron in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = ArcaneNeuron()
         assert n.v_fast == 0.0 and n.v_work == 0.0 and n.v_deep == 0.0
         assert n.tau_fast == 5.0 and n.tau_work == 200.0 and n.tau_deep == 10000.0
         assert n.theta == 1.0 and n.w_gate.shape == (4,) and n.w_pred.shape == (3,)
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert ArcaneNeuron().step(0.0) in (0, 1)
 
-    def test_five_subsystems_evolve(self):
+    def test_five_subsystems_evolve(self) -> None:
+        """All five subsystems evolve under drive."""
         n = ArcaneNeuron()
         for _ in range(500):
             n.step(2.0)
@@ -32,7 +46,8 @@ class TestArcaneIsolation:
         assert state["novelty"] != 0.0
         assert state["confidence"] != 0.5
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = ArcaneNeuron()
         for _ in range(50000):
             n.step(2.0)
@@ -41,7 +56,8 @@ class TestArcaneIsolation:
             if isinstance(val, (int, float)):
                 assert np.isfinite(val), f"{key} = {val}"
 
-    def test_get_state_keys(self):
+    def test_get_state_keys(self) -> None:
+        """The state dictionary has exactly the documented keys."""
         n = ArcaneNeuron()
         state = n.get_state()
         expected_keys = {
@@ -58,7 +74,8 @@ class TestArcaneIsolation:
         }
         assert set(state.keys()) == expected_keys
 
-    def test_state_properties_and_recent_activity(self):
+    def test_state_properties_and_recent_activity(self) -> None:
+        """The state properties mirror the internal state."""
         n = ArcaneNeuron()
         assert n.identity_state == n.v_deep
         assert n.confidence == n._confidence
@@ -68,7 +85,7 @@ class TestArcaneIsolation:
         n.step(2.0)
         assert n.get_recent_pre_activity() in (0.0, 1.0)
 
-    def test_three_compartments_use_closed_form_relaxation_without_spike(self):
+    def test_three_compartments_use_closed_form_relaxation_without_spike(self) -> None:
         """Fast, working, and deep states follow exact first-order updates."""
         n = ArcaneNeuron(v_fast=0.4, v_work=0.2, v_deep=0.01, theta=100.0, dt=25.0)
         n._spike_history = [0] * 50
@@ -100,7 +117,8 @@ class TestArcaneIsolation:
         assert n._prediction == pytest.approx(expected_prediction)
         assert n._novelty == pytest.approx(expected_novelty)
 
-    def test_large_timestep_relaxation_remains_bounded(self):
+    def test_large_timestep_relaxation_remains_bounded(self) -> None:
+        """A large time step stays bounded."""
         n = ArcaneNeuron(v_fast=1000.0, v_work=5.0, v_deep=1.0, theta=1.0e9, dt=1000.0)
         n._spike_history = [0] * 50
         n.step(0.0)
@@ -111,7 +129,8 @@ class TestArcaneIsolation:
         "field",
         ["v_fast", "v_work", "v_deep", "tau_fast", "tau_work", "tau_deep", "dt"],
     )
-    def test_rejects_corrupted_runtime_state_before_mutation(self, field: str):
+    def test_rejects_corrupted_runtime_state_before_mutation(self, field: str) -> None:
+        """Corrupted runtime state is rejected without change."""
         n = ArcaneNeuron(v_fast=0.25, v_work=0.1, v_deep=0.01)
         setattr(n, field, np.nan)
         corrupted = n.get_state()
@@ -124,7 +143,8 @@ class TestArcaneIsolation:
             else:
                 assert after[key] == expected
 
-    def test_rejects_corrupted_weight_vector_before_mutation(self):
+    def test_rejects_corrupted_weight_vector_before_mutation(self) -> None:
+        """A corrupted weight vector is rejected without change."""
         n = ArcaneNeuron(v_fast=0.25, v_work=0.1, v_deep=0.01)
         before = n.get_state()
         n.w_gate = np.array([0.8, np.nan, 0.05, 0.05])
@@ -132,14 +152,16 @@ class TestArcaneIsolation:
             n.step(0.5)
         assert n.get_state() == before
 
-    def test_rejects_non_finite_current_before_mutation(self):
+    def test_rejects_non_finite_current_before_mutation(self) -> None:
+        """A non-finite current is rejected before any state change."""
         n = ArcaneNeuron(v_fast=0.25, v_work=0.1, v_deep=0.01)
         before = n.get_state()
         with pytest.raises(ValueError, match="current"):
             n.step(np.inf)
         assert n.get_state() == before
 
-    def test_rejects_predictor_overflow_before_mutation(self):
+    def test_rejects_predictor_overflow_before_mutation(self) -> None:
+        """A predictor overflow leaves the state unchanged."""
         n = ArcaneNeuron(v_fast=0.25, v_work=0.1, v_deep=0.01)
         before = n.get_state()
         n.w_pred = np.array([1.0e308, 1.0e308, 1.0e308])
@@ -147,7 +169,8 @@ class TestArcaneIsolation:
             n.step(0.5)
         assert n.get_state() == before
 
-    def test_rejects_deep_candidate_overflow_before_mutation(self):
+    def test_rejects_deep_candidate_overflow_before_mutation(self) -> None:
+        """A deep-compartment overflow is rejected without change."""
         n = ArcaneNeuron(v_fast=0.0, v_work=1.0e308, v_deep=0.01, theta=100.0)
         before = n.get_state()
         n.alpha_d = 1.0e308
@@ -155,7 +178,8 @@ class TestArcaneIsolation:
             n.step(0.0)
         assert n.get_state() == before
 
-    def test_sigmoid_saturates_infinite_gate_input(self):
+    def test_sigmoid_saturates_infinite_gate_input(self) -> None:
+        """The sigmoid saturates for infinite input."""
         assert ArcaneNeuron._sigmoid(np.inf) == 1.0
         assert ArcaneNeuron._sigmoid(-np.inf) == 0.0
 
@@ -171,7 +195,10 @@ class TestArcaneIsolation:
             (lambda n: setattr(n, "_hist_idx", -1), "history counters"),
         ],
     )
-    def test_rejects_invalid_runtime_contracts_before_mutation(self, mutator, message):
+    def test_rejects_invalid_runtime_contracts_before_mutation(
+        self, mutator: Callable[[ArcaneNeuron], object], message: str
+    ) -> None:
+        """Each invalid runtime contract is rejected without change."""
         n = ArcaneNeuron(v_fast=0.25, v_work=0.1, v_deep=0.01)
         before_steps = n.get_state()["total_steps"]
         mutator(n)

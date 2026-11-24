@@ -10,7 +10,11 @@
 
 from __future__ import annotations
 
-from tests.model_amari_field_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.amari_field import (
+    AmariNeuralField,
+)
 
 
 class TestAmariMexicanHatKernel:
@@ -22,6 +26,7 @@ class TestAmariMexicanHatKernel:
         assert abs(n._w[0] - (n.a_exc - n.b_inh)) < 1e-10
 
     def test_kernel_shape(self) -> None:
+        """The Mexican-hat kernel has one weight per site."""
         n = AmariNeuralField()
         assert n._w.shape == (n.n,)
 

@@ -10,19 +10,28 @@
 
 from __future__ import annotations
 
-from tests.model_astrocyte_support import *  # noqa: F403
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.neurons.models.astrocyte import (
+    AstrocyteModel,
+)
 
 
 class TestAstrocytePipeline:
-    def test_population_creates(self):
+    """The astrocyte model in the network pipeline."""
+
+    def test_population_creates(self) -> None:
+        """A population of five astrocytes is built."""
         assert Population(AstrocyteModel, n=5, label="astro").n == 5
 
-    def test_returns_float(self):
+    def test_returns_float(self) -> None:
         """Rate model (Ca²⁺). Network incompatible (float return)."""
         n = AstrocyteModel()
         assert isinstance(n.step(0.5), float)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = AstrocyteModel()

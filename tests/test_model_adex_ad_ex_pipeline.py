@@ -10,14 +10,41 @@
 
 from __future__ import annotations
 
-from tests.model_adex_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    firing_rate,
+    isi,
+    spike_count,
+)
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.adex import (
+    AdExNeuron,
+)
 
 
 class TestAdExPipeline:
-    def test_population(self):
+    """The AdEx neuron in the network pipeline."""
+
+    def test_population(self) -> None:
+        """A population of ten AdEx neurons is built."""
         assert Population(AdExNeuron, n=10, label="adex").n == 10
 
-    def test_network_with_drive(self):
+    def test_network_with_drive(self) -> None:
+        """A driven network produces spikes."""
         pop = Population(AdExNeuron, n=10, label="adex")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=500.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -25,9 +52,11 @@ class TestAdExPipeline:
         net.run(duration=2.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_projection_wiring(self):
-        """Projection from source adds current to target. Verify source fires
-        and projection object is accepted by Network without error."""
+    def test_projection_wiring(self) -> None:
+        """Projection from source adds current to target.
+
+        Verify source fires and projection object is accepted by Network without error.
+        """
         src = Population(AdExNeuron, n=5, label="src")
         tgt = Population(AdExNeuron, n=5, label="tgt")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=500.0, dt=0.001, seed=42)
@@ -41,7 +70,8 @@ class TestAdExPipeline:
         # Target may or may not fire depending on projection current magnitude
         # The key test: network accepted the Projection and ran without error
 
-    def test_analysis_pipeline(self):
+    def test_analysis_pipeline(self) -> None:
+        """The analysis reports spikes, intervals and a rate."""
         n = AdExNeuron()
         train = np.array([float(n.step(500.0)) for _ in range(10000)])
         sc = spike_count(train)

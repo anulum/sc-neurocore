@@ -10,10 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_amari_field_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.amari_field import (
+    AmariNeuralField,
+)
+from tests.model_amari_field_support import (
+    amari_state,
+)
 
 
 class TestAmariFieldDynamics:
+    """Dynamics of the Amari neural field."""
+
     def test_bump_stimulus_activates_field(self) -> None:
         """Gaussian bump input should create localised activation."""
         n = AmariNeuralField()

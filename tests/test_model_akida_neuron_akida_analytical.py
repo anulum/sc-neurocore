@@ -10,11 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_akida_neuron_support import *  # noqa: F403
+from sc_neurocore.neurons.models.akida_neuron import (
+    AkidaNeuron,
+)
 
 
 class TestAkidaAnalytical:
-    def test_rank_order_decay_formula(self):
+    """Analytical behaviour of the Akida neuron."""
+
+    def test_rank_order_decay_formula(self) -> None:
         """V += int(weight · modulation^rank). Rank increments per event."""
         n = AkidaNeuron()
         w = 50
@@ -28,7 +32,7 @@ class TestAkidaAnalytical:
         n.step(w)
         assert n.v == 50 + 37 + 28 and n._rank == 3
 
-    def test_modulation_decay_sequence(self):
+    def test_modulation_decay_sequence(self) -> None:
         """modulation^rank: 1.0, 0.75, 0.5625, 0.4219, ..."""
         m = 0.75
         expected = [m**k for k in range(5)]
@@ -36,13 +40,13 @@ class TestAkidaAnalytical:
         assert abs(expected[1] - 0.75) < 1e-12
         assert abs(expected[2] - 0.5625) < 1e-12
 
-    def test_zero_weight_no_integration(self):
+    def test_zero_weight_no_integration(self) -> None:
         """weight=0 → no integration, rank does not increment."""
         n = AkidaNeuron()
         n.step(0)
         assert n.v == 0 and n._rank == 0
 
-    def test_rank_only_increments_on_nonzero(self):
+    def test_rank_only_increments_on_nonzero(self) -> None:
         """Rank increments only when weight != 0."""
         n = AkidaNeuron()
         n.step(50)  # rank → 1
@@ -50,7 +54,7 @@ class TestAkidaAnalytical:
         n.step(50)  # rank → 2
         assert n._rank == 2
 
-    def test_single_spike_only(self):
+    def test_single_spike_only(self) -> None:
         """Once _spiked=True, neuron never fires again."""
         n = AkidaNeuron(threshold=50)
         # First spike
@@ -60,14 +64,14 @@ class TestAkidaAnalytical:
         for _ in range(100):
             assert n.step(60) == 0
 
-    def test_spike_at_threshold(self):
+    def test_spike_at_threshold(self) -> None:
         """Spike when V >= threshold and not already spiked."""
         n = AkidaNeuron(threshold=100)
         # Feed until threshold
         n.step(100)  # V = 100 → spike
         assert n._spiked is True
 
-    def test_no_leak(self):
+    def test_no_leak(self) -> None:
         """No leak between events — V persists."""
         n = AkidaNeuron()
         n.step(50)
@@ -75,7 +79,7 @@ class TestAkidaAnalytical:
         n.step(0)  # zero input
         assert n.v == v_after  # unchanged
 
-    def test_integer_truncation(self):
+    def test_integer_truncation(self) -> None:
         """int() truncates toward zero."""
         n = AkidaNeuron()
         # weight=1, rank=1: int(1 * 0.75) = int(0.75) = 0

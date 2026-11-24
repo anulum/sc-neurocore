@@ -10,12 +10,31 @@
 
 from __future__ import annotations
 
-from tests.model_amari_field_support import *  # noqa: F403
+import numpy as np
+import time
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.amari_field import (
+    AmariNeuralField,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestAmariPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the Amari neural field."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = AmariNeuralField(n=64)
         I = np.ones(64) * 0.5
         N = 5000
@@ -29,7 +48,8 @@ class TestAmariPerformance:
             strict_minimum_per_second=5_000.0,
         )
 
-    def test_network_throughput(self):
+    def test_network_throughput(self) -> None:
+        """The network meets its throughput floor."""
         pop = Population(AmariNeuralField, n=3, label="bench")
         drive = PoissonInput(n=3, rate_hz=100.0, weight=1.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

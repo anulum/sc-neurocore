@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_adex_support import *  # noqa: F403
+from sc_neurocore.neurons.models.adex import (
+    AdExNeuron,
+)
+from tests.model_adex_support import (
+    _run,
+)
 
 
 class TestAdExExponentialSpike:
-    def test_exponential_upstroke(self):
+    """The exponential spike initiation of the AdEx neuron."""
+
+    def test_exponential_upstroke(self) -> None:
         """delta_T controls spike sharpness. Larger delta_T → softer spike."""
         n_sharp = AdExNeuron(delta_t=1.0)
         n_soft = AdExNeuron(delta_t=5.0)

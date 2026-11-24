@@ -10,10 +10,23 @@
 
 from __future__ import annotations
 
-from tests.model_ai_optimized_support import *  # noqa: F403
+import pytest
+import time
+from sc_neurocore.neurons.models.ai_optimized import (
+    AttentionGatedNeuron,
+    ContinuousAttractorNeuron,
+    DifferentiableSurrogateNeuron,
+    MetaPlasticNeuron,
+    MultiTimescaleNeuron,
+)
+from tests.performance_guard import (
+    assert_throughput_guard,
+)
 
 
 class TestAIOptimizedPerformance:
+    """Throughput of the AI-optimised neurons."""
+
     @pytest.mark.parametrize(
         "cls,min_perf",
         [
@@ -25,7 +38,8 @@ class TestAIOptimizedPerformance:
         ],
         ids=lambda c: c.__name__ if isinstance(c, type) else str(c),
     )
-    def test_throughput(self, cls: type, min_perf: int):
+    def test_throughput(self, cls: type, min_perf: int) -> None:
+        """Each neuron meets its throughput floor."""
         n = cls()
         N = min(min_perf, 10000)
         t0 = time.perf_counter()

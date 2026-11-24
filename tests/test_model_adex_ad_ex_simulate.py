@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_adex_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.adex import (
+    AdExNeuron,
+)
 
 
 class TestAdExSimulate:
     """Engineering-verification surface for ``AdExNeuron.simulate``."""
 
     def test_simulate_python_returns_finite_trace_and_spike_count(self) -> None:
+        """The Python simulation gives a finite trace and count."""
         n = AdExNeuron()
         trace, spikes = n.simulate(1000, current=250.0, backend="python")
         assert trace.shape == (1000,)
@@ -25,6 +30,7 @@ class TestAdExSimulate:
         assert n.v == float(trace[-1])
 
     def test_simulate_rejects_negative_steps_and_bad_backend(self) -> None:
+        """Negative steps and an unknown backend are rejected."""
         n = AdExNeuron()
         with pytest.raises(ValueError, match="n_steps"):
             n.simulate(-1, current=0.0, backend="python")
@@ -34,6 +40,7 @@ class TestAdExSimulate:
             n.simulate(10, current=float("nan"), backend="python")
 
     def test_simulate_rust_matches_python_under_default_contract(self) -> None:
+        """The Rust simulation matches Python by default."""
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
         py = AdExNeuron()
         rs = AdExNeuron()
@@ -44,6 +51,7 @@ class TestAdExSimulate:
         assert (rs.v, rs.w) == (py.v, py.w)
 
     def test_simulate_rust_accepts_nondefault_baseline_and_rejects_other_integrators(self) -> None:
+        """The Rust simulation takes the baseline integrator only."""
         pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
         n = AdExNeuron(integrator="rk4")
         with pytest.raises(RuntimeError, match="baseline_euler"):
@@ -57,6 +65,7 @@ class TestAdExSimulate:
         assert (rust.v, rust.w) == pytest.approx((python.v, python.w), abs=1e-12)
 
     def test_simulate_zero_steps_is_empty(self) -> None:
+        """Zero steps give an empty trace and keep the state."""
         n = AdExNeuron()
         before = (n.v, n.w)
         trace, spikes = n.simulate(0, current=250.0, backend="python")

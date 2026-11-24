@@ -10,13 +10,21 @@
 
 from __future__ import annotations
 
-from tests.model_alpha_support import *  # noqa: F403
+import numpy as np
+import numpy.typing as npt
+from sc_neurocore.neurons.models.alpha import (
+    AlphaNeuron,
+)
+from typing import (
+    cast,
+)
 
 
 class TestBatchAndDispatch:
     """The maintained batch lane matches the scalar golden loop."""
 
     def test_batch_matches_scalar_step_loop(self) -> None:
+        """The batch run matches a loop of single steps."""
         exc = 1.5 + 0.8 * np.sin(np.arange(256) * 0.037)
         inh = 0.6 + 0.3 * np.cos(np.arange(256) * 0.021)
         scalar = AlphaNeuron()
@@ -34,12 +42,14 @@ class TestBatchAndDispatch:
         assert batch["spike_count"] == expected_spikes
 
     def test_scalar_inhibitory_broadcast_matches_vector(self) -> None:
+        """A scalar inhibitory input broadcasts like a vector."""
         exc = np.full(64, 2.0)
         vector = AlphaNeuron().simulate(exc, np.full(64, 0.5), backend="python")
         scalar = AlphaNeuron().simulate(exc, 0.5, backend="python")
         np.testing.assert_array_equal(vector["v"], scalar["v"])
 
     def test_empty_batch_returns_initial_state(self) -> None:
+        """An empty batch returns the initial state."""
         result = AlphaNeuron(v=0.1, a_exc=0.2).simulate([], backend="python")
         assert cast(npt.NDArray[np.float64], result["v"]).size == 0
         assert result["v_final"] == 0.1
@@ -47,12 +57,14 @@ class TestBatchAndDispatch:
         assert result["spike_count"] == 0
 
     def test_simulate_writes_back_final_state(self) -> None:
+        """A simulation writes its final state back."""
         n = AlphaNeuron()
         result = n.simulate(np.full(200, 2.0), backend="python")
         assert n.v == result["v_final"]
         assert n.a_exc == result["a_exc_final"]
 
     def test_long_varied_run_is_finite_and_deterministic(self) -> None:
+        """A long varied run stays finite and deterministic."""
         exc = 2.0 + 0.5 * np.sin(np.arange(20_000, dtype=np.float64) * 0.013)
         inh = 0.8 + 0.2 * np.cos(np.arange(20_000, dtype=np.float64) * 0.007)
         first = AlphaNeuron().simulate(exc, inh, backend="python")

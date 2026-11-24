@@ -10,7 +10,29 @@
 
 from __future__ import annotations
 
-from tests.model_astrocyte_adapter_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    firing_rate,
+    spike_count,
+)
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.astrocyte_adapter import (
+    AstrocyteNeuron,
+)
 
 
 class TestAstrocyteAdapterPipeline:

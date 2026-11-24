@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5644
+    "test_files": 5638
   },
   "documentation": {
     "public_pages": [
@@ -3570,16 +3570,10 @@
       "tests/layers/test_sc_conv_layer_geometry.py",
       "tests/layers/test_sc_conv_layer_validation.py",
       "tests/learning_advanced_support.py",
-      "tests/model_adaptive_threshold_if_support.py",
-      "tests/model_adaptive_threshold_moe_support.py",
       "tests/model_adex_support.py",
       "tests/model_ai_optimized_support.py",
-      "tests/model_akida_neuron_support.py",
-      "tests/model_alpha_support.py",
       "tests/model_amari_field_support.py",
       "tests/model_arcane_neuron_support.py",
-      "tests/model_astrocyte_adapter_support.py",
-      "tests/model_astrocyte_support.py",
       "tests/model_balanced_resonate_and_fire_support.py",
       "tests/model_bertram_phantom_support.py",
       "tests/model_booth_rinzel_support.py",

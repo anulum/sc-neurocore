@@ -10,15 +10,21 @@
 
 from __future__ import annotations
 
-from tests.model_akida_neuron_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.akida_neuron import (
+    AkidaNeuron,
+)
 
 
 class TestAkidaDynamics:
-    def test_fires_with_large_weight(self):
+    """Dynamics of the Akida neuron."""
+
+    def test_fires_with_large_weight(self) -> None:
+        """A large weighted input makes the neuron fire."""
         n = AkidaNeuron()
         assert n.step(100) == 1
 
-    def test_accumulation_to_threshold(self):
+    def test_accumulation_to_threshold(self) -> None:
         """Multiple small weights accumulate to threshold."""
         n = AkidaNeuron(threshold=100)
         spikes = 0
@@ -26,7 +32,7 @@ class TestAkidaDynamics:
             spikes += n.step(30)
         assert spikes == 1  # fires once
 
-    def test_never_fires_with_tiny_input(self):
+    def test_never_fires_with_tiny_input(self) -> None:
         """Weight too small → int truncation → V never reaches threshold."""
         n = AkidaNeuron(threshold=100)
         # weight=1: ranks 0→0=1, 1→0, 2→0, ... V maxes at 1
@@ -35,7 +41,8 @@ class TestAkidaDynamics:
         assert n._spiked is False
 
     @pytest.mark.parametrize("weight", [20, 50, 100, 200])
-    def test_weight_sweep(self, weight: int):
+    def test_weight_sweep(self, weight: int) -> None:
+        """The integer voltage holds across a weight sweep."""
         n = AkidaNeuron()
         for _ in range(100):
             n.step(weight)

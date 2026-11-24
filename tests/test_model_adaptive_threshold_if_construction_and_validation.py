@@ -10,20 +10,25 @@
 
 from __future__ import annotations
 
-from tests.model_adaptive_threshold_if_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.adaptive_threshold_if import (
+    AdaptiveThresholdIFNeuron,
+)
 
 
 class TestConstructionAndValidation:
     """Construction normalises fields and rejects invalid configurations."""
 
     def test_catalogue_defaults(self) -> None:
+        """The defaults match the model catalogue."""
         n = AdaptiveThresholdIFNeuron()
         assert (n.v, n.theta) == (-65.0, -50.0)
         assert (n.v_rest, n.v_reset, n.theta_rest) == (-65.0, -65.0, -50.0)
         assert (n.delta_theta, n.tau_m, n.tau_theta, n.dt) == (5.0, 10.0, 50.0, 0.1)
 
     def test_scalar_fields_are_normalised_to_float(self) -> None:
-        n = AdaptiveThresholdIFNeuron(v=-60, tau_m=8)  # type: ignore[arg-type]
+        """Integer fields are normalised to floats."""
+        n = AdaptiveThresholdIFNeuron(v=-60, tau_m=8)
         assert isinstance(n.v, float) and isinstance(n.tau_m, float)
 
     @pytest.mark.parametrize(
@@ -47,10 +52,12 @@ class TestConstructionAndValidation:
         ],
     )
     def test_rejects_non_physical_configuration(self, kwargs: dict[str, float]) -> None:
+        """Each non-physical configuration is rejected."""
         with pytest.raises(ValueError):
             AdaptiveThresholdIFNeuron(**kwargs)
 
     @pytest.mark.parametrize("field", ["v", "theta", "tau_m"])
     def test_rejects_non_numeric_fields(self, field: str) -> None:
+        """Non-numeric fields are rejected."""
         with pytest.raises(ValueError, match="must be numeric"):
             AdaptiveThresholdIFNeuron(**{field: "fast"})  # type: ignore[arg-type]

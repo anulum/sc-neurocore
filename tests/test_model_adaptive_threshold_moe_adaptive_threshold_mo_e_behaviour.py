@@ -10,30 +10,38 @@
 
 from __future__ import annotations
 
-from tests.model_adaptive_threshold_moe_support import *  # noqa: F403
+from sc_neurocore.neurons.models.adaptive_threshold_moe import (
+    AdaptiveThresholdMoENeuron,
+)
 
 
 class TestAdaptiveThresholdMoEBehaviour:
-    def test_integer_spike_count_and_soft_reset_residual(self):
+    """Behaviour of the adaptive-threshold MoE neuron."""
+
+    def test_integer_spike_count_and_soft_reset_residual(self) -> None:
+        """A step emits integer spikes and keeps the residual."""
         n = AdaptiveThresholdMoENeuron(k=4.0, ema_alpha=1.0)
         spikes = n.step(2.0)
         assert spikes == 4
         assert n.v == 0.0
         assert n.v_th == 0.5
 
-    def test_negative_drive_does_not_emit_negative_spikes(self):
+    def test_negative_drive_does_not_emit_negative_spikes(self) -> None:
+        """Negative drive emits no negative spikes."""
         n = AdaptiveThresholdMoENeuron(k=4.0, ema_alpha=1.0)
         assert n.step(-2.0) == 0
         assert n.v == -2.0
         assert n.v_th == 0.5
 
-    def test_collapsed_mode_preserves_membrane_state(self):
+    def test_collapsed_mode_preserves_membrane_state(self) -> None:
+        """Collapsed mode keeps the membrane state."""
         n = AdaptiveThresholdMoENeuron(k=4.0, ema_alpha=1.0)
         n.v = 0.75
         assert n.step_collapsed(2.0) == 4
         assert n.v == 0.75
 
-    def test_sparsity_reflects_thresholded_residual(self):
+    def test_sparsity_reflects_thresholded_residual(self) -> None:
+        """Sparsity reflects the thresholded residual."""
         n = AdaptiveThresholdMoENeuron(k=4.0, ema_alpha=1.0)
         n.step(0.2)
         assert n.sparsity() == 1.0

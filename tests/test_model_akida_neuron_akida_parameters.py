@@ -10,12 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_akida_neuron_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.akida_neuron import (
+    AkidaNeuron,
+)
 
 
 class TestAkidaParameters:
+    """Parameter sweeps of the Akida neuron."""
+
     @pytest.mark.parametrize("threshold", [50, 100, 200])
-    def test_threshold_sweep(self, threshold: int):
+    def test_threshold_sweep(self, threshold: int) -> None:
+        """Each threshold in the sweep is reached."""
         n = AkidaNeuron(threshold=threshold)
         for _ in range(100):
             n.step(50)
@@ -24,13 +30,14 @@ class TestAkidaParameters:
             assert n._spiked is True
 
     @pytest.mark.parametrize("modulation", [0.5, 0.75, 0.9])
-    def test_modulation_sweep(self, modulation: float):
+    def test_modulation_sweep(self, modulation: float) -> None:
+        """The integer voltage holds across a modulation sweep."""
         n = AkidaNeuron(modulation=modulation)
         for _ in range(20):
             n.step(50)
         assert isinstance(n.v, int)
 
-    def test_higher_modulation_more_accumulation(self):
+    def test_higher_modulation_more_accumulation(self) -> None:
         """Higher modulation → slower decay → more total integration."""
         n_low = AkidaNeuron(modulation=0.5, threshold=10000)
         n_high = AkidaNeuron(modulation=0.9, threshold=10000)

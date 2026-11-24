@@ -10,7 +10,11 @@
 
 from __future__ import annotations
 
-from tests.model_adaptive_threshold_if_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.adaptive_threshold_if import (
+    AdaptiveThresholdIFNeuron,
+)
 
 
 class TestAtomicity:
@@ -18,6 +22,7 @@ class TestAtomicity:
 
     @pytest.mark.parametrize("current", [float("nan"), float("inf"), -float("inf")])
     def test_rejects_non_finite_current(self, current: float) -> None:
+        """A non-finite current is rejected before any state change."""
         n = AdaptiveThresholdIFNeuron()
         before = (n.v, n.theta)
         with pytest.raises(ValueError, match="current"):
@@ -25,6 +30,7 @@ class TestAtomicity:
         assert (n.v, n.theta) == before
 
     def test_rejects_non_finite_runtime_voltage_before_update(self) -> None:
+        """A corrupted voltage is rejected before the update."""
         n = AdaptiveThresholdIFNeuron(v=-60.0, theta=-45.0)
         n.v = float("nan")
         with pytest.raises(ValueError, match="state"):
@@ -32,6 +38,7 @@ class TestAtomicity:
         assert np.isnan(n.v)
 
     def test_rejects_non_finite_runtime_threshold_before_update(self) -> None:
+        """A corrupted threshold is rejected before the update."""
         n = AdaptiveThresholdIFNeuron(v=-60.0, theta=-45.0)
         n.theta = float("nan")
         with pytest.raises(ValueError, match="state"):
@@ -39,6 +46,7 @@ class TestAtomicity:
         assert np.isnan(n.theta)
 
     def test_rejects_non_finite_relaxation_update_before_state_mutation(self) -> None:
+        """A non-finite relaxation update is rejected without changing state."""
         n = AdaptiveThresholdIFNeuron(v=-1.0e308, theta=-45.0)
         before = (n.v, n.theta)
         with pytest.raises(FloatingPointError, match="exact relaxation"):
@@ -46,6 +54,7 @@ class TestAtomicity:
         assert (n.v, n.theta) == before
 
     def test_rejects_non_finite_threshold_jump_before_state_mutation(self) -> None:
+        """A non-finite threshold jump is rejected without changing state."""
         n = AdaptiveThresholdIFNeuron(v=1.2e308, theta=1.0e308, delta_theta=1.0e308)
         before = (n.v, n.theta)
         with pytest.raises(FloatingPointError, match="threshold jump"):
@@ -53,6 +62,7 @@ class TestAtomicity:
         assert (n.v, n.theta) == before
 
     def test_rejects_invalid_runtime_configuration_before_mutation(self) -> None:
+        """A corrupted runtime configuration is rejected without changing state."""
         n = AdaptiveThresholdIFNeuron()
         n.tau_m = 0.0
         before = (n.v, n.theta)

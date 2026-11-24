@@ -10,16 +10,35 @@
 
 from __future__ import annotations
 
-from tests.model_amari_field_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.amari_field import (
+    AmariNeuralField,
+)
 
 
 class TestAmariPipeline:
-    def test_population(self):
+    """The Amari neural field in the network pipeline."""
+
+    def test_population(self) -> None:
+        """A population of three fields is built."""
         assert Population(AmariNeuralField, n=3, label="amari").n == 3
 
-    def test_network_runs(self):
-        """Network accepts AmariNeuralField. step() gets float from PoissonInput,
-        but the model's step() expects array — Population wraps it."""
+    def test_network_runs(self) -> None:
+        """Network accepts AmariNeuralField.
+
+        step() gets float from PoissonInput, but the model's step() expects array — Population wraps it.
+        """
         pop = Population(AmariNeuralField, n=3, label="amari")
         drive = PoissonInput(n=3, rate_hz=100.0, weight=1.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

@@ -1320,6 +1320,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 59 top-level model-zoo test modules of the adaptive-threshold IF,
+  adaptive-threshold MoE, AdEx, AI-optimised, Akida, alpha, Amari field,
+  Arcane and astrocyte neurons import their names explicitly instead of
+  through a suppressed star import, gain their missing docstrings and
+  type annotations and are enrolled in the docstring policy, and the
+  support modules left without an importer are deleted.
+
 - The 15 top-level HDC and IBM verification-circuit test modules import
   their names explicitly instead of through a suppressed star import,
   gain their missing docstrings and are enrolled in the docstring

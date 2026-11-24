@@ -10,12 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_astrocyte_support import *  # noqa: F403
+import time
+from sc_neurocore.neurons.models.astrocyte import (
+    AstrocyteModel,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestAstrocytePerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the astrocyte model."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = AstrocyteModel()
         N = 20000
         t0 = time.perf_counter()

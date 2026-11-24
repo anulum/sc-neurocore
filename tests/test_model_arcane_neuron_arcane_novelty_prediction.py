@@ -10,25 +10,29 @@
 
 from __future__ import annotations
 
-from tests.model_arcane_neuron_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.arcane_neuron import (
+    ArcaneNeuron,
+)
 
 
 class TestArcaneNoveltyPrediction:
     """Self-referential: predict own state → surprise → novelty."""
 
-    def test_surprise_computed(self):
+    def test_surprise_computed(self) -> None:
+        """The surprise is non-negative."""
         n = ArcaneNeuron()
         n.step(2.0)
         assert n._surprise >= 0
 
-    def test_novelty_sigmoid(self):
-        """novelty = sigmoid(κ·(surprise - baseline)). Bounded [0, 1]."""
+    def test_novelty_sigmoid(self) -> None:
+        """The novelty is sigmoid(κ·(surprise - baseline)), bounded in [0, 1]."""
         n = ArcaneNeuron()
         for _ in range(100):
             n.step(2.0)
         assert 0 <= n._novelty <= 1
 
-    def test_predictor_weights_normalised(self):
+    def test_predictor_weights_normalised(self) -> None:
         """w_pred is normalised after each update."""
         n = ArcaneNeuron()
         for _ in range(1000):
@@ -36,7 +40,7 @@ class TestArcaneNoveltyPrediction:
         norm = np.linalg.norm(n.w_pred)
         assert abs(norm - 1.0) < 0.01 or norm == 0
 
-    def test_meta_lr_increases_with_novelty(self):
+    def test_meta_lr_increases_with_novelty(self) -> None:
         """meta_lr = lr_base * (1 + η * novelty). Higher novelty → faster learning."""
         n = ArcaneNeuron()
         n._novelty = 0.0
@@ -45,8 +49,8 @@ class TestArcaneNoveltyPrediction:
         lr_high = n.meta_learning_rate
         assert lr_high > lr_low
 
-    def test_confidence_decreases_with_novelty(self):
-        """confidence = 1 - mean(novelty_history). High novelty → low confidence."""
+    def test_confidence_decreases_with_novelty(self) -> None:
+        """The confidence is 1 - mean(novelty_history), so high novelty gives low confidence."""
         n = ArcaneNeuron()
         n._novelty_history = [0.9] * 20
         n.step(0.0)  # updates confidence

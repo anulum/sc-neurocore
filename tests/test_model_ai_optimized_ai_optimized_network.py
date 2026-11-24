@@ -10,13 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_ai_optimized_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.ai_optimized import (
+    CompositionalBindingNeuron,
+    DifferentiableSurrogateNeuron,
+    MultiTimescaleNeuron,
+)
 
 
 class TestAIOptimizedNetwork:
     """Pipeline wiring for representative models."""
 
-    def test_multitimescale_network(self):
+    def test_multitimescale_network(self) -> None:
+        """A multi-timescale network produces spikes."""
         pop = Population(MultiTimescaleNeuron, n=5, label="mt")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=3.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -24,7 +41,8 @@ class TestAIOptimizedNetwork:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_differentiable_surrogate_network(self):
+    def test_differentiable_surrogate_network(self) -> None:
+        """A differentiable-surrogate network produces spikes."""
         pop = Population(DifferentiableSurrogateNeuron, n=10, label="ds")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -32,7 +50,8 @@ class TestAIOptimizedNetwork:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_compositional_binding_network(self):
+    def test_compositional_binding_network(self) -> None:
+        """A compositional-binding network produces spikes."""
         pop = Population(CompositionalBindingNeuron, n=10, label="cb")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=2.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

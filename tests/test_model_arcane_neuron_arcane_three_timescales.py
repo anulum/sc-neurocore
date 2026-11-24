@@ -10,18 +10,22 @@
 
 from __future__ import annotations
 
-from tests.model_arcane_neuron_support import *  # noqa: F403
+from sc_neurocore.neurons.models.arcane_neuron import (
+    ArcaneNeuron,
+)
 
 
 class TestArcaneThreeTimescales:
-    def test_fast_fastest(self):
+    """The three timescales of the Arcane neuron."""
+
+    def test_fast_fastest(self) -> None:
         """v_fast (τ=5) changes fastest."""
         n = ArcaneNeuron(theta=100.0)  # prevent spikes
         n.step(2.0)
         assert abs(n.v_fast) > abs(n.v_work)
         assert abs(n.v_fast) > abs(n.v_deep)
 
-    def test_working_memory_on_spike(self):
+    def test_working_memory_on_spike(self) -> None:
         """v_work updates only when spike occurs (gated by spike)."""
         n = ArcaneNeuron()
         for _ in range(5000):

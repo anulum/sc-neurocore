@@ -10,14 +10,40 @@
 
 from __future__ import annotations
 
-from tests.model_arcane_neuron_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    firing_rate,
+    spike_count,
+)
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.arcane_neuron import (
+    ArcaneNeuron,
+)
 
 
 class TestArcanePipeline:
-    def test_population(self):
+    """The Arcane neuron in the network pipeline."""
+
+    def test_population(self) -> None:
+        """A population of ten Arcane neurons is built."""
         assert Population(ArcaneNeuron, n=10, label="arcane").n == 10
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network produces spikes."""
         pop = Population(ArcaneNeuron, n=10, label="arcane")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=3.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -25,7 +51,8 @@ class TestArcanePipeline:
         net.run(duration=2.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_projection_wiring(self):
+    def test_projection_wiring(self) -> None:
+        """A projection drives the target population."""
         src = Population(ArcaneNeuron, n=5, label="src")
         tgt = Population(ArcaneNeuron, n=5, label="tgt")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=3.0, dt=0.001, seed=42)
@@ -37,7 +64,8 @@ class TestArcanePipeline:
         assert mon_src.count > 0
         assert mon_tgt.count > 0
 
-    def test_analysis(self):
+    def test_analysis(self) -> None:
+        """The analysis reports spikes and a rate."""
         n = ArcaneNeuron()
         train = np.array([float(n.step(2.0)) for _ in range(5000)])
         sc = spike_count(train)
@@ -45,7 +73,8 @@ class TestArcanePipeline:
         rate = firing_rate(train, dt=0.001)
         assert rate > 0
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = ArcaneNeuron()

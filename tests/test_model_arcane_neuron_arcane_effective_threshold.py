@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_arcane_neuron_support import *  # noqa: F403
+from sc_neurocore.neurons.models.arcane_neuron import (
+    ArcaneNeuron,
+)
+from tests.model_arcane_neuron_support import (
+    _run,
+)
 
 
 class TestArcaneEffectiveThreshold:
-    def test_threshold_modulated_by_deep(self):
+    """The effective threshold of the Arcane neuron."""
+
+    def test_threshold_modulated_by_deep(self) -> None:
         """eff_threshold = θ · (1 + γ·v_deep) · (1 - δ·confidence).
 
         Higher v_deep → higher threshold. Higher confidence → lower threshold.
@@ -26,7 +33,7 @@ class TestArcaneEffectiveThreshold:
         eff = n.theta * (1 + n.gamma * n.v_deep) * (1 - n.delta_conf * n._confidence)
         assert abs(eff - 0.85) < 0.01
 
-    def test_confident_lowers_threshold(self):
+    def test_confident_lowers_threshold(self) -> None:
         """High confidence → lower effective threshold → fires more easily."""
         n_conf = ArcaneNeuron()
         n_unconf = ArcaneNeuron()

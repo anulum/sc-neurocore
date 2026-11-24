@@ -10,7 +10,14 @@
 
 from __future__ import annotations
 
-from tests.model_alpha_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.alpha import (
+    AlphaNeuron,
+)
+from typing import (
+    cast,
+)
 
 
 class TestAtomicity:
@@ -21,12 +28,14 @@ class TestAtomicity:
         (("v", "state must be numeric"), ("tau_v", "parameters must be numeric")),
     )
     def test_rejects_non_numeric_runtime_fields(self, field: str, message: str) -> None:
+        """Non-numeric runtime fields are rejected."""
         n = AlphaNeuron()
         setattr(n, field, "invalid")
         with pytest.raises(ValueError, match=message):
             n.step(0.0)
 
     def test_rejects_non_numeric_runtime_current(self) -> None:
+        """A non-numeric current is rejected without changing state."""
         n = AlphaNeuron()
         before = (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh)
         with pytest.raises(ValueError, match="current values must be numeric"):
@@ -35,6 +44,7 @@ class TestAtomicity:
 
     @pytest.mark.parametrize("current", [float("nan"), float("inf"), -float("inf")])
     def test_rejects_non_finite_current(self, current: float) -> None:
+        """A non-finite current is rejected before any state change."""
         n = AlphaNeuron()
         before = (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh)
         with pytest.raises(ValueError, match="current"):
@@ -42,6 +52,7 @@ class TestAtomicity:
         assert (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh) == before
 
     def test_rejects_non_finite_runtime_state_before_update(self) -> None:
+        """Corrupted state is rejected before the update."""
         n = AlphaNeuron()
         n.v = float("nan")
         with pytest.raises(ValueError, match="state"):
@@ -49,6 +60,7 @@ class TestAtomicity:
         assert np.isnan(n.v)
 
     def test_rejects_invalid_runtime_configuration_before_mutation(self) -> None:
+        """A corrupted runtime configuration is rejected without changing state."""
         n = AlphaNeuron()
         n.tau_exc = 0.0
         before = (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh)
@@ -57,6 +69,7 @@ class TestAtomicity:
         assert (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh) == before
 
     def test_rejects_non_finite_update_before_state_mutation(self) -> None:
+        """A non-finite update is rejected without changing state."""
         n = AlphaNeuron(v=-1.0e308)
         before = (n.v, n.a_exc, n.i_exc, n.a_inh, n.i_inh)
         with pytest.raises((FloatingPointError, ValueError), match="finite"):
