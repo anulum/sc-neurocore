@@ -6913,7 +6913,7 @@
           "pure numeric calls with multiplicative operators",
           "multiplicative operators"
         ],
-        "operators": 65,
+        "operators": 71,
         "basis": "b"
       },
       "stubs": [

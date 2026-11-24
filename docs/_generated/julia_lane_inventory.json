@@ -5952,7 +5952,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/julia/neurons/traub_miles.jl",
-      "sha256": "fed45729443d437f32d62ceff0c4f9d357f5c29d2a085f0af6cfe12868986116",
+      "sha256": "3cdc60a7331f54dd43bc3b610cb5260dd1e23ab1831569c8145353cc7473b32d",
       "parses": true,
       "authoritative": false,
       "loaded": false,

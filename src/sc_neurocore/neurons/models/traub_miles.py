@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Traub & Miles 1991 — reduced hippocampal CA3 pyramidal
 
+"""Traub & Miles 1991 reduced CA3 pyramidal neuron, integrated by ten-substep RK4."""
+
 from __future__ import annotations
 
 import math
@@ -33,6 +35,7 @@ class TraubMilesNeuron:
     v_threshold: float = -20.0
 
     def __post_init__(self) -> None:
+        """Coerce every field to float and reject an invalid configuration or state."""
         self._validate_configuration(coerce=True)
 
     def _validate_configuration(self, *, coerce: bool = False) -> None:
@@ -85,15 +88,30 @@ class TraubMilesNeuron:
 
     @staticmethod
     def _rates(v: float) -> tuple[float, float, float, float, float, float]:
+        """Return (alpha_m, beta_m, alpha_h, beta_h, alpha_n, beta_n) at voltage ``v``.
+
+        ``alpha_m``, ``beta_m`` and ``alpha_n`` are 0/0 at -54, -27 and -52 mV. Their
+        limits are ``a k`` (1.28, 1.40 and 0.16); within ``|d| <= 1e-6`` of each the
+        first-order expansion ``a (k +- d / 2)`` replaces the closed form, which keeps the
+        rate continuous and leaves it unchanged everywhere else.
+        """
         try:
             d = v + 54.0
-            am = 0.32 * d / (1.0 - math.exp(-d / 4.0)) if abs(d) > 1e-6 else 8.0
+            am = 0.32 * d / (1.0 - math.exp(-d / 4.0)) if abs(d) > 1e-6 else 0.32 * (4.0 + 0.5 * d)
             d2 = v + 27.0
-            bm = 0.28 * d2 / (math.exp(d2 / 5.0) - 1.0) if abs(d2) > 1e-6 else 5.6
+            bm = (
+                0.28 * d2 / (math.exp(d2 / 5.0) - 1.0)
+                if abs(d2) > 1e-6
+                else 0.28 * (5.0 - 0.5 * d2)
+            )
             ah = 0.128 * math.exp(-(v + 50.0) / 18.0)
             bh = 4.0 / (1.0 + math.exp(-(v + 27.0) / 5.0))
             d3 = v + 52.0
-            an = 0.032 * d3 / (1.0 - math.exp(-d3 / 5.0)) if abs(d3) > 1e-6 else 0.32
+            an = (
+                0.032 * d3 / (1.0 - math.exp(-d3 / 5.0))
+                if abs(d3) > 1e-6
+                else 0.032 * (5.0 + 0.5 * d3)
+            )
             bn = 0.5 * math.exp(-(v + 57.0) / 40.0)
         except (OverflowError, ZeroDivisionError) as exc:
             raise FloatingPointError("Traub-Miles rate evaluation overflowed") from exc
@@ -120,6 +138,26 @@ class TraubMilesNeuron:
         return dv, dm, dh, dn
 
     def step(self, current: float) -> int:
+        """Advance one step of ten RK4 substeps under a constant input current.
+
+        Parameters
+        ----------
+        current : float
+            External drive, in uA/cm^2; it must be finite.
+
+        Returns
+        -------
+        int
+            1 when the voltage crosses ``v_threshold`` upward during the step, else 0.
+
+        Raises
+        ------
+        ValueError
+            If ``current`` is not finite or the configuration is invalid.
+        FloatingPointError
+            If a rate, derivative or candidate state leaves its valid range; the state is
+            then left unchanged.
+        """
         drive = float(current)
         if not math.isfinite(drive):
             raise ValueError("current must be finite")
@@ -159,4 +197,5 @@ class TraubMilesNeuron:
         return 1 if (self.v >= self.v_threshold and v_prev < self.v_threshold) else 0
 
     def reset(self) -> None:
+        """Restore the resting voltage and gate values of the default neuron."""
         self.v, self.m, self.h, self.n = -67.0, 0.05, 0.6, 0.3

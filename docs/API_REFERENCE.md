@@ -37586,8 +37586,11 @@ Traub & Miles 1991 — reduced hippocampal CA3 pyramidal.
 Reference: Traub, R.D. & Miles, R. (1991). Neuronal Networks of the Hippocampus. Cambridge Univ. Press.
 
 - **__post_init__**()
+  - Coerce every field to float and reject an invalid configuration or state.
 - **step**(current)
+  - Advance one step of ten RK4 substeps under a constant input current.
 - **reset**()
+  - Restore the resting voltage and gate values of the default neuron.
 
 ---
 

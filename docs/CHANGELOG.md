@@ -657,6 +657,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `TraubMilesNeuron` now takes the analytic limits at its three removable
+  rate singularities: alpha_m(-54 mV) = 1.28, beta_m(-27 mV) = 1.40 and
+  alpha_n(-52 mV) = 0.16, where `8.0`, `5.6` and `0.32` (6.25, 4 and 2
+  times the limits) were returned. Within 1e-6 mV of each point the rate
+  is the first-order expansion about the limit, and the closed form is
+  unchanged outside it. The Python reference, the Rust engine and safety
+  crates, and the Go and Julia lanes evaluate the same expression; a
+  new test module and Rust and Go tests check the limits, the window and
+  its edge, and the Julia lane bit for bit against Python.
+
 - The six SHD weight-extraction tool test modules skip again without
   the torch extra. Since they import their names explicitly, they took
   them straight from the tool, which exits without torch, before their

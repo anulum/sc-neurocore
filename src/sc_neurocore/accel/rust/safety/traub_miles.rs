@@ -182,13 +182,13 @@ fn rates(v: f64) -> Result<(f64, f64, f64, f64, f64, f64), &'static str> {
     let am = if d.abs() > 1e-6 {
         0.32 * d / (1.0 - (-d / 4.0).exp())
     } else {
-        8.0
+        0.32 * (4.0 + 0.5 * d)
     };
     let d2 = v + 27.0;
     let bm = if d2.abs() > 1e-6 {
         0.28 * d2 / ((d2 / 5.0).exp() - 1.0)
     } else {
-        5.6
+        0.28 * (5.0 - 0.5 * d2)
     };
     let ah = 0.128 * (-(v + 50.0) / 18.0).exp();
     let bh = 4.0 / (1.0 + (-(v + 27.0) / 5.0).exp());
@@ -196,7 +196,7 @@ fn rates(v: f64) -> Result<(f64, f64, f64, f64, f64, f64), &'static str> {
     let an = if d3.abs() > 1e-6 {
         0.032 * d3 / (1.0 - (-d3 / 5.0).exp())
     } else {
-        0.32
+        0.032 * (5.0 + 0.5 * d3)
     };
     let bn = 0.5 * (-(v + 57.0) / 40.0).exp();
     for rate in [am, bm, ah, bh, an, bn] {
@@ -246,5 +246,25 @@ mod tests {
         assert!((state.h - 0.5626824931070477).abs() < 1e-15);
         assert!((state.n - 0.30356298261126924).abs() < 1e-15);
         assert!((state.v - (-65.66233161606698)).abs() > 1e-3);
+    }
+
+    #[test]
+    fn test_traub_miles_removable_singularities_take_the_analytic_limits() {
+        // alpha_m, beta_m and alpha_n are 0/0 at -54, -27 and -52 mV; their limits are a*k.
+        let pick = |v: f64, index: usize| {
+            let (am, bm, ah, bh, an, bn) = rates(v).unwrap();
+            [am, bm, ah, bh, an, bn][index]
+        };
+        for (index, v0, limit) in [(0, -54.0, 1.28), (1, -27.0, 1.40), (4, -52.0, 0.16)] {
+            for offset in [0.0, 1e-12, -1e-9, 1e-7, -5e-7, 1e-6] {
+                let rate = pick(v0 + offset, index);
+                assert!((rate - limit).abs() <= 0.5 * f64::abs(offset) + 1e-15);
+            }
+            for sign in [-1.0, 1.0] {
+                let inside = pick(v0 + sign * 0.99e-6, index);
+                let outside = pick(v0 + sign * 1.01e-6, index);
+                assert!((outside - inside).abs() <= 0.5 * 0.02e-6 + 1e-9);
+            }
+        }
     }
 }

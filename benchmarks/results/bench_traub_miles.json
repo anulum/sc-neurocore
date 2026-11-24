@@ -1,9 +1,9 @@
 {
   "meta": {
-    "timestamp_utc": "2026-06-01T12:45:55Z",
+    "timestamp_utc": "2026-11-24T15:58:04Z",
     "cpu": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
-    "platform": "Linux-6.17.0-29-generic-x86_64-with-glibc2.39",
-    "python": "3.12.3",
+    "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
+    "python": "3.12.16",
     "n_steps": 20000,
     "parity_steps": 2000,
     "current": 5.0,
@@ -13,8 +13,8 @@
     "python": {
       "available": true,
       "used": true,
-      "wall_ms": 2478.778,
-      "steps_per_s": 8068.0,
+      "wall_ms": 2551.856,
+      "steps_per_s": 7837.0,
       "state": {
         "spikes": 244,
         "v": -82.54672240414472,
@@ -26,9 +26,9 @@
     "rust": {
       "available": true,
       "used": true,
-      "wall_ms": 57.499,
-      "steps_per_s": 347831.0,
-      "speedup_over_python": 43.11,
+      "wall_ms": 59.842,
+      "steps_per_s": 334213.0,
+      "speedup_over_python": 42.64,
       "state": {
         "spikes": 244,
         "v": -82.54672240414394,

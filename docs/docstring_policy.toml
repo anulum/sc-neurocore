@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5096
+expected_file_count = 5098
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20428,3 +20428,11 @@ rationale = "Exercise SC-NeuroCore: gdsii gds file roundtrip."
 [[file]]
 path = "tests/test_optics/test_gdsii_layout_arithmetic.py"
 rationale = "Exercise SC-NeuroCore: gdsii layout arithmetic."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/traub_miles.py"
+rationale = "Public Traub-Miles 1991 neuron model whose removable rate singularities take their analytic limits, exercised by the dedicated limit tests."
+
+[[file]]
+path = "tests/test_traub_miles_removable_rate_limits.py"
+rationale = "Exercise SC-NeuroCore: Traub-Miles removable rate limits, window continuity and the Julia lane."

@@ -76,19 +76,21 @@ func ValidateTraubMiles(s *TraubMilesNeuronState) bool {
 
 func traubMilesRates(v float64) (float64, float64, float64, float64, float64, float64, error) {
 	d := v + 54.0
-	am := 8.0
+	// Inside |d| <= 1e-6 the 0/0 forms take their first-order expansion about the limit a*k;
+	// float64(...) keeps the product from fusing into an FMA, so every lane rounds alike.
+	am := 0.32 * (4.0 + float64(0.5*d))
 	if math.Abs(d) > 1.0e-6 {
 		am = 0.32 * d / (1.0 - math.Exp(-d/4.0))
 	}
 	d2 := v + 27.0
-	bm := 5.6
+	bm := 0.28 * (5.0 - float64(0.5*d2))
 	if math.Abs(d2) > 1.0e-6 {
 		bm = 0.28 * d2 / (math.Exp(d2/5.0) - 1.0)
 	}
 	ah := 0.128 * math.Exp(-(v+50.0)/18.0)
 	bh := 4.0 / (1.0 + math.Exp(-(v+27.0)/5.0))
 	d3 := v + 52.0
-	an := 0.32
+	an := 0.032 * (5.0 + float64(0.5*d3))
 	if math.Abs(d3) > 1.0e-6 {
 		an = 0.032 * d3 / (1.0 - math.Exp(-d3/5.0))
 	}

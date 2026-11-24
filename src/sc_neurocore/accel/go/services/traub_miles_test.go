@@ -59,3 +59,40 @@ func TestTraubMilesStepPreservesStateOnInvalidCurrent(t *testing.T) {
 		t.Fatalf("state mutated after invalid current: %.17g %.17g %.17g %.17g", state.V, state.M, state.H, state.N)
 	}
 }
+
+// traubMilesRate returns rate number index of traubMilesRates(v), failing the test on an error.
+func traubMilesRate(t *testing.T, v float64, index int) float64 {
+	t.Helper()
+	am, bm, ah, bh, an, bn, err := traubMilesRates(v)
+	if err != nil {
+		t.Fatalf("rates(%v) failed: %v", v, err)
+	}
+	return []float64{am, bm, ah, bh, an, bn}[index]
+}
+
+// TestTraubMilesRatesTakeTheAnalyticLimitsAtTheRemovableSingularities checks that alpha_m, beta_m
+// and alpha_n, which are 0/0 at -54, -27 and -52 mV, take their limits a*k inside the 1e-6 window
+// and stay continuous across its edge.
+func TestTraubMilesRatesTakeTheAnalyticLimitsAtTheRemovableSingularities(t *testing.T) {
+	cases := []struct {
+		index int
+		v0    float64
+		limit float64
+	}{{0, -54.0, 1.28}, {1, -27.0, 1.40}, {4, -52.0, 0.16}}
+	for _, c := range cases {
+		for _, offset := range []float64{0.0, 1e-12, -1e-9, 1e-7, -5e-7, 1e-6} {
+			rate := traubMilesRate(t, c.v0+offset, c.index)
+			if math.Abs(rate-c.limit) > 0.5*math.Abs(offset)+1e-15 {
+				t.Fatalf("rate %d at %v = %.17g, limit %.17g", c.index, c.v0+offset, rate, c.limit)
+			}
+		}
+		// Across the window edge the rate moves by no more than the closed form's rounding.
+		for _, sign := range []float64{-1.0, 1.0} {
+			inside := traubMilesRate(t, c.v0+sign*0.99e-6, c.index)
+			outside := traubMilesRate(t, c.v0+sign*1.01e-6, c.index)
+			if math.Abs(outside-inside) > 0.5*0.02e-6+1e-9 {
+				t.Fatalf("rate %d jumps by %.3g across the window edge", c.index, outside-inside)
+			}
+		}
+	}
+}
