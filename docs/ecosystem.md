@@ -18,7 +18,7 @@ existing software workbench; the smaller components, general circuit platform
 and manufacturing integrations are at the stages shown below.
 
 
-_Last reviewed: 2026-11-22. Status describes the documented delivery boundary,
+_Last reviewed: 2026-11-24. Status describes the documented delivery boundary,
 not blanket qualification of every model, backend or physical target._
 
 <div class="grid cards" markdown="1">

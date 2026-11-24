@@ -609,6 +609,10 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   134; one is new, the folded energy estimator's import of the NIR bridge.
   The print page is rendered again.
 
+- The group and project map's review date is 2026-11-24, after its status
+  statements were checked again against the public repositories; the print
+  page is rendered again.
+
 - `sc_neurocore.studio.project` held two responsibilities, project storage
   and the graph-to-target pipeline. The pipeline (`run_pipeline`,
   `PIPELINE_ROUTE`, `PIPELINE_COSIM_STEP_LIMIT`, `PIPELINE_Q_FORMATS`) now
