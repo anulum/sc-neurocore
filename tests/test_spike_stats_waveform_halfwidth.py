@@ -10,22 +10,33 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_waveform_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.waveform import (
+    waveform_halfwidth,
+)
+from tests.spike_stats_waveform_support import (
+    _typical_waveform,
+)
 
 
 class TestHalfwidth:
-    def test_typical(self):
+    """The half-width of a spike waveform."""
+
+    def test_typical(self) -> None:
+        """The half-width of the synthetic spike is computed (the check only excludes infinity)."""
         w = _typical_waveform()
         result = waveform_halfwidth(w)
         assert np.isfinite(result) or np.isnan(result)
 
-    def test_no_crossing(self):
+    def test_no_crossing(self) -> None:
+        """A waveform that never crosses half its trough gives NaN."""
         # All positive — trough/2 never crossed
         w = np.array([5.0, 4.0, 3.0, 4.0, 5.0])
         result = waveform_halfwidth(w)
         assert np.isnan(result)
 
-    def test_single_crossing(self):
+    def test_single_crossing(self) -> None:
+        """The half-width of a waveform crossing half its trough once is computed (the check only excludes infinity)."""
         # Only one point below half — below.size < 2
         w = np.array([1.0, 0.5, -0.1, 0.5, 1.0])
         result = waveform_halfwidth(w)

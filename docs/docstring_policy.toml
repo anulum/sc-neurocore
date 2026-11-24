@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4497
+expected_file_count = 4525
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -18032,3 +18032,115 @@ rationale = "Exercise SC-NeuroCore: spike stats sorting quality silhouette score
 [[file]]
 path = "tests/test_spike_stats_sorting_quality_snr.py"
 rationale = "Exercise SC-NeuroCore: spike stats sorting quality snr."
+
+[[file]]
+path = "tests/spike_stats_waveform_support.py"
+rationale = "Provide the synthetic extracellular spike waveform of the waveform-shape tests."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_basic.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts basic."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_causality.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts causality."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_correlation.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts correlation."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_decoding.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts decoding."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_dimensionality.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts dimensionality."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_distance.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts distance."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_information.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts information."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_lfp.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts lfp."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_network.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts network."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_patterns.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts patterns."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_point_process.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts point process."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_rate.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts rate."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_sorting_quality.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts sorting quality."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_stimulus.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts stimulus."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_surrogates.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts surrogates."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_variability_assembly_waveform_spatial.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts variability assembly waveform spatial."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_variability_distance_spatial_decode.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts variability distance spatial decode."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_variability_entropy_complexity.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts variability entropy complexity."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_variability_hurst_allan_rr.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts variability hurst allan rr."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_variability_isi_variability.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts variability isi variability."
+
+[[file]]
+path = "tests/test_spike_stats_toolkit_edge_contracts_variability_sync_and_coincidence.py"
+rationale = "Exercise SC-NeuroCore: spike stats toolkit edge contracts variability sync and coincidence."
+
+[[file]]
+path = "tests/test_spike_stats_waveform_halfwidth.py"
+rationale = "Exercise SC-NeuroCore: spike stats waveform halfwidth."
+
+[[file]]
+path = "tests/test_spike_stats_waveform_pt_ratio.py"
+rationale = "Exercise SC-NeuroCore: spike stats waveform pt ratio."
+
+[[file]]
+path = "tests/test_spike_stats_waveform_recovery_slope.py"
+rationale = "Exercise SC-NeuroCore: spike stats waveform recovery slope."
+
+[[file]]
+path = "tests/test_spike_stats_waveform_repolarization_slope.py"
+rationale = "Exercise SC-NeuroCore: spike stats waveform repolarization slope."
+
+[[file]]
+path = "tests/test_spike_stats_waveform_waveform_amplitude.py"
+rationale = "Exercise SC-NeuroCore: spike stats waveform waveform amplitude."
+
+[[file]]
+path = "tests/test_spike_stats_waveform_waveform_width.py"
+rationale = "Exercise SC-NeuroCore: spike stats waveform waveform width."

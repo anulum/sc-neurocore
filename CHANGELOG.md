@@ -1378,6 +1378,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 27 top-level spike-statistics toolkit edge-contract and waveform
+  test modules import their names explicitly instead of through a
+  suppressed star import, gain their missing docstrings and type
+  annotations and are enrolled in the docstring policy; the waveform
+  support is typed and documented, and the toolkit support left without
+  an importer is deleted.
+
 - The 29 top-level spike-statistics dimensionality and sorting-quality
   test modules import their names explicitly instead of through a
   suppressed star import, replace two type-ignore comments with a typed

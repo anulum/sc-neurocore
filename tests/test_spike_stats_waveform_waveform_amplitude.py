@@ -10,15 +10,25 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_waveform_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.waveform import (
+    waveform_amplitude,
+)
+from tests.spike_stats_waveform_support import (
+    _typical_waveform,
+)
 
 
 class TestWaveformAmplitude:
-    def test_typical(self):
+    """The peak-to-trough amplitude of a spike waveform."""
+
+    def test_typical(self) -> None:
+        """The synthetic spike has a positive amplitude."""
         w = _typical_waveform()
         result = waveform_amplitude(w)
         assert result > 0
 
-    def test_flat(self):
+    def test_flat(self) -> None:
+        """A flat waveform has an amplitude of zero."""
         result = waveform_amplitude(np.zeros(10))
         assert result == 0.0

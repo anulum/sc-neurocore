@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5619
+    "test_files": 5618
   },
   "documentation": {
     "public_pages": [
@@ -3748,7 +3748,6 @@
       "tests/spike_profiler_support.py",
       "tests/spike_stats_dimensionality_support.py",
       "tests/spike_stats_sorting_quality_support.py",
-      "tests/spike_stats_toolkit_edge_contracts_support.py",
       "tests/spike_stats_waveform_support.py",
       "tests/spike_train_stats_extended_support.py",
       "tests/spike_train_stats_support.py",

@@ -6,9 +6,12 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_spike_stats_waveform.py
 
+"""A synthetic extracellular spike waveform for the waveform-shape tests."""
+
 from __future__ import annotations
 
-"""Edge-case tests for every branch in waveform shape analysis functions."""
+from typing import Any
+
 import numpy as np
 from sc_neurocore.analysis.spike_stats.waveform import (
     waveform_width,
@@ -20,7 +23,7 @@ from sc_neurocore.analysis.spike_stats.waveform import (
 )
 
 
-def _typical_waveform():
+def _typical_waveform() -> np.ndarray[Any, Any]:
     """Synthetic spike waveform: depolarisation → trough → repolarisation → overshoot → baseline."""
     # Realistic extracellular spike: brief negative trough then positive peak
     t = np.linspace(0, 2, 60)

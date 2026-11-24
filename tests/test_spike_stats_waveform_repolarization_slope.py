@@ -10,16 +10,26 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_waveform_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.waveform import (
+    waveform_repolarization_slope,
+)
+from tests.spike_stats_waveform_support import (
+    _typical_waveform,
+)
 
 
 class TestRepolarizationSlope:
-    def test_typical(self):
+    """The repolarisation slope of a spike waveform after its trough."""
+
+    def test_typical(self) -> None:
+        """The repolarisation slope of the synthetic spike is finite."""
         w = _typical_waveform()
         result = waveform_repolarization_slope(w)
         assert np.isfinite(result)
 
-    def test_trough_at_end(self):
+    def test_trough_at_end(self) -> None:
+        """The repolarisation slope with the trough at the last sample is computed (the check only excludes infinity)."""
         # Trough at second-to-last
         w = np.array([1.0, 0.0, -1.0])
         result = waveform_repolarization_slope(w)

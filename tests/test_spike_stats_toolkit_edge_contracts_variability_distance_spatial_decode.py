@@ -6,12 +6,25 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (distance_spatial_decode) from former test_spike_stats_toolkit_edge_contracts_variability.py
 
+"""Edge contracts of the ISI distance, spike directionality, the cubic statistic, spatial information and the LDA and population-vector decoders."""
+
 from __future__ import annotations
 
-from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.distance import (
+    isi_distance,
+)
+from sc_neurocore.analysis.spike_stats.patterns import (
+    cubic_higher_order,
+    spike_directionality,
+)
+from sc_neurocore.analysis.spike_stats.stimulus import (
+    spatial_information,
+)
 
 
-def test_isi_distance_zero_timestep_collapses_intervals():
+def test_isi_distance_zero_timestep_collapses_intervals() -> None:
+    """With a zero time step the ISI distance collapses to zero."""
     # distance.py:97 — a zero timestep maps every spike to t=0, so both ISI
     # sequences are all-zero and the matched ratio is exactly 0.0.
     train_a = np.array([1, 0, 1, 0, 1], dtype=np.int8)
@@ -20,14 +33,16 @@ def test_isi_distance_zero_timestep_collapses_intervals():
     assert r == 0.0
 
 
-def test_spike_directionality_one_sided_neighbours():
+def test_spike_directionality_one_sided_neighbours() -> None:
+    """Spike directionality with neighbours on one side only is zero."""
     # patterns.py:47 — both trains are non-empty but every reference spike sees
     # partner spikes on only one side, so no lead is ever scored (total == 0).
     r = spike_directionality(np.array([0.5]), np.array([0.6, 0.7]))
     assert r == 0.0
 
 
-def test_cubic_higher_order_lag_exceeds_signal():
+def test_cubic_higher_order_lag_exceeds_signal() -> None:
+    """A maximum lag beyond the signal gives a 20x20 statistic that is zero at the centre."""
     # patterns.py:82 — lags beyond the signal length leave valid_n <= 0, so the
     # corresponding cumulant entries are skipped and stay zero.
     r = cubic_higher_order(np.array([0, 1, 0], dtype=np.int8), max_lag=20)
@@ -35,7 +50,8 @@ def test_cubic_higher_order_lag_exceeds_signal():
     assert r[10, 10] == 0.0
 
 
-def test_spatial_information_zero_timestep_no_occupancy():
+def test_spatial_information_zero_timestep_no_occupancy() -> None:
+    """With a zero time step spatial information has no occupancy and is zero."""
     # stimulus.py:73 — a zero timestep yields zero occupancy everywhere, so the
     # information measure is undefined and returns 0.0.
     train = np.ones(12, dtype=np.int8)
@@ -43,7 +59,8 @@ def test_spatial_information_zero_timestep_no_occupancy():
     assert spatial_information(train, positions, dt=0.0) == 0.0
 
 
-def test_spatial_information_silent_train_zero_mean_rate():
+def test_spatial_information_silent_train_zero_mean_rate() -> None:
+    """Spatial information of a silent train is zero."""
     # stimulus.py:80 — a silent train has zero mean firing rate, so the
     # bits-per-spike normalisation is undefined and returns 0.0.
     train = np.zeros(20, dtype=np.int8)
@@ -51,7 +68,8 @@ def test_spatial_information_silent_train_zero_mean_rate():
     assert spatial_information(train, positions) == 0.0
 
 
-def test_lda_decode_valid():
+def test_lda_decode_valid() -> None:
+    """LDA decoding of a point between two classes returns one of them."""
     # decoding.py:84 — len(classes) >= 2
     from sc_neurocore.analysis.spike_stats.decoding import linear_discriminant_decode
 
@@ -61,7 +79,8 @@ def test_lda_decode_valid():
     assert r in (0, 1)
 
 
-def test_lda_decode_single_class():
+def test_lda_decode_single_class() -> None:
+    """LDA decoding with a single training class returns that class."""
     # decoding.py:89 — len(classes) == 1 → return the sole class without a solve
     from sc_neurocore.analysis.spike_stats.decoding import linear_discriminant_decode
 
@@ -70,7 +89,8 @@ def test_lda_decode_single_class():
     assert linear_discriminant_decode(train_data, labels, np.array([1.0, 1.0])) == 7
 
 
-def test_lda_decode_empty_labels():
+def test_lda_decode_empty_labels() -> None:
+    """LDA decoding without training data returns 0."""
     # decoding.py:89 — len(classes) == 0 → 0
     from sc_neurocore.analysis.spike_stats.decoding import linear_discriminant_decode
 
@@ -79,7 +99,8 @@ def test_lda_decode_empty_labels():
     assert r == 0
 
 
-def test_population_vector_decode_no_bins():
+def test_population_vector_decode_no_bins() -> None:
+    """Population-vector decoding of trains shorter than the window is empty."""
     # decoding.py:34 — min_len // window == 0 → empty result
     from sc_neurocore.analysis.spike_stats.decoding import population_vector_decode
 

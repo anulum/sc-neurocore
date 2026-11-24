@@ -10,28 +10,40 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_waveform_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.waveform import (
+    waveform_recovery_slope,
+)
+from tests.spike_stats_waveform_support import (
+    _typical_waveform,
+)
 
 
 class TestRecoverySlope:
-    def test_typical(self):
+    """The recovery slope of a spike waveform after its peak."""
+
+    def test_typical(self) -> None:
+        """The recovery slope of the synthetic spike is finite."""
         w = _typical_waveform()
         result = waveform_recovery_slope(w)
         assert np.isfinite(result)
 
-    def test_trough_at_end(self):
+    def test_trough_at_end(self) -> None:
+        """A trough at the last sample gives NaN."""
         # Trough at end
         w = np.array([1.0, 0.0, -1.0])
         result = waveform_recovery_slope(w)
         assert np.isnan(result)
 
-    def test_peak_at_end(self):
+    def test_peak_at_end(self) -> None:
+        """A peak at the last sample gives NaN."""
         # Peak at end of waveform
         w = np.array([-2.0, -1.0, 0.0, 1.0, 2.0])
         result = waveform_recovery_slope(w)
         assert np.isnan(result)
 
-    def test_empty_post_peak(self):
+    def test_empty_post_peak(self) -> None:
+        """The recovery slope of a waveform with nothing after its peak is computed (the check only excludes infinity)."""
         # Only 2 elements after trough, peak=last
         w = np.array([-1.0, 0.0, 1.0])
         result = waveform_recovery_slope(w)

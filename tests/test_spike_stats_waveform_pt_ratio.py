@@ -10,22 +10,33 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_waveform_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.waveform import (
+    waveform_pt_ratio,
+)
+from tests.spike_stats_waveform_support import (
+    _typical_waveform,
+)
 
 
 class TestPtRatio:
-    def test_typical(self):
+    """The peak-to-trough ratio of a spike waveform."""
+
+    def test_typical(self) -> None:
+        """The peak-to-trough ratio of the synthetic spike is finite."""
         w = _typical_waveform()
         result = waveform_pt_ratio(w)
         assert np.isfinite(result)
 
-    def test_trough_at_end(self):
+    def test_trough_at_end(self) -> None:
+        """A trough at the last sample gives NaN."""
         # Trough is last element
         w = np.array([1.0, 0.5, 0.0, -0.5, -1.0])
         result = waveform_pt_ratio(w)
         assert np.isnan(result)
 
-    def test_zero_trough(self):
+    def test_zero_trough(self) -> None:
+        """A trough of zero gives NaN."""
         # Trough amplitude near zero (line 75 trough_val < 1e-30)
         w = np.array([0.0, 0.0, 0.0, 0.0, 1.0])
         result = waveform_pt_ratio(w)

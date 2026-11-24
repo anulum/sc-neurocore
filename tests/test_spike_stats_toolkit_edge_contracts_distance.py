@@ -6,55 +6,92 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (distance) from former test_spike_stats_toolkit_edge_contracts.py
 
+"""Edge contracts, Python fallbacks and Rust delegation of the spike-train distances, and the GPFA transform of no trains."""
+
 from __future__ import annotations
 
-from tests.spike_stats_toolkit_edge_contracts_support import *  # noqa: F403
+from typing import Any
+
+import pytest
+import numpy as np
+import sc_neurocore.analysis.spike_stats.distance as distance_module
+from sc_neurocore.analysis.spike_stats.distance import (
+    _local_isi,
+    adaptive_spike_distance,
+    earth_movers_distance,
+    generalized_victor_purpura,
+    hunter_milton_similarity,
+    isi_distance,
+    isi_profile,
+    multi_neuron_victor_purpura,
+    schreiber_similarity,
+    spike_distance,
+    spike_distance_matrix,
+    spike_profile,
+    spike_sync,
+    spike_sync_profile,
+    van_rossum_distance,
+    victor_purpura_distance,
+)
+from sc_neurocore.analysis.spike_stats.gpfa import (
+    gpfa_transform,
+)
 
 
-def test_vp_empty_b():
+def test_vp_empty_b() -> None:
+    """The Victor-Purpura distance to an empty train is the spike count of the other."""
     r = victor_purpura_distance(np.array([0.1, 0.2]), np.array([]))
     assert r == 2.0
 
 
-def test_vp_empty_a():
+def test_vp_empty_a() -> None:
+    """The Victor-Purpura distance from an empty train is the spike count of the other."""
     r = victor_purpura_distance(np.array([]), np.array([0.1, 0.2]))
     assert r == 2.0
 
 
-def test_isi_dist_silent():
+def test_isi_dist_silent() -> None:
+    """The ISI distance of two silent trains is zero or NaN."""
     r = isi_distance(np.zeros(10, dtype=np.int8), np.zeros(10, dtype=np.int8))
     assert r == 0.0 or np.isnan(r)
 
 
-def test_spike_sync_empty():
+def test_spike_sync_empty() -> None:
+    """Spike synchrony with an empty train is zero."""
     assert spike_sync(np.array([]), np.array([0.1, 0.2])) == 0.0
 
 
-def test_hunter_milton_empty():
+def test_hunter_milton_empty() -> None:
+    """The Hunter-Milton similarity with an empty train is zero."""
     assert hunter_milton_similarity(np.array([]), np.array([0.1])) == 0.0
 
 
-def test_gvp_empty():
+def test_gvp_empty() -> None:
+    """The generalised Victor-Purpura distance from an empty train is non-negative."""
     r = generalized_victor_purpura(np.array([]), np.array([0.1, 0.2]))
     assert r >= 0
 
 
-def test_gvp_empty_b():
+def test_gvp_empty_b() -> None:
+    """The generalised Victor-Purpura distance to an empty train is non-negative."""
     r = generalized_victor_purpura(np.array([0.1, 0.2]), np.array([]))
     assert r >= 0
 
 
-def test_schreiber_silent():
+def test_schreiber_silent() -> None:
+    """The Schreiber similarity of two silent trains is zero."""
     r = schreiber_similarity(np.zeros(100, dtype=np.int8), np.zeros(100, dtype=np.int8))
     assert r == 0.0
 
 
-def test_isi_profile_short():
+def test_isi_profile_short() -> None:
+    """The ISI profile of two-sample trains still has bins."""
     r = isi_profile(np.array([1, 0], dtype=np.int8), np.array([0, 1], dtype=np.int8), n_bins=100)
     assert r.shape[0] > 0
 
 
-def test_distance_python_fallback_algorithms(monkeypatch):
+def test_distance_python_fallback_algorithms(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without the Rust engine the Python distances, profiles and distance matrices give their reference values."""
     monkeypatch.setattr(distance_module, "_HAS_RUST", False)
     monkeypatch.setattr(distance_module, "_ssc", None)
 
@@ -140,24 +177,40 @@ def test_distance_python_fallback_algorithms(monkeypatch):
         assert np.allclose(np.diag(distances), 0.0)
 
 
-def test_distance_rust_acceleration_delegation(monkeypatch):
+def test_distance_rust_acceleration_delegation(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With the Rust engine the distances delegate to it with contiguous arrays and return its values."""
+
     class RustCore:
-        def py_van_rossum_distance(self, a, b, dt, tau_ms):
+        """A fake Rust engine that checks its arrays are contiguous and returns fixed distances."""
+
+        def py_van_rossum_distance(
+            self, a: np.ndarray[Any, Any], b: np.ndarray[Any, Any], dt: float, tau_ms: float
+        ) -> float:
+            """Return a fixed van Rossum distance of 1.25."""
             assert a.flags.c_contiguous
             assert b.flags.c_contiguous
             return 1.25
 
-        def py_spike_distance(self, a, b, t_start, t_end):
+        def py_spike_distance(
+            self, a: np.ndarray[Any, Any], b: np.ndarray[Any, Any], t_start: float, t_end: float
+        ) -> float:
+            """Return a fixed SPIKE distance of 0.75."""
             assert a.flags.c_contiguous
             assert b.flags.c_contiguous
             return 0.75
 
-        def py_hunter_milton(self, a, b, dt_max):
+        def py_hunter_milton(
+            self, a: np.ndarray[Any, Any], b: np.ndarray[Any, Any], dt_max: float
+        ) -> float:
+            """Return a fixed Hunter-Milton similarity of 0.5."""
             assert a.flags.c_contiguous
             assert b.flags.c_contiguous
             return 0.5
 
-        def py_multi_neuron_vp(self, arrs, cost_per_s):
+        def py_multi_neuron_vp(
+            self, arrs: list[np.ndarray[Any, Any]], cost_per_s: float
+        ) -> list[float]:
+            """Return a fixed flattened 2x2 Victor-Purpura matrix."""
             assert all(arr.flags.c_contiguous for arr in arrs)
             return [0.0, 2.0, 2.0, 0.0]
 
@@ -171,7 +224,8 @@ def test_distance_rust_acceleration_delegation(monkeypatch):
     assert np.array_equal(matrix, np.array([[0.0, 2.0], [2.0, 0.0]]))
 
 
-def test_gpfa_transform_empty():
+def test_gpfa_transform_empty() -> None:
+    """The GPFA transform of no trains is empty."""
     params = {
         "C": np.zeros((0, 2)),
         "d": np.array([]),
