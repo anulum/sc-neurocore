@@ -6,12 +6,29 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (threshold_bias_heterogeneous) from former test_folded_interconnect.py
 
+"""Threshold, bias and heterogeneous-parameter parity of the folded interconnect."""
+
 from __future__ import annotations
 
-from tests.folded_interconnect_support import *  # noqa: F403
+from sc_neurocore.compiler.equation_compiler import Q88
+from sc_neurocore.nir_bridge import quantise_graph
+from sc_neurocore.nir_bridge.fpga_folded_interconnect import (
+    build_folded_interconnect as _build_top_folded,
+)
+from sc_neurocore.nir_bridge.neuron_graph import ConnectionSpec
+from sc_neurocore.nir_bridge.neuron_graph import NeuronGraph
+from sc_neurocore.nir_bridge.neuron_graph import NeuronSpec
+from tests.folded_interconnect_support import (
+    _DW,
+    _FR,
+    _STEPS,
+    _parity_rasters,
+    pytestmark as pytestmark,
+)
 
 
 def test_folded_external_source_threshold_matches_direct() -> None:
+    """An external source threshold gives matching rasters."""
     import numpy as np
 
     # External-weighted input gated per-column by a NIR source Threshold: a column
@@ -38,6 +55,7 @@ def test_folded_external_source_threshold_matches_direct() -> None:
 
 
 def test_folded_destination_threshold_matches_direct() -> None:
+    """A destination threshold gives matching rasters."""
     import numpy as np
 
     # Mixed fan-in into one population: a destination-thresholded external connection
@@ -71,6 +89,7 @@ def test_folded_destination_threshold_matches_direct() -> None:
 
 
 def test_folded_external_bias_matches_direct() -> None:
+    """An external bias gives matching rasters."""
     import numpy as np
 
     # External-weighted input plus a per-destination-neuron bias constant. The bias is
@@ -96,6 +115,7 @@ def test_folded_external_bias_matches_direct() -> None:
 
 
 def test_folded_bias_with_destination_threshold_matches_direct() -> None:
+    """A bias with a destination threshold gives matching rasters."""
     import numpy as np
 
     # A destination-thresholded connection whose per-neuron bias participates in the
@@ -137,6 +157,7 @@ def test_folded_bias_with_destination_threshold_matches_direct() -> None:
 
 
 def test_folded_analogue_source_matches_direct() -> None:
+    """An analogue source gives matching rasters."""
     import numpy as np
 
     # An analogue li source population (membrane voltage, no spikes) feeds a lif
@@ -166,6 +187,7 @@ def test_folded_analogue_source_matches_direct() -> None:
 
 
 def test_folded_analogue_source_threshold_matches_direct() -> None:
+    """A thresholded analogue source gives matching rasters."""
     import numpy as np
 
     # An analogue li source gated by a per-column source Threshold: a column contributes
@@ -194,6 +216,7 @@ def test_folded_analogue_source_threshold_matches_direct() -> None:
 
 
 def test_folded_heterogeneous_v_threshold_matches_direct() -> None:
+    """A varying v_threshold gives matching rasters."""
     import numpy as np
 
     # A population whose neurons carry different firing thresholds: the folded PE exposes
@@ -235,6 +258,7 @@ def test_folded_heterogeneous_v_threshold_matches_direct() -> None:
 
 
 def test_folded_heterogeneous_tau_matches_direct() -> None:
+    """A varying tau gives matching rasters."""
     import numpy as np
 
     # Heterogeneous membrane time constants: a larger tau leaks more slowly and integrates

@@ -10,13 +10,19 @@
 
 from __future__ import annotations
 
-from tests.folded_heterogeneous_params_support import *  # noqa: F403
+import numpy as np
+from tests.folded_heterogeneous_params_support import (
+    _Q,
+    _dequantised_pop,
+    _qgraph,
+)
 
 
 class TestDequantisePop:
     """De-quantising a population's parameters for real-valued PE compilation."""
 
     def test_rescales_quantised_integers_back_to_real_values(self) -> None:
+        """Quantised parameters rescale to real values."""
         pop = _qgraph([10.0, 20.0, 30.0]).populations[0]
         # pop.params['tau'] holds q.encode(10/20/30) = 2560/5120/7680; de-quantising divides
         # by 2**fraction, recovering 10/20/30 (which re-encode losslessly).
@@ -28,6 +34,7 @@ class TestDequantisePop:
         assert [_Q.encode(v) for v in [10.0, 20.0, 30.0]] == [2560, 5120, 7680]
 
     def test_empty_params_returns_population_unchanged(self) -> None:
+        """A population without parameters comes back unchanged."""
         pop = _qgraph([10.0, 10.0]).populations[0]
         pop.params.clear()
         assert _dequantised_pop(pop, 8) is pop

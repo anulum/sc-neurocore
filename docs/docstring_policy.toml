@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3633
+expected_file_count = 3647
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -14576,3 +14576,59 @@ rationale = "Exercise SC-NeuroCore: cortical column native discovery."
 [[file]]
 path = "tests/test_cortical_column_published_fidelity.py"
 rationale = "Exercise SC-NeuroCore: cortical column published fidelity."
+
+[[file]]
+path = "tests/folded_heterogeneous_params_support.py"
+rationale = "Provide the NIR-guarded LIF graph builders shared by the folded heterogeneous-parameter suites."
+
+[[file]]
+path = "tests/test_dense_optimization_batch_encode_numpy.py"
+rationale = "Exercise SC-NeuroCore: dense optimization batch encode numpy."
+
+[[file]]
+path = "tests/test_dense_optimization_bernoulli_packed_equivalence.py"
+rationale = "Exercise SC-NeuroCore: dense optimization bernoulli packed equivalence."
+
+[[file]]
+path = "tests/test_dense_optimization_forward_fast.py"
+rationale = "Exercise SC-NeuroCore: dense optimization forward fast."
+
+[[file]]
+path = "tests/test_dense_optimization_forward_prepacked.py"
+rationale = "Exercise SC-NeuroCore: dense optimization forward prepacked."
+
+[[file]]
+path = "tests/test_folded_heterogeneous_params_can_fold_heterogeneity.py"
+rationale = "Exercise SC-NeuroCore: folded heterogeneous params can fold heterogeneity."
+
+[[file]]
+path = "tests/test_folded_heterogeneous_params_dequantise_pop.py"
+rationale = "Exercise SC-NeuroCore: folded heterogeneous params dequantise pop."
+
+[[file]]
+path = "tests/test_folded_heterogeneous_params_folded_heterogeneous_params.py"
+rationale = "Exercise SC-NeuroCore: folded heterogeneous params folded heterogeneous params."
+
+[[file]]
+path = "tests/test_folded_heterogeneous_params_heterogeneous_param_names.py"
+rationale = "Exercise SC-NeuroCore: folded heterogeneous params heterogeneous param names."
+
+[[file]]
+path = "tests/test_folded_heterogeneous_params_population_params_are_uniform.py"
+rationale = "Exercise SC-NeuroCore: folded heterogeneous params population params are uniform."
+
+[[file]]
+path = "tests/test_folded_interconnect_core_raster_parity.py"
+rationale = "Exercise SC-NeuroCore: folded interconnect core raster parity."
+
+[[file]]
+path = "tests/test_folded_interconnect_delayed_parity.py"
+rationale = "Exercise SC-NeuroCore: folded interconnect delayed parity."
+
+[[file]]
+path = "tests/test_folded_interconnect_multi_population_compile.py"
+rationale = "Exercise SC-NeuroCore: folded interconnect multi population compile."
+
+[[file]]
+path = "tests/test_folded_interconnect_threshold_bias_heterogeneous.py"
+rationale = "Exercise SC-NeuroCore: folded interconnect threshold bias heterogeneous."

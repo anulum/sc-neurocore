@@ -10,18 +10,23 @@
 
 from __future__ import annotations
 
-from tests.folded_heterogeneous_params_support import *  # noqa: F403
+from tests.folded_heterogeneous_params_support import (
+    _population_params_are_uniform,
+    _qgraph,
+)
 
 
 class TestPopulationParamsAreUniform:
     """The per-population parameter-uniformity predicate."""
 
     def test_homogeneous_population_is_uniform(self) -> None:
+        """Equal parameters are uniform."""
         assert (
             _population_params_are_uniform(_qgraph([10.0, 10.0, 10.0]).populations[0], 16) is True
         )
 
     def test_heterogeneous_tau_is_not_uniform(self) -> None:
+        """A varying tau is not uniform."""
         assert (
             _population_params_are_uniform(_qgraph([10.0, 20.0, 30.0]).populations[0], 16) is False
         )

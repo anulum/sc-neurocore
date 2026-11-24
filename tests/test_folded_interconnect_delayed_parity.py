@@ -6,12 +6,37 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (delayed_parity) from former test_folded_interconnect.py
 
+"""Delayed-spike parity of the folded and direct interconnects."""
+
 from __future__ import annotations
 
-from tests.folded_interconnect_support import *  # noqa: F403
+from sc_neurocore.compiler.equation_compiler import Q88
+from sc_neurocore.nir_bridge import quantise_graph
+from sc_neurocore.nir_bridge.fpga_direct_interconnect import (
+    build_direct_interconnect as _build_top_direct,
+)
+from sc_neurocore.nir_bridge.fpga_folded_interconnect import (
+    build_folded_interconnect as _build_top_folded,
+)
+from sc_neurocore.nir_bridge.fpga_neuron_rtl import build_neuron_module as _build_neuron_module
+from sc_neurocore.nir_bridge.neuron_graph import ConnectionSpec
+from sc_neurocore.nir_bridge.neuron_graph import NeuronGraph
+from sc_neurocore.nir_bridge.neuron_graph import NeuronSpec
+from tests.folded_interconnect_support import (
+    _DW,
+    _FR,
+    _STEPS,
+    _cosim,
+    _delayed_recurrent_graph,
+    _direct_tb,
+    _folded_tb,
+    _parity_rasters,
+    pytestmark as pytestmark,
+)
 
 
 def test_folded_delayed_recurrent_matches_direct() -> None:
+    """Delayed recurrent spikes give matching rasters."""
     ng, currents, n_dst = _delayed_recurrent_graph()
     q = Q88(data_width=_DW, fraction=_FR)
     qgraph = quantise_graph(ng, q)
@@ -48,6 +73,7 @@ def test_folded_delayed_recurrent_matches_direct() -> None:
 
 
 def test_folded_delayed_analogue_source_matches_direct() -> None:
+    """A delayed analogue source gives matching rasters."""
     import numpy as np
 
     # A *delayed* analogue li source feeding a lif population: a delay of d ticks reads

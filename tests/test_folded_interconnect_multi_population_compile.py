@@ -6,12 +6,41 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (multi_population_compile) from former test_folded_interconnect.py
 
+"""Multi-population parity and compilation of the folded interconnect."""
+
 from __future__ import annotations
 
-from tests.folded_interconnect_support import *  # noqa: F403
+from sc_neurocore.compiler.equation_compiler import Q88
+from sc_neurocore.nir_bridge import quantise_graph
+from sc_neurocore.nir_bridge.fpga_direct_interconnect import (
+    build_direct_interconnect as _build_top_direct,
+)
+from sc_neurocore.nir_bridge.fpga_folded_interconnect import (
+    build_folded_interconnect as _build_top_folded,
+)
+from sc_neurocore.nir_bridge.fpga_neuron_rtl import build_neuron_module as _build_neuron_module
+from sc_neurocore.nir_bridge.neuron_graph import ConnectionSpec
+from sc_neurocore.nir_bridge.neuron_graph import NeuronGraph
+from sc_neurocore.nir_bridge.neuron_graph import NeuronSpec
+import pytest
+from tests.folded_interconnect_support import (
+    _DW,
+    _FR,
+    _STEPS,
+    _cosim,
+    _direct_tb,
+    _folded_tb,
+    _parity_rasters,
+    _single_lif_graph,
+    _two_pop_delayed_ff_graph,
+    _two_pop_ff_graph,
+    _two_pop_recurrent_graph,
+    pytestmark as pytestmark,
+)
 
 
 def test_folded_two_population_feedforward_matches_direct() -> None:
+    """Two feedforward populations give matching rasters."""
     ng, currents, n_total = _two_pop_ff_graph()
     q = Q88(data_width=_DW, fraction=_FR)
     qgraph = quantise_graph(ng, q)
@@ -48,6 +77,7 @@ def test_folded_two_population_feedforward_matches_direct() -> None:
 
 
 def test_folded_two_population_recurrent_matches_direct() -> None:
+    """Two recurrent populations give matching rasters."""
     ng, currents, n_total = _two_pop_recurrent_graph()
     q = Q88(data_width=_DW, fraction=_FR)
     qgraph = quantise_graph(ng, q)
@@ -81,6 +111,7 @@ def test_folded_two_population_recurrent_matches_direct() -> None:
 
 
 def test_folded_multi_population_shares_one_pe_per_type() -> None:
+    """Populations of one type share one PE."""
     ng, _currents, _n = _two_pop_ff_graph()
     q = Q88(data_width=_DW, fraction=_FR)
     qgraph = quantise_graph(ng, q)
@@ -95,6 +126,7 @@ def test_folded_multi_population_shares_one_pe_per_type() -> None:
 
 
 def test_compile_network_folded_two_populations() -> None:
+    """Two populations compile folded."""
     from sc_neurocore.nir_bridge.fpga_compiler import compile_network_to_fpga
 
     ng, _currents, n_total = _two_pop_ff_graph()
@@ -108,6 +140,7 @@ def test_compile_network_folded_two_populations() -> None:
 
 
 def test_compile_network_folded_opt_in() -> None:
+    """The folded interconnect is an explicit opt-in."""
     from sc_neurocore.nir_bridge.fpga_compiler import compile_network_to_fpga
 
     result = compile_network_to_fpga(_single_lif_graph(), interconnect="folded")
@@ -117,6 +150,7 @@ def test_compile_network_folded_opt_in() -> None:
 
 
 def test_compile_network_folded_analogue_source() -> None:
+    """An analogue source compiles folded."""
     import numpy as np
 
     from sc_neurocore.nir_bridge.fpga_compiler import compile_network_to_fpga
@@ -143,6 +177,7 @@ def test_compile_network_folded_analogue_source() -> None:
 
 
 def test_compile_network_folded_rejects_unsupported_graph() -> None:
+    """A graph that cannot fold is rejected."""
     from sc_neurocore.nir_bridge.fpga_compiler import compile_network_to_fpga
 
     # A *delayed external* source connection is outside the folded subset: a synaptic
@@ -170,6 +205,7 @@ def test_compile_network_folded_rejects_unsupported_graph() -> None:
 
 
 def test_folded_two_population_delayed_feedforward_matches_direct() -> None:
+    """Two delayed feedforward populations give matching rasters."""
     ng, currents, n_total = _two_pop_delayed_ff_graph()
     q = Q88(data_width=_DW, fraction=_FR)
     qgraph = quantise_graph(ng, q)
@@ -203,6 +239,7 @@ def test_folded_two_population_delayed_feedforward_matches_direct() -> None:
 
 
 def test_folded_two_population_source_threshold_matches_direct() -> None:
+    """A source threshold between two populations gives matching rasters."""
     import numpy as np
 
     # Inter-population spiking fan-in gated by a source Threshold: the spike magnitude

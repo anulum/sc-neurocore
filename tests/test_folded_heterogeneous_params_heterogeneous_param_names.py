@@ -10,23 +10,30 @@
 
 from __future__ import annotations
 
-from tests.folded_heterogeneous_params_support import *  # noqa: F403
+from tests.folded_heterogeneous_params_support import (
+    _heterogeneous_param_names,
+    _qgraph,
+)
 
 
 class TestHeterogeneousParamNames:
     """Which parameters vary per neuron."""
 
     def test_homogeneous_population_has_no_heterogeneous_params(self) -> None:
+        """Equal parameters report no varying names."""
         assert _heterogeneous_param_names(_qgraph([10.0, 10.0, 10.0]).populations[0], 16) == []
 
     def test_varying_tau_is_reported(self) -> None:
+        """A varying tau is reported."""
         assert _heterogeneous_param_names(_qgraph([10.0, 20.0, 30.0]).populations[0], 16) == ["tau"]
 
     def test_multiple_varying_parameters_are_sorted(self) -> None:
+        """Several varying parameters are reported sorted."""
         pop = _qgraph([10.0, 20.0], v_leak=[0.0, -1.0]).populations[0]
         assert _heterogeneous_param_names(pop, 16) == ["tau", "v_leak"]
 
     def test_values_that_quantise_equal_are_not_heterogeneous(self) -> None:
+        """Values that quantise equally do not count as varying."""
         step = 1.0 / (1 << 8)
         pop = _qgraph([10.0, 10.0 + step / 4.0]).populations[0]
         assert _heterogeneous_param_names(pop, 16) == []

@@ -1320,6 +1320,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 13 top-level dense optimisation, folded heterogeneous-parameter
+  and folded interconnect test modules import their names explicitly
+  instead of through a suppressed star import, gain their missing
+  docstrings and type annotations and are enrolled in the docstring
+  policy. Every name their supports bind at or after the Rust-engine
+  or NIR import guard is still taken from the support, and the
+  interconnect modules keep the support's iverilog skip marker. One
+  helper support gains types and its own policy entry.
+
 - The ten top-level cortical column test modules import their names
   explicitly instead of through a suppressed star import, gain their
   missing docstrings and type annotations and are enrolled in the

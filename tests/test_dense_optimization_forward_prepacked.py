@@ -10,27 +10,33 @@
 
 from __future__ import annotations
 
-from tests.dense_optimization_support import *  # noqa: F403
+import numpy as np
+import pytest
+from tests.dense_optimization_support import (
+    v3,
+)
 
 
 class TestForwardPrepacked:
     """Tests for pre-packed forward path."""
 
-    def test_output_shape(self):
+    def test_output_shape(self) -> None:
+        """The pre-packed forward pass gives one output per neuron."""
         layer = v3.DenseLayer(4, 2, 1024, seed=42)
         probs = np.array([0.3, 0.5, 0.7, 0.9], dtype=np.float64)
         packed = v3.batch_encode_numpy(probs, length=1024, seed=55)
         out = layer.forward_prepacked(packed)
         assert len(out) == 2
 
-    def test_output_range(self):
+    def test_output_range(self) -> None:
+        """Each output lies between zero and the input count."""
         layer = v3.DenseLayer(4, 2, 1024, seed=42)
         probs = np.array([0.5, 0.5, 0.5, 0.5], dtype=np.float64)
         packed = v3.batch_encode_numpy(probs, length=1024, seed=55)
         out = layer.forward_prepacked(packed)
         assert all(0.0 <= v <= 4.0 for v in out)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
         """Same pre-packed inputs should always produce same output."""
         layer = v3.DenseLayer(4, 2, 1024, seed=42)
         packed = v3.batch_encode_numpy(np.array([0.5] * 4), length=1024, seed=55)
@@ -38,20 +44,22 @@ class TestForwardPrepacked:
         out2 = layer.forward_prepacked(packed)
         assert out1 == out2
 
-    def test_accepts_list_of_lists(self):
+    def test_accepts_list_of_lists(self) -> None:
         """forward_prepacked should also accept list[list[int]]."""
         layer = v3.DenseLayer(2, 1, 128, seed=42)
         packed = v3.batch_encode(np.array([0.5, 0.5]), length=128, seed=55)
         out = layer.forward_prepacked(packed)
         assert len(out) == 1
 
-    def test_wrong_n_inputs(self):
+    def test_wrong_n_inputs(self) -> None:
+        """The wrong input count is rejected."""
         layer = v3.DenseLayer(4, 2, 1024, seed=42)
         packed = v3.batch_encode_numpy(np.array([0.5, 0.5, 0.5]), length=1024, seed=55)
         with pytest.raises(ValueError):
             layer.forward_prepacked(packed)
 
-    def test_wrong_word_count(self):
+    def test_wrong_word_count(self) -> None:
+        """The wrong packed word count is rejected."""
         layer = v3.DenseLayer(2, 1, 1024, seed=42)
         packed = v3.batch_encode_numpy(np.array([0.5, 0.5]), length=512, seed=55)
         with pytest.raises(ValueError):

@@ -10,13 +10,15 @@
 
 from __future__ import annotations
 
-from tests.dense_optimization_support import *  # noqa: F403
+from tests.dense_optimization_support import (
+    v3,
+)
 
 
 class TestBernoulliPackedEquivalence:
     """Validate deterministic behavior for packed Bernoulli refactor."""
 
-    def test_pack_deterministic(self):
+    def test_pack_deterministic(self) -> None:
         """forward() should remain deterministic for fixed inputs and seed."""
         layer = v3.DenseLayer(8, 4, 256, seed=12345)
         inputs = [0.1, 0.3, 0.5, 0.7, 0.2, 0.4, 0.6, 0.8]
@@ -24,7 +26,7 @@ class TestBernoulliPackedEquivalence:
         assert len(out) == 4
         assert all(0.0 <= v <= 8.0 for v in out)
 
-    def test_pack_deterministic_repeated(self):
+    def test_pack_deterministic_repeated(self) -> None:
         """Same inputs + seeds produce exactly same outputs."""
         layer = v3.DenseLayer(8, 4, 256, seed=12345)
         out1 = layer.forward([0.5] * 8, seed=42)

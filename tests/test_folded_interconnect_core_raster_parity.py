@@ -6,12 +6,36 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (core_raster_parity) from former test_folded_interconnect.py
 
+"""Spike-raster parity of the folded and direct interconnects."""
+
 from __future__ import annotations
 
-from tests.folded_interconnect_support import *  # noqa: F403
+from sc_neurocore.compiler.equation_compiler import Q88
+from sc_neurocore.nir_bridge import quantise_graph
+from sc_neurocore.nir_bridge.fpga_direct_interconnect import (
+    build_direct_interconnect as _build_top_direct,
+)
+from sc_neurocore.nir_bridge.fpga_folded_interconnect import (
+    build_folded_interconnect as _build_top_folded,
+)
+from sc_neurocore.nir_bridge.fpga_neuron_rtl import build_neuron_module as _build_neuron_module
+from tests.folded_interconnect_support import (
+    _DW,
+    _FR,
+    _STEPS,
+    _cosim,
+    _direct_tb,
+    _flat_current_literal,
+    _folded_tb,
+    _recurrent_graph,
+    _single_lif_graph,
+    _weighted_ff_graph,
+    pytestmark as pytestmark,
+)
 
 
 def test_folded_matches_direct_spike_raster() -> None:
+    """The folded spike raster matches the direct one."""
     ng = _single_lif_graph()
     q = Q88(data_width=_DW, fraction=_FR)
     qgraph = quantise_graph(ng, q)
@@ -39,6 +63,7 @@ def test_folded_matches_direct_spike_raster() -> None:
 
 
 def test_folded_weighted_external_matches_direct() -> None:
+    """Weighted external input gives matching rasters."""
     ng, currents, n_dst = _weighted_ff_graph()
     q = Q88(data_width=_DW, fraction=_FR)
     qgraph = quantise_graph(ng, q)
@@ -72,6 +97,7 @@ def test_folded_weighted_external_matches_direct() -> None:
 
 
 def test_folded_recurrent_matches_direct() -> None:
+    """A recurrent network gives matching rasters."""
     ng, currents, n_dst = _recurrent_graph()
     q = Q88(data_width=_DW, fraction=_FR)
     qgraph = quantise_graph(ng, q)
@@ -105,6 +131,7 @@ def test_folded_recurrent_matches_direct() -> None:
 
 
 def test_folded_state_is_bram_backed_and_shares_one_pe() -> None:
+    """The folded state sits in block RAM behind one PE."""
     ng = _single_lif_graph()
     q = Q88(data_width=_DW, fraction=_FR)
     qgraph = quantise_graph(ng, q)

@@ -10,14 +10,19 @@
 
 from __future__ import annotations
 
-from tests.folded_heterogeneous_params_support import *  # noqa: F403
+from tests.folded_heterogeneous_params_support import (
+    _can_fold,
+    _qgraph,
+)
 
 
 class TestCanFoldHeterogeneity:
     """``_can_fold`` accepts heterogeneous datapath parameters."""
 
     def test_homogeneous_graph_folds(self) -> None:
+        """A graph with equal parameters can fold."""
         assert _can_fold(_qgraph([10.0, 10.0, 10.0]), data_width=16) is True
 
     def test_heterogeneous_graph_folds(self) -> None:
+        """A graph with varying parameters can fold too."""
         assert _can_fold(_qgraph([10.0, 20.0, 30.0]), data_width=16) is True
