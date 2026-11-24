@@ -566,6 +566,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   brings in the timing witness's current status and drops a repeated
   provenance comment.
 
+- A new test, `tests/test_ecosystem_map_consistency.py`, binds the group
+  and project map to `tools/sc_nc_split_map.json` and to its own counts:
+  the stated entry total and its four parts equal the listed rows, every
+  repository row links its lower-case name, the thirteen SC-NC rows are the
+  map's destinations and list exactly the packages and modules the map
+  assigns them, and the import-order, facade and circuit-side sentences
+  follow the map. The documentation workflow builds the site with
+  `mkdocs build --strict`, so a broken link or anchor fails the build.
+
 - The responsibility and interface text of the thirteen SC-NC rows on the
   group and project map follows the public repositories. Recorders and
   checkpoints are the engine's, views are the Studio's, equivalence proofs

@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5629
+    "test_files": 5630
   },
   "documentation": {
     "public_pages": [
@@ -4906,6 +4906,7 @@
       "tests/test_dsl_to_verilog_dsl_to_verilog_transcendental.py",
       "tests/test_dsl_to_verilog_i_verilog_simulation.py",
       "tests/test_dsl_to_verilog_testbench_generation.py",
+      "tests/test_ecosystem_map_consistency.py",
       "tests/test_eda_toolchain_versions.py",
       "tests/test_edge/test_aer_router_daemon.py",
       "tests/test_edge/test_edge_deploy.py",

@@ -48,7 +48,7 @@ jobs:
           python -c "import torch; assert torch.__version__ == '2.15.0+cpu'; assert torch.version.cuda is None"
 
       - name: Build MkDocs site
-        run: mkdocs build --site-dir _site
+        run: mkdocs build --strict --site-dir _site
 
       - name: Prepare official Python reference inventory
         run: |
