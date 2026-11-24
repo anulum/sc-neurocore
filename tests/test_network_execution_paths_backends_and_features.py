@@ -10,7 +10,27 @@
 
 from __future__ import annotations
 
-from tests.network_execution_paths_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+    StateMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    StepCurrent,
+)
+from tests.network_execution_paths_support import (
+    _MODEL,
+)
 
 
 def test_rust_backend_runs_populations_and_projection() -> None:

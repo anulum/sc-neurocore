@@ -1378,6 +1378,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 18 top-level network test modules (basic network, execution paths,
+  and monitors and stimuli) import their names explicitly instead of
+  through a suppressed star import and are enrolled in the docstring
+  policy; the two support modules left without an importer are deleted.
+
 - The 19 top-level Wilson-Cowan dynamics and parity test modules import
   their names explicitly instead of through a suppressed star import,
   take every name bound after a support's skip guard from that support,

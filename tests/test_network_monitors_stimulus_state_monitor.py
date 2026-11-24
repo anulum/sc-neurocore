@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from tests.network_monitors_stimulus_support import *  # noqa: F403
+from sc_neurocore import (
+    StochasticLIFNeuron,
+)
+from sc_neurocore.network.monitor import (
+    StateMonitor,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
 
 
 class TestStateMonitor:

@@ -12,7 +12,19 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tests.network_basic_support import *  # noqa: F403
+import pytest
+from sc_neurocore.exceptions import (
+    SCHardwareError,
+)
+from sc_neurocore.network.export import (
+    export_verilog,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
 
 
 class TestExport:

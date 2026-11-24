@@ -10,7 +10,21 @@
 
 from __future__ import annotations
 
-from tests.network_execution_paths_support import *  # noqa: F403
+import builtins
+import pytest
+import sc_neurocore.network.network as network_module
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from tests.network_execution_paths_support import (
+    _MODEL,
+)
+from typing import (
+    Any,
+)
 
 
 def test_engine_detection_helpers_after_cache_reset() -> None:

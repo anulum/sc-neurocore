@@ -10,7 +10,10 @@
 
 from __future__ import annotations
 
-from tests.network_monitors_stimulus_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.network.stimulus import (
+    TimedArray,
+)
 
 
 class TestTimedArray:

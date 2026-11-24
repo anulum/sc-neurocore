@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from tests.network_basic_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.network.monitor import (
+    RateMonitor,
+    SpikeMonitor,
+    StateMonitor,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
 
 
 class TestMonitors:

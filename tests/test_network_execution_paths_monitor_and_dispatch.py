@@ -10,7 +10,21 @@
 
 from __future__ import annotations
 
-from tests.network_execution_paths_support import *  # noqa: F403
+import pytest
+from sc_neurocore.network.monitor import (
+    RateMonitor,
+    StateMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from tests.network_execution_paths_support import (
+    _install_fake_rust_engine,
+    _MODEL,
+)
 
 
 def test_auto_backend_uses_python_for_state_monitors(

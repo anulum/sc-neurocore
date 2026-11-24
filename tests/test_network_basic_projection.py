@@ -10,7 +10,14 @@
 
 from __future__ import annotations
 
-from tests.network_basic_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
 
 
 class TestProjection:

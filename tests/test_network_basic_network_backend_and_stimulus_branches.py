@@ -10,7 +10,16 @@
 
 from __future__ import annotations
 
-from tests.network_basic_support import *  # noqa: F403
+import pytest
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    TimedArray,
+)
 
 
 class TestNetworkBackendAndStimulusBranches:

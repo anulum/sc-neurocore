@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5615
+    "test_files": 5613
   },
   "documentation": {
     "public_pages": [
@@ -3685,9 +3685,7 @@
       "tests/native_go_coverage_contracts/trace_contract.py",
       "tests/native_go_coverage_platform.py",
       "tests/native_lane_requirement.py",
-      "tests/network_basic_support.py",
       "tests/network_execution_paths_support.py",
-      "tests/network_monitors_stimulus_support.py",
       "tests/neuroml_import_support.py",
       "tests/neuron_families_support.py",
       "tests/neuron_integrator_paths_support.py",

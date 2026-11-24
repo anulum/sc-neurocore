@@ -10,7 +10,11 @@
 
 from __future__ import annotations
 
-from tests.network_basic_support import *  # noqa: F403
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+    StepCurrent,
+    TimedArray,
+)
 
 
 class TestStimulus:
