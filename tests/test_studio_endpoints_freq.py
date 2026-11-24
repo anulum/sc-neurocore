@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.studio_endpoints_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+from tests.studio_endpoints_support import (
+    MODEL,
+)
+from tests.studio_endpoints_support import client as client
 
 
 class TestFreqResponseEndpoint:
-    def test_freq_response(self, client):
+    """The Studio frequency-response endpoint."""
+
+    def test_freq_response(self, client: TestClient) -> None:
+        """A frequency response returns frequencies and rates for the given bias and depth."""
         r = client.post(
             "/api/freq-response",
             json={
@@ -32,7 +43,8 @@ class TestFreqResponseEndpoint:
         assert "rates" in data
         assert data["bias"] == 10.0 and data["depth"] == 0.5
 
-    def test_the_retired_amplitude_is_refused_with_its_reason(self, client):
+    def test_the_retired_amplitude_is_refused_with_its_reason(self, client: TestClient) -> None:
+        """The retired amplitude field is refused with the reason to send bias and depth."""
         # "amplitude" meant a mean-zero sine; reading it as the new bias would
         # answer a different question under the old name.
         r = client.post(
@@ -42,7 +54,8 @@ class TestFreqResponseEndpoint:
         assert r.status_code == 422
         assert "send bias and depth" in r.text
 
-    def test_a_zero_bias_is_refused(self, client):
+    def test_a_zero_bias_is_refused(self, client: TestClient) -> None:
+        """A zero bias is refused with 422."""
         r = client.post(
             "/api/freq-response",
             json={"model_name": MODEL, "duration": 20.0, "bias": 0.0, "n_freqs": 3},

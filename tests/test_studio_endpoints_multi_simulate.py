@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.studio_endpoints_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+from tests.studio_endpoints_support import (
+    MODEL,
+)
+from tests.studio_endpoints_support import client as client
 
 
 class TestMultiSimulate:
-    def test_multi_simulate(self, client):
+    """The Studio multi-simulation endpoint."""
+
+    def test_multi_simulate(self, client: TestClient) -> None:
+        """Two models simulate together with a time axis each."""
         r = client.post(
             "/api/multi-simulate",
             json=[
@@ -27,9 +38,8 @@ class TestMultiSimulate:
         assert len(data) == 2
         assert all("time" in d for d in data)
 
-    def test_empty_multi_simulate_returns_empty_result(self, client):
+    def test_empty_multi_simulate_returns_empty_result(self, client: TestClient) -> None:
         """An empty bounded batch is a valid no-op."""
-
         response = client.post("/api/multi-simulate", json=[])
 
         assert response.status_code == 200

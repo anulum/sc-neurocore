@@ -16,7 +16,12 @@ from sc_neurocore.studio.evidence_receipt import (
     subject_of,
 )
 from sc_neurocore.studio.evidence_seal import seal_sha256
-from tests.studio_endpoints_support import *  # noqa: F403
+import pytest
+from tests.studio_endpoints_support import (
+    TestClient,
+    create_app,
+)
+from tests.studio_endpoints_support import client as client
 
 
 class TestCacheStats:

@@ -10,7 +10,33 @@
 
 from __future__ import annotations
 
-from tests.studio_evidence_bundle_support import *  # noqa: F403
+import json
+import math
+import pytest
+import threading
+from collections.abc import (
+    Callable,
+)
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform import (
+    StudioJobArtifact,
+    StudioJobContext,
+    StudioJobManager,
+    StudioJobRecord,
+    write_studio_evidence_bundle,
+)
+from tests.studio_evidence_bundle_support import (
+    _action_evidence_payload,
+    _analysis_payload,
+    _default_flow_attestation_payload,
+    _default_flow_run_payload,
+    _simulation_payload,
+)
+from typing import (
+    cast,
+)
 
 
 @pytest.mark.parametrize(
@@ -107,7 +133,6 @@ def test_write_studio_evidence_bundle_rejects_invalid_action_evidence(
     error_match: str,
 ) -> None:
     """Evidence bundle writer fails closed on malformed worker evidence."""
-
     manager = StudioJobManager(
         root=tmp_path / "jobs",
         allowed_kinds=frozenset({"compiler"}),
@@ -115,6 +140,7 @@ def test_write_studio_evidence_bundle_rejects_invalid_action_evidence(
     )
 
     def source_task(context: StudioJobContext) -> dict[str, object]:
+        """Write a compiler artefact for the job and return an empty result."""
         context.write_artifact("compiler/evidence.json", payload_factory(context.job_id))
         return {}
 
@@ -144,7 +170,6 @@ def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
     tmp_path: Path,
 ) -> None:
     """Evidence bundle writer fails closed on unsafe replay and artifact inputs."""
-
     context = StudioJobContext(
         job_id="sj_evidence",
         work_dir=tmp_path / "evidence",
@@ -389,6 +414,7 @@ def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
     )
 
     def source_task(job_context: StudioJobContext) -> dict[str, object]:
+        """Write a compiler artefact for the job and return an empty result."""
         job_context.write_artifact("compiler/result.json", "{}")
         return {}
 
@@ -425,6 +451,7 @@ def test_write_studio_evidence_bundle_rejects_invalid_json_and_artifact_state(
         )
 
     def corrupt_evidence_task(job_context: StudioJobContext) -> dict[str, object]:
+        """Write a legacy-schema evidence artefact and return an empty result."""
         job_context.write_artifact("compiler/evidence.json", '{"schema_version": "legacy"}')
         return {}
 

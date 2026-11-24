@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.studio_endpoints_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+from tests.studio_endpoints_support import (
+    MODEL,
+)
+from tests.studio_endpoints_support import client as client
 
 
 class TestSensitivityEndpoint:
-    def test_sensitivity_model(self, client):
+    """The Studio sensitivity endpoint."""
+
+    def test_sensitivity_model(self, client: TestClient) -> None:
+        """A model sensitivity sweep returns the base rate and sensitivities."""
         r = client.post(
             "/api/sensitivity",
             json={

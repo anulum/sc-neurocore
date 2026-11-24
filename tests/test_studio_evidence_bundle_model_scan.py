@@ -10,10 +10,33 @@
 
 from __future__ import annotations
 
-from tests.studio_evidence_bundle_support import *  # noqa: F403
+import json
+import pytest
+import threading
+from collections.abc import (
+    Callable,
+)
+from datetime import (
+    datetime,
+)
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform import (
+    StudioJobContext,
+    write_studio_evidence_bundle,
+)
+from tests.studio_evidence_bundle_support import (
+    _model_scan_response,
+    UTC,
+)
+from typing import (
+    cast,
+)
 
 
 def test_write_studio_evidence_bundle_includes_model_scan(tmp_path: Path) -> None:
+    """A bundle with a model scan carries it as one analysis entry."""
     context = StudioJobContext(
         job_id="sj_scan",
         work_dir=tmp_path / "scan",
@@ -59,6 +82,7 @@ def test_write_studio_evidence_bundle_rejects_invalid_model_scan(
     mutate: Callable[[dict[str, object]], object],
     match: str,
 ) -> None:
+    """An invalid model scan is rejected with ValueError."""
     context = StudioJobContext(
         job_id="sj_scan_bad",
         work_dir=tmp_path / "scan-bad",

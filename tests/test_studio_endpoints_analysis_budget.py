@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.studio_endpoints_support import *  # noqa: F403
+from tests.studio_endpoints_support import (
+    MODEL,
+    TestClient,
+    _budget_client,
+)
+from tests.studio_endpoints_support import client as client
 
 
 class TestAnalysisBudgetEnforcement:
+    """Step and simulation budgets of the Studio analysis endpoints."""
+
     def test_heatmap_rejected_over_step_budget(self) -> None:
+        """A heatmap over the step budget is rejected with the projected and allowed steps."""
         client = _budget_client(
             max_sync_analysis_steps_per_simulation=1_000,
             max_sync_analysis_simulations=1_000,
@@ -41,6 +49,7 @@ class TestAnalysisBudgetEnforcement:
         assert r.json()["detail"]["projected"] == 200_000
 
     def test_sensitivity_rejected_over_simulation_budget(self) -> None:
+        """A sensitivity sweep over the simulation budget is rejected with its counts."""
         client = _budget_client(max_sync_analysis_simulations=5)
         params = {f"p{i}": float(i + 1) for i in range(10)}
         r = client.post(
@@ -54,6 +63,7 @@ class TestAnalysisBudgetEnforcement:
         assert detail["allowed"] == 5
 
     def test_multi_simulate_rejected_over_simulation_budget(self) -> None:
+        """A multi-simulation over the simulation budget is rejected with its counts."""
         client = _budget_client(max_sync_analysis_simulations=1)
         r = client.post(
             "/api/multi-simulate",
@@ -72,6 +82,7 @@ class TestAnalysisBudgetEnforcement:
         self,
         client: TestClient,
     ) -> None:
+        """Invalid cost fields reach payload validation and are rejected as invalid input."""
         invalid_config = {
             "equations": ["dv/dt = I"],
             "init": {"v": 0.0},
@@ -86,6 +97,7 @@ class TestAnalysisBudgetEnforcement:
         assert r.json()["detail"] == "Invalid input"
 
     def test_bifurcation_rejected_for_non_positive_timestep(self, client: TestClient) -> None:
+        """A bifurcation with a non-positive time step is rejected on the timestep limit."""
         r = client.post(
             "/api/bifurcation",
             json={
@@ -102,6 +114,7 @@ class TestAnalysisBudgetEnforcement:
         assert r.json()["detail"]["limit"] == "timestep"
 
     def test_normal_sensitivity_within_default_budget_passes(self, client: TestClient) -> None:
+        """A sensitivity sweep within the default budget succeeds."""
         # The default budget admits ordinary analysis requests unchanged.
         r = client.post(
             "/api/sensitivity",

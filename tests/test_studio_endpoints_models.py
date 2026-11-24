@@ -10,17 +10,31 @@
 
 from __future__ import annotations
 
-from tests.studio_endpoints_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+import pytest
+from tests.studio_endpoints_support import (
+    MODEL,
+)
+from tests.studio_endpoints_support import client as client
+from typing import Never
 
 
 class TestModelEndpoints:
-    def test_list_models(self, client):
+    """The Studio model catalogue and model simulation endpoints."""
+
+    def test_list_models(self, client: TestClient) -> None:
+        """The model catalogue lists more than 100 models."""
         r = client.get("/api/models")
         assert r.status_code == 200
         data = r.json()
         assert len(data) > 100
 
-    def test_model_detail(self, client):
+    def test_model_detail(self, client: TestClient) -> None:
+        """A model detail gives its name, parameters, state variables and category."""
         r = client.get(f"/api/models/{MODEL}")
         assert r.status_code == 200
         data = r.json()
@@ -29,14 +43,18 @@ class TestModelEndpoints:
         assert "state_vars" in data
         assert "category" in data
 
-    def test_model_detail_not_found(self, client):
+    def test_model_detail_not_found(self, client: TestClient) -> None:
+        """An unknown model gives 404."""
         r = client.get("/api/models/NonexistentModel")
         assert r.status_code == 404
 
-    def test_model_detail_internal_failure_is_500(self, client, monkeypatch):
+    def test_model_detail_internal_failure_is_500(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """An internal failure of a model lookup gives 500."""
         import sc_neurocore.studio.api.catalogue as catalogue_routes
 
-        def _boom(_name: str):
+        def _boom(_name: str) -> Never:
             raise RuntimeError("metadata exploded")
 
         monkeypatch.setattr(catalogue_routes, "get_model_detail", _boom)
@@ -44,7 +62,8 @@ class TestModelEndpoints:
         assert r.status_code == 500
         assert r.json()["detail"] == "Internal error"
 
-    def test_simulate_model(self, client):
+    def test_simulate_model(self, client: TestClient) -> None:
+        """A model simulation returns times and states."""
         r = client.post(
             "/api/models/simulate",
             json={

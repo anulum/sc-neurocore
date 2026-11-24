@@ -15,11 +15,17 @@ import json
 import pytest
 from starlette.testclient import TestClient
 
-from tests.studio_endpoints_support import *  # noqa: F403
+from tests.studio_endpoints_support import (
+    MODEL,
+)
+from tests.studio_endpoints_support import client as client
 
 
 class TestCodegenEndpoint:
-    def test_codegen_model(self, client):
+    """The Studio code-export endpoint."""
+
+    def test_codegen_model(self, client: TestClient) -> None:
+        """A model export pins the request and embeds the experiment hash and a replay script."""
         r = client.post(
             "/api/codegen",
             json={
@@ -49,7 +55,8 @@ class TestCodegenEndpoint:
         # The script goes through the contract instead of guessing a step call.
         assert "step(current=" not in data["script"]
 
-    def test_codegen_ode(self, client):
+    def test_codegen_ode(self, client: TestClient) -> None:
+        """An ODE export pins the equations and the initial state."""
         r = client.post(
             "/api/codegen",
             json={
@@ -68,18 +75,21 @@ class TestCodegenEndpoint:
         assert data["request"]["init"] == {"v": 0.0}
         assert "script" in data
 
-    def test_codegen_requires_the_mode_discriminator(self, client):
+    def test_codegen_requires_the_mode_discriminator(self, client: TestClient) -> None:
+        """An export without its mode is rejected with 422."""
         r = client.post("/api/codegen", json={"model_name": MODEL, "duration": 10})
         assert r.status_code == 422
 
-    def test_codegen_rejects_a_field_of_the_other_branch(self, client):
+    def test_codegen_rejects_a_field_of_the_other_branch(self, client: TestClient) -> None:
+        """An export with a field of the other mode is rejected with 422."""
         r = client.post(
             "/api/codegen",
             json={"mode": "model", "model_name": MODEL, "equations": ["dv/dt = I"]},
         )
         assert r.status_code == 422
 
-    def test_codegen_refuses_an_experiment_the_contract_rejects(self, client):
+    def test_codegen_refuses_an_experiment_the_contract_rejects(self, client: TestClient) -> None:
+        """An export of a rejected experiment is refused with 422."""
         r = client.post(
             "/api/codegen",
             json={"mode": "model", "model_name": MODEL, "params": {"not_a_parameter": 1.0}},
@@ -88,7 +98,10 @@ class TestCodegenEndpoint:
         detail = r.json()["detail"]
         assert detail["error"] in {"invalid_model_input", "experiment_rejected"}
 
-    def test_codegen_refuses_an_unknown_model_instead_of_exporting_it(self, client):
+    def test_codegen_refuses_an_unknown_model_instead_of_exporting_it(
+        self, client: TestClient
+    ) -> None:
+        """An export of an unknown model is refused with 422."""
         r = client.post(
             "/api/codegen",
             json={"mode": "model", "model_name": "NoSuchNeuronExistsHere"},
@@ -97,6 +110,8 @@ class TestCodegenEndpoint:
 
 
 class TestReplayPackEndpoint:
+    """The Studio replay-pack export endpoint."""
+
     def test_pack_size_refusal_has_actionable_detail(
         self, client: TestClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -120,7 +135,8 @@ class TestReplayPackEndpoint:
             "differences": [],
         }
 
-    def test_the_pack_seals_the_experiment_and_its_expectation(self, client):
+    def test_the_pack_seals_the_experiment_and_its_expectation(self, client: TestClient) -> None:
+        """The replay pack seals the experiment identity, expectation, environment and runner."""
         r = client.post(
             "/api/export/replay-pack",
             json={
@@ -144,7 +160,10 @@ class TestReplayPackEndpoint:
         # browser download and the Python runner put it through.
         assert json.loads(json.dumps(pack)) == pack
 
-    def test_the_pack_matches_the_simulation_the_same_request_produces(self, client):
+    def test_the_pack_matches_the_simulation_the_same_request_produces(
+        self, client: TestClient
+    ) -> None:
+        """The pack's expectation matches the simulation of the same request."""
         body = {
             "mode": "model",
             "model_name": MODEL,
@@ -163,7 +182,8 @@ class TestReplayPackEndpoint:
         assert pack["expectation"]["final_state"] == run["final_state"]
         assert pack["experiment_sha256"] == run["experiment"]["experiment_sha256"]
 
-    def test_the_pack_endpoint_refuses_a_rejected_experiment(self, client):
+    def test_the_pack_endpoint_refuses_a_rejected_experiment(self, client: TestClient) -> None:
+        """A replay pack of a rejected experiment is refused with 422."""
         r = client.post(
             "/api/export/replay-pack",
             json={"mode": "model", "model_name": MODEL, "dt": 0.1, "duration": 0.01},

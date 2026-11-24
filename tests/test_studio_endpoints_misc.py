@@ -10,12 +10,14 @@
 
 from __future__ import annotations
 
-from tests.studio_endpoints_support import *  # noqa: F403
+from tests.studio_endpoints_support import (
+    TestClient,
+)
+from tests.studio_endpoints_support import client as client
 
 
 def test_import_trace_rejects_empty_voltage(client: TestClient) -> None:
     """Trace import requires a non-empty voltage vector."""
-
     response = client.post("/api/import-trace", json={"voltage": [], "dt": 0.1})
 
     assert response.status_code == 422

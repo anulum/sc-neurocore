@@ -10,7 +10,34 @@
 
 from __future__ import annotations
 
-from tests.studio_evidence_bundle_support import *  # noqa: F403
+import json
+import threading
+from datetime import (
+    datetime,
+)
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform import (
+    STUDIO_EVIDENCE_BUNDLE_SCHEMA_VERSION,
+    StudioJobContext,
+    StudioJobManager,
+    write_studio_evidence_bundle,
+)
+from sc_neurocore.studio.platform.action_evidence import (
+    write_studio_action_evidence_manifest,
+)
+from tests.studio_evidence_bundle_support import (
+    _analysis_payload,
+    _default_flow_attestation_payload,
+    _default_flow_run_payload,
+    _project_payload,
+    _simulation_payload,
+    UTC,
+)
+from typing import (
+    cast,
+)
 
 from sc_neurocore.studio.evidence_chain import EVIDENCE_VERIFIER_VERSION
 
@@ -19,7 +46,6 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     tmp_path: Path,
 ) -> None:
     """Evidence bundle writer preserves project, job, audit, and artifact data."""
-
     manager = StudioJobManager(
         root=tmp_path / "jobs",
         allowed_kinds=frozenset({"compiler"}),
@@ -27,6 +53,7 @@ def test_write_studio_evidence_bundle_copies_project_job_audit_and_replay(
     )
 
     def source_task(context: StudioJobContext) -> dict[str, object]:
+        """Write a result artefact and its action-evidence manifest for the job."""
         result: dict[str, object] = {"compiled": True}
         result_artifact = context.write_artifact("compiler/result.json", json.dumps(result))
         write_studio_action_evidence_manifest(
@@ -147,7 +174,6 @@ def test_write_studio_evidence_bundle_classifies_suffixed_action_evidence(
     tmp_path: Path,
 ) -> None:
     """Evidence bundles classify suffixed worker evidence artifacts."""
-
     manager = StudioJobManager(
         root=tmp_path / "jobs",
         allowed_kinds=frozenset({"synthesis"}),
@@ -155,6 +181,7 @@ def test_write_studio_evidence_bundle_classifies_suffixed_action_evidence(
     )
 
     def source_task(context: StudioJobContext) -> dict[str, object]:
+        """Write a result artefact and its action-evidence manifest for the job."""
         result: dict[str, object] = {"supported": True}
         result_artifact = context.write_artifact(
             "synthesis/multi-target-result.json",

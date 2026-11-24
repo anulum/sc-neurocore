@@ -10,10 +10,33 @@
 
 from __future__ import annotations
 
-from tests.studio_evidence_bundle_support import *  # noqa: F403
+import pytest
+import threading
+from collections.abc import (
+    Callable,
+)
+from datetime import (
+    datetime,
+)
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform import (
+    StudioJobContext,
+    write_studio_evidence_bundle,
+)
+from tests.studio_evidence_bundle_support import (
+    _weight_restore_attach_response,
+    _weight_restore_response,
+    UTC,
+)
+from typing import (
+    cast,
+)
 
 
 def test_write_studio_evidence_bundle_includes_weight_restore(tmp_path: Path) -> None:
+    """A bundle with a weight restore carries it as one training entry."""
     context = StudioJobContext(
         job_id="sj_restore",
         work_dir=tmp_path / "restore",
@@ -59,6 +82,7 @@ def test_write_studio_evidence_bundle_rejects_invalid_weight_restore(
     mutate: Callable[[dict[str, object]], object],
     match: str,
 ) -> None:
+    """An invalid weight restore is rejected with ValueError."""
     context = StudioJobContext(
         job_id="sj_restore_bad",
         work_dir=tmp_path / "restore-bad",
@@ -73,6 +97,7 @@ def test_write_studio_evidence_bundle_rejects_invalid_weight_restore(
 
 
 def test_write_studio_evidence_bundle_includes_weight_restore_attach(tmp_path: Path) -> None:
+    """A bundle with a weight-restore attach carries it as one training entry."""
     context = StudioJobContext(
         job_id="sj_attach",
         work_dir=tmp_path / "attach",
@@ -116,6 +141,7 @@ def test_write_studio_evidence_bundle_rejects_invalid_weight_restore_attach(
     mutate: Callable[[dict[str, object]], object],
     match: str,
 ) -> None:
+    """An invalid weight-restore attach is rejected with ValueError."""
     context = StudioJobContext(
         job_id="sj_attach_bad",
         work_dir=tmp_path / "attach-bad",

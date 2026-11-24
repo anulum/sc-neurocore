@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4708
+expected_file_count = 4726
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -18876,3 +18876,75 @@ rationale = "Exercise SC-NeuroCore: studio identity mutations."
 [[file]]
 path = "tests/test_studio_identity_service_accounts.py"
 rationale = "Exercise SC-NeuroCore: studio identity service accounts."
+
+[[file]]
+path = "tests/test_studio_endpoints_analysis_budget.py"
+rationale = "Exercise SC-NeuroCore: studio endpoints analysis budget."
+
+[[file]]
+path = "tests/test_studio_endpoints_analysis_metadata.py"
+rationale = "Exercise SC-NeuroCore: studio endpoints analysis metadata."
+
+[[file]]
+path = "tests/test_studio_endpoints_bifurcation.py"
+rationale = "Exercise SC-NeuroCore: studio endpoints bifurcation."
+
+[[file]]
+path = "tests/test_studio_endpoints_characterize.py"
+rationale = "Exercise SC-NeuroCore: studio endpoints characterize."
+
+[[file]]
+path = "tests/test_studio_endpoints_codegen.py"
+rationale = "Exercise SC-NeuroCore: studio endpoints codegen."
+
+[[file]]
+path = "tests/test_studio_endpoints_fi_curve.py"
+rationale = "Exercise SC-NeuroCore: studio endpoints fi curve."
+
+[[file]]
+path = "tests/test_studio_endpoints_freq.py"
+rationale = "Exercise SC-NeuroCore: studio endpoints freq."
+
+[[file]]
+path = "tests/test_studio_endpoints_misc.py"
+rationale = "Exercise SC-NeuroCore: studio endpoints misc."
+
+[[file]]
+path = "tests/test_studio_endpoints_models.py"
+rationale = "Exercise SC-NeuroCore: studio endpoints models."
+
+[[file]]
+path = "tests/test_studio_endpoints_multi_simulate.py"
+rationale = "Exercise SC-NeuroCore: studio endpoints multi simulate."
+
+[[file]]
+path = "tests/test_studio_endpoints_network.py"
+rationale = "Exercise SC-NeuroCore: studio endpoints network."
+
+[[file]]
+path = "tests/test_studio_endpoints_presets.py"
+rationale = "Exercise SC-NeuroCore: studio endpoints presets."
+
+[[file]]
+path = "tests/test_studio_endpoints_sensitivity.py"
+rationale = "Exercise SC-NeuroCore: studio endpoints sensitivity."
+
+[[file]]
+path = "tests/test_studio_evidence_bundle_chain.py"
+rationale = "Exercise SC-NeuroCore: studio evidence bundle chain."
+
+[[file]]
+path = "tests/test_studio_evidence_bundle_model_scan.py"
+rationale = "Exercise SC-NeuroCore: studio evidence bundle model scan."
+
+[[file]]
+path = "tests/test_studio_evidence_bundle_rejections.py"
+rationale = "Exercise SC-NeuroCore: studio evidence bundle rejections."
+
+[[file]]
+path = "tests/test_studio_evidence_bundle_weight_restore.py"
+rationale = "Exercise SC-NeuroCore: studio evidence bundle weight restore."
+
+[[file]]
+path = "tests/test_studio_evidence_bundle_write.py"
+rationale = "Exercise SC-NeuroCore: studio evidence bundle write."

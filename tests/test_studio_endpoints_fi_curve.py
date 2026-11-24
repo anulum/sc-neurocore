@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.studio_endpoints_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+from tests.studio_endpoints_support import (
+    MODEL,
+)
+from tests.studio_endpoints_support import client as client
 
 
 class TestFICurveEndpoint:
-    def test_fi_curve_model(self, client):
+    """The Studio F-I curve endpoint."""
+
+    def test_fi_curve_model(self, client: TestClient) -> None:
+        """A model F-I curve returns three currents and their rates."""
         r = client.post(
             "/api/fi-curve",
             json={

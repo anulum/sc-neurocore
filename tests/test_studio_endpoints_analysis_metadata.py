@@ -11,11 +11,18 @@
 from __future__ import annotations
 
 from sc_neurocore.studio.simulation_manifest import STUDIO_SIMULATION_RUN_SCHEMA_VERSION
-from tests.studio_endpoints_support import *  # noqa: F403
+from tests.studio_endpoints_support import (
+    MODEL,
+    TestClient,
+)
+from tests.studio_endpoints_support import client as client
 
 
 class TestAnalysisMetadataConsistency:
+    """Result metadata attached by the Studio analysis endpoints."""
+
     def test_characterize_attaches_analysis_metadata(self, client: TestClient) -> None:
+        """Characterisation results carry versioned analysis metadata."""
         r = client.post(
             "/api/characterize",
             json={"name": MODEL, "dt": 0.5, "duration": 20.0, "current": 10.0},
@@ -27,6 +34,7 @@ class TestAnalysisMetadataConsistency:
         assert metadata["source"] == "model"
 
     def test_multi_simulate_attaches_run_metadata_per_result(self, client: TestClient) -> None:
+        """Each multi-simulation result carries versioned run metadata."""
         r = client.post(
             "/api/multi-simulate",
             json=[

@@ -17,7 +17,26 @@ a pack whose parts contradict each other is refused rather than published.
 
 from __future__ import annotations
 
-from tests.studio_evidence_bundle_support import *  # noqa: F403
+import json
+import pytest
+import threading
+from pathlib import (
+    Path,
+)
+from sc_neurocore.studio.platform import (
+    StudioJobContext,
+    write_studio_evidence_bundle,
+)
+from tests.studio_evidence_bundle_support import (
+    _analysis_payload,
+    _project_payload,
+    _simulation_payload,
+    _weight_restore_attach_response,
+    _weight_restore_response,
+)
+from typing import (
+    cast,
+)
 
 from sc_neurocore.studio.evidence_chain import EVIDENCE_VERIFIER_VERSION
 from sc_neurocore.studio.evidence_receipt import (
@@ -45,6 +64,8 @@ def _bundle_document(tmp_path: Path, relative_path: str) -> dict[str, object]:
 
 
 class TestSealingWhatArrivesUnsealed:
+    """Sealing evidence payloads that arrive without a receipt."""
+
     def test_an_unsealed_payload_is_sealed_and_marked_as_an_export(self, tmp_path: Path) -> None:
         """An export-time receipt attests what was handed over, nothing more."""
         write_studio_evidence_bundle(
@@ -61,6 +82,7 @@ class TestSealingWhatArrivesUnsealed:
     def test_a_payload_that_attests_its_own_production_keeps_that_attestation(
         self, tmp_path: Path
     ) -> None:
+        """A payload that carries its own production receipt keeps it."""
         produced = attach_evidence_receipt(
             _simulation_payload(),
             lane="simulation",
@@ -76,6 +98,7 @@ class TestSealingWhatArrivesUnsealed:
         assert document[EVIDENCE_RECEIPT_KEY] == produced[EVIDENCE_RECEIPT_KEY]
 
     def test_every_classified_entry_names_its_receipt_in_the_manifest(self, tmp_path: Path) -> None:
+        """Every classified manifest entry names its receipt."""
         result = write_studio_evidence_bundle(
             _context(tmp_path),
             project_payload=_project_payload(),
@@ -91,7 +114,10 @@ class TestSealingWhatArrivesUnsealed:
 
 
 class TestTheChainDocument:
+    """The evidence-chain document of a bundle."""
+
     def test_the_pack_carries_its_own_verdict(self, tmp_path: Path) -> None:
+        """The pack carries a verified, complete chain verdict and its summary counts."""
         result = write_studio_evidence_bundle(
             _context(tmp_path), simulation_payloads=(_simulation_payload(),)
         )
@@ -125,6 +151,8 @@ class TestTheChainDocument:
 
 
 class TestRefusingAPackThatContradictsItself:
+    """Bundles whose entries contradict each other."""
+
     def test_attaching_a_checkpoint_of_another_shape_is_refused(self, tmp_path: Path) -> None:
         """The wrong-model case for the training lane, caught at export."""
         attach = dict(_weight_restore_attach_response())
@@ -138,6 +166,7 @@ class TestRefusingAPackThatContradictsItself:
             )
 
     def test_an_agreeing_attach_and_restore_export_together(self, tmp_path: Path) -> None:
+        """An attach and a restore that agree export together with a verified chain."""
         result = write_studio_evidence_bundle(
             _context(tmp_path),
             weight_restore_payloads=(_weight_restore_response(),),

@@ -10,24 +10,34 @@
 
 from __future__ import annotations
 
-from tests.studio_endpoints_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+from tests.studio_endpoints_support import client as client
 
 
 class TestPresetsEndpoint:
-    def test_preset_actions_catalog(self, client):
+    """Studio presets, their actions and the guarded default flow."""
+
+    def test_preset_actions_catalog(self, client: TestClient) -> None:
+        """The action catalogue counts its actions, at least two."""
         response = client.get("/api/presets/actions/catalog")
         assert response.status_code == 200
         payload = response.json()
         assert payload["count"] == len(payload["actions"])
         assert payload["count"] >= 2
 
-    def test_list_presets(self, client):
+    def test_list_presets(self, client: TestClient) -> None:
+        """The preset list holds at least ten presets."""
         r = client.get("/api/presets")
         assert r.status_code == 200
         data = r.json()
         assert len(data) >= 10
 
-    def test_get_preset(self, client):
+    def test_get_preset(self, client: TestClient) -> None:
+        """The first listed preset can be fetched by its id."""
         r = client.get("/api/presets")
         presets = r.json()
         first = presets[0]
@@ -36,14 +46,16 @@ class TestPresetsEndpoint:
         data = r2.json()
         assert "id" in data
 
-    def test_fpga_precision_preset_has_studio_actions(self, client):
+    def test_fpga_precision_preset_has_studio_actions(self, client: TestClient) -> None:
+        """The FPGA precision preset carries adaptive-precision actions."""
         response = client.get("/api/presets/fpga_precision")
         assert response.status_code == 200
         payload = response.json()
         assert "studio_actions" in payload
         assert payload["studio_actions"][0]["endpoint"].startswith("/api/adaptive-precision/")
 
-    def test_fpga_precision_actions_endpoint(self, client):
+    def test_fpga_precision_actions_endpoint(self, client: TestClient) -> None:
+        """The FPGA precision actions point at adaptive-precision endpoints."""
         response = client.get("/api/presets/fpga_precision/actions")
         assert response.status_code == 200
         payload = response.json()
@@ -51,35 +63,50 @@ class TestPresetsEndpoint:
         assert isinstance(payload["actions"], list)
         assert payload["actions"][0]["endpoint"].startswith("/api/adaptive-precision/")
 
-    def test_fpga_precision_action_resolve_rejects_unknown_override(self, client):
+    def test_fpga_precision_action_resolve_rejects_unknown_override(
+        self, client: TestClient
+    ) -> None:
+        """Resolving an action with an unknown override is rejected with 422."""
         response = client.post(
             "/api/presets/fpga_precision/actions/auto_tune_adaptive_precision/resolve",
             json={"overrides": {"unknown_key": 123}},
         )
         assert response.status_code == 422
 
-    def test_fpga_precision_action_execute_rejects_unknown_override(self, client):
+    def test_fpga_precision_action_execute_rejects_unknown_override(
+        self, client: TestClient
+    ) -> None:
+        """Executing an action with an unknown override is rejected with 422."""
         response = client.post(
             "/api/presets/fpga_precision/actions/auto_tune_adaptive_precision/execute",
             json={"overrides": {"unknown_key": 123}},
         )
         assert response.status_code == 422
 
-    def test_fpga_precision_execute_all_rejects_bad_override_shape(self, client):
+    def test_fpga_precision_execute_all_rejects_bad_override_shape(
+        self, client: TestClient
+    ) -> None:
+        """Executing all actions with a malformed override is rejected with 422."""
         response = client.post(
             "/api/presets/fpga_precision/actions/execute-all",
             json={"action_overrides": {"auto_tune_adaptive_precision": "invalid"}},
         )
         assert response.status_code == 422
 
-    def test_fpga_precision_default_flow_rejects_bad_override_shape(self, client):
+    def test_fpga_precision_default_flow_rejects_bad_override_shape(
+        self, client: TestClient
+    ) -> None:
+        """A default-flow run with a malformed override is rejected with 422."""
         response = client.post(
             "/api/presets/fpga_precision/default-flow/run",
             json={"action_overrides": {"auto_tune_adaptive_precision": "invalid"}},
         )
         assert response.status_code == 422
 
-    def test_fpga_precision_default_flow_fingerprint_stable_for_same_input(self, client):
+    def test_fpga_precision_default_flow_fingerprint_stable_for_same_input(
+        self, client: TestClient
+    ) -> None:
+        """Two default-flow runs of the same input give the same fingerprint."""
         payload = {
             "action_overrides": {"auto_tune_adaptive_precision": {"target_error_percent": 0.05}}
         }
@@ -94,15 +121,18 @@ class TestPresetsEndpoint:
             == second_body["reproducibility_manifest"]["inputs_fingerprint_sha256"]
         )
 
-    def test_default_flow_plan_not_found(self, client):
+    def test_default_flow_plan_not_found(self, client: TestClient) -> None:
+        """The default-flow plan of an unknown preset gives 404."""
         response = client.get("/api/presets/nonexistent/default-flow/plan")
         assert response.status_code == 404
 
-    def test_default_flow_contract_not_found(self, client):
+    def test_default_flow_contract_not_found(self, client: TestClient) -> None:
+        """The default-flow contract of an unknown preset gives 404."""
         response = client.get("/api/presets/nonexistent/default-flow/contract")
         assert response.status_code == 404
 
-    def test_default_flow_verify_detects_drift(self, client):
+    def test_default_flow_verify_detects_drift(self, client: TestClient) -> None:
+        """Verifying a drifted plan reports mismatched order and fingerprints."""
         response = client.post(
             "/api/presets/fpga_precision/default-flow/verify",
             json={
@@ -116,7 +146,10 @@ class TestPresetsEndpoint:
         assert payload["fingerprints_match"] is False
         assert payload["verified"] is False
 
-    def test_default_flow_verify_rejects_invalid_fingerprint_format(self, client):
+    def test_default_flow_verify_rejects_invalid_fingerprint_format(
+        self, client: TestClient
+    ) -> None:
+        """Verifying with a malformed fingerprint is rejected with 422."""
         response = client.post(
             "/api/presets/fpga_precision/default-flow/verify",
             json={
@@ -127,7 +160,8 @@ class TestPresetsEndpoint:
         )
         assert response.status_code == 422
 
-    def test_default_flow_guarded_run_rejects_drift(self, client):
+    def test_default_flow_guarded_run_rejects_drift(self, client: TestClient) -> None:
+        """A guarded run of a drifted plan is rejected with 422."""
         response = client.post(
             "/api/presets/fpga_precision/default-flow/run-guarded",
             json={
@@ -138,7 +172,8 @@ class TestPresetsEndpoint:
         )
         assert response.status_code == 422
 
-    def test_default_flow_guarded_run_requires_plan_fingerprint(self, client):
+    def test_default_flow_guarded_run_requires_plan_fingerprint(self, client: TestClient) -> None:
+        """A guarded run without the plan fingerprint is rejected with 422."""
         plan = client.get("/api/presets/fpga_precision/default-flow/plan")
         assert plan.status_code == 200
         plan_payload = plan.json()
@@ -154,7 +189,10 @@ class TestPresetsEndpoint:
         )
         assert response.status_code == 422
 
-    def test_default_flow_guarded_run_rejects_plan_fingerprint_mismatch(self, client):
+    def test_default_flow_guarded_run_rejects_plan_fingerprint_mismatch(
+        self, client: TestClient
+    ) -> None:
+        """A guarded run with a mismatched plan fingerprint is rejected with 422."""
         plan = client.get("/api/presets/fpga_precision/default-flow/plan")
         assert plan.status_code == 200
         plan_payload = plan.json()
@@ -171,7 +209,10 @@ class TestPresetsEndpoint:
         )
         assert response.status_code == 422
 
-    def test_default_flow_guarded_run_rejects_invalid_fingerprint_format(self, client):
+    def test_default_flow_guarded_run_rejects_invalid_fingerprint_format(
+        self, client: TestClient
+    ) -> None:
+        """A guarded run with a malformed fingerprint is rejected with 422."""
         response = client.post(
             "/api/presets/fpga_precision/default-flow/run-guarded",
             json={
@@ -182,7 +223,8 @@ class TestPresetsEndpoint:
         )
         assert response.status_code == 422
 
-    def test_default_flow_run_from_contract_rejects_drift(self, client):
+    def test_default_flow_run_from_contract_rejects_drift(self, client: TestClient) -> None:
+        """A run from a drifted contract is rejected with 422."""
         contract = client.get("/api/presets/fpga_precision/default-flow/contract")
         assert contract.status_code == 200
         payload = contract.json()
@@ -193,7 +235,8 @@ class TestPresetsEndpoint:
         )
         assert response.status_code == 422
 
-    def test_default_flow_attest_rejects_missing_repro_manifest(self, client):
+    def test_default_flow_attest_rejects_missing_repro_manifest(self, client: TestClient) -> None:
+        """An attestation without its reproduction manifest is rejected with 422."""
         response = client.post(
             "/api/presets/fpga_precision/default-flow/attest",
             json={
@@ -205,7 +248,10 @@ class TestPresetsEndpoint:
         )
         assert response.status_code == 422
 
-    def test_default_flow_attest_verify_detects_tampered_attestation(self, client):
+    def test_default_flow_attest_verify_detects_tampered_attestation(
+        self, client: TestClient
+    ) -> None:
+        """Verifying a tampered attestation reports a fingerprint mismatch."""
         run = client.post(
             "/api/presets/fpga_precision/default-flow/run",
             json={

@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.studio_endpoints_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+from tests.studio_endpoints_support import client as client
 
 
 class TestNetworkEndpoint:
-    def test_network_default(self, client):
+    """The Studio excitatory-inhibitory network endpoint."""
+
+    def test_network_default(self, client: TestClient) -> None:
+        """The default network has 100 neurons and returns spikes and rates."""
         r = client.post("/api/network/ei", json={})
         assert r.status_code == 200
         data = r.json()
@@ -23,7 +31,8 @@ class TestNetworkEndpoint:
         assert "rate_time" in data
         assert data["n_total"] == 100
 
-    def test_network_custom(self, client):
+    def test_network_custom(self, client: TestClient) -> None:
+        """A custom network has the requested 40 excitatory and 10 inhibitory neurons."""
         r = client.post(
             "/api/network/ei",
             json={

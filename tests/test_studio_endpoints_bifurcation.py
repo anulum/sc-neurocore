@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.studio_endpoints_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+from tests.studio_endpoints_support import (
+    MODEL,
+)
+from tests.studio_endpoints_support import client as client
 
 
 class TestBifurcationEndpoint:
-    def test_bifurcation_model(self, client):
+    """The Studio bifurcation endpoint."""
+
+    def test_bifurcation_model(self, client: TestClient) -> None:
+        """A model bifurcation returns parameter values and attractors."""
         r = client.post(
             "/api/bifurcation",
             json={
