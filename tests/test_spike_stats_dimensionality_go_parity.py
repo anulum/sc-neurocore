@@ -10,14 +10,23 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_dimensionality_support import *  # noqa: F403
+import pytest
+from tests.spike_stats_dimensionality_support import (
+    _DIM,
+    _GO_AVAILABLE,
+    _parity,
+)
 
 
 @pytest.mark.skipif(not _GO_AVAILABLE, reason="Go dimensionality library not built")
 class TestGoParity:
+    """The Go dimensionality backend against the Python reference."""
+
     def test_parity(self) -> None:
+        """PCA, demixed PCA and factor analysis on Go match the Python reference within 1e-6."""
         _parity("go")
 
     def test_ensure_cached(self) -> None:
+        """The Go backend probe returns True on two successive calls."""
         assert _DIM._ensure_go_dim() is True
         assert _DIM._ensure_go_dim() is True

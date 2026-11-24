@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_sorting_quality_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.sorting_quality import (
+    nn_hit_rate,
+)
+from tests.spike_stats_sorting_quality_support import (
+    _rng,
+)
 
 
 class TestNNHitRate:
+    """The nearest-neighbour hit rate of a cluster."""
+
     def test_typical(self) -> None:
+        """Separated clusters give a hit rate inside [0, 1]."""
         rng = _rng()
         cluster = rng.normal(0, 0.5, (20, 3))
         noise = rng.normal(5, 0.5, (20, 3))
@@ -22,6 +31,7 @@ class TestNNHitRate:
         assert 0 <= result <= 1
 
     def test_too_small(self) -> None:
+        """A three-point cluster with k = 4 gives NaN."""
         cluster = _rng().normal(0, 1, (3, 2))
         noise = _rng().normal(3, 1, (10, 2))
         result = nn_hit_rate(cluster, noise, k=4)

@@ -10,14 +10,27 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_sorting_quality_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.analysis.spike_stats.sorting_quality import (
+    isolation_distance,
+    l_ratio,
+)
+from tests.spike_stats_sorting_quality_support import (
+    _cluster_noise,
+    _raise_oserror,
+    _SQ,
+)
 
 
 def test_rust_probe_returns_none_for_missing_symbol() -> None:
+    """The Rust engine probe returns None for a symbol the engine lacks."""
     assert _SQ._load_rust_metric("py_no_such_symbol") is None
 
 
 def test_rust_probe_returns_none_when_engine_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Rust engine probe returns None when the engine cannot be imported."""
+
     def _raise(_name: str) -> object:
         raise ImportError("engine absent")
 
@@ -26,6 +39,7 @@ def test_rust_probe_returns_none_when_engine_missing(monkeypatch: pytest.MonkeyP
 
 
 def test_rust_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without the Rust engine the rust backend raises RuntimeError and auto falls back to NumPy."""
     monkeypatch.setattr(_SQ, "_rust_isolation", None)
     monkeypatch.setattr(_SQ, "_rust_l_ratio", None)
     cluster, noise = _cluster_noise(10, 20, 2)
@@ -38,12 +52,14 @@ def test_rust_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -
 
 
 def test_ensure_julia_false_without_juliacall(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Julia backend probe returns False when juliacall is not installed."""
     monkeypatch.setattr(_SQ, "_julia_sq", None)
     monkeypatch.setattr(_SQ._importlib_util, "find_spec", lambda _name: None)
     assert _SQ._ensure_julia_sq() is False
 
 
 def test_ensure_julia_false_when_module_file_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Julia backend probe returns False when its Julia module file is missing."""
     monkeypatch.setattr(_SQ, "_julia_sq", None)
     monkeypatch.setattr(_SQ._importlib_util, "find_spec", lambda _name: object())
     monkeypatch.setattr(_SQ._os.path, "isfile", lambda _path: False)
@@ -51,6 +67,7 @@ def test_ensure_julia_false_when_module_file_missing(monkeypatch: pytest.MonkeyP
 
 
 def test_julia_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With the Julia backend unavailable, isolation distance raises RuntimeError."""
     monkeypatch.setattr(_SQ, "_ensure_julia_sq", lambda: False)
     cluster, noise = _cluster_noise(10, 20, 2)
     with pytest.raises(RuntimeError, match="Julia sorting-quality backend is not available"):
@@ -58,12 +75,14 @@ def test_julia_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_ensure_go_false_when_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Go backend probe returns False when its shared library is missing."""
     monkeypatch.setattr(_SQ, "_go_sq_lib", None)
     monkeypatch.setattr(_SQ._os.path, "isfile", lambda _path: False)
     assert _SQ._ensure_go_sq() is False
 
 
 def test_ensure_go_false_on_load_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Go backend probe returns False when loading its library raises OSError."""
     monkeypatch.setattr(_SQ, "_go_sq_lib", None)
     monkeypatch.setattr(_SQ._os.path, "isfile", lambda _path: True)
     monkeypatch.setattr(_SQ._ctypes, "CDLL", _raise_oserror)
@@ -71,6 +90,7 @@ def test_ensure_go_false_on_load_error(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_ensure_go_false_when_symbol_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Go backend probe returns False when the library lacks its symbols."""
     monkeypatch.setattr(_SQ, "_go_sq_lib", None)
     monkeypatch.setattr(_SQ._os.path, "isfile", lambda _path: True)
     monkeypatch.setattr(_SQ._ctypes, "CDLL", lambda _path: object())
@@ -78,6 +98,7 @@ def test_ensure_go_false_when_symbol_missing(monkeypatch: pytest.MonkeyPatch) ->
 
 
 def test_go_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With the Go backend unavailable, the L-ratio raises RuntimeError."""
     monkeypatch.setattr(_SQ, "_ensure_go_sq", lambda: False)
     cluster, noise = _cluster_noise(10, 20, 2)
     with pytest.raises(RuntimeError, match="Go sorting-quality backend is not available"):
@@ -85,12 +106,14 @@ def test_go_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> 
 
 
 def test_ensure_mojo_false_when_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Mojo backend probe returns False when its shared library is missing."""
     monkeypatch.setattr(_SQ, "_mojo_sq_lib", None)
     monkeypatch.setattr(_SQ._os.path, "isfile", lambda _path: False)
     assert _SQ._ensure_mojo_sq() is False
 
 
 def test_ensure_mojo_false_on_load_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Mojo backend probe returns False when loading its library raises OSError."""
     monkeypatch.setattr(_SQ, "_mojo_sq_lib", None)
     monkeypatch.setattr(_SQ._os.path, "isfile", lambda _path: True)
     monkeypatch.setattr(_SQ._ctypes, "CDLL", _raise_oserror)
@@ -98,6 +121,7 @@ def test_ensure_mojo_false_on_load_error(monkeypatch: pytest.MonkeyPatch) -> Non
 
 
 def test_ensure_mojo_false_when_symbol_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Mojo backend probe returns False when the library lacks its symbols."""
     monkeypatch.setattr(_SQ, "_mojo_sq_lib", None)
     monkeypatch.setattr(_SQ._os.path, "isfile", lambda _path: True)
     monkeypatch.setattr(_SQ._ctypes, "CDLL", lambda _path: object())
@@ -105,6 +129,7 @@ def test_ensure_mojo_false_when_symbol_missing(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_mojo_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With the Mojo backend unavailable, isolation distance raises RuntimeError."""
     monkeypatch.setattr(_SQ, "_ensure_mojo_sq", lambda: False)
     cluster, noise = _cluster_noise(10, 20, 2)
     with pytest.raises(RuntimeError, match="Mojo sorting-quality backend is not available"):

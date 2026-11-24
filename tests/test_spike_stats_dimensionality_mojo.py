@@ -10,16 +10,29 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_dimensionality_support import *  # noqa: F403
+import pytest
+from sc_neurocore.analysis.spike_stats.dimensionality import (
+    demixed_pca,
+    factor_analysis,
+    spike_train_pca,
+)
+from tests.spike_stats_dimensionality_support import (
+    _conditions,
+    _DIM,
+    _raise_oserror,
+    _trains,
+)
 
 
 def test_ensure_mojo_false_when_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Mojo backend probe returns False when its shared library is missing."""
     monkeypatch.setattr(_DIM, "_mojo_dim_lib", None)
     monkeypatch.setattr(_DIM._os.path, "isfile", lambda _path: False)
     assert _DIM._ensure_mojo_dim() is False
 
 
 def test_ensure_mojo_false_on_load_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Mojo backend probe returns False when loading its library raises OSError."""
     monkeypatch.setattr(_DIM, "_mojo_dim_lib", None)
     monkeypatch.setattr(_DIM._os.path, "isfile", lambda _path: True)
     monkeypatch.setattr(_DIM._ctypes, "CDLL", _raise_oserror)
@@ -27,6 +40,7 @@ def test_ensure_mojo_false_on_load_error(monkeypatch: pytest.MonkeyPatch) -> Non
 
 
 def test_ensure_mojo_false_when_symbol_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Mojo backend probe returns False when the library lacks its symbols."""
     monkeypatch.setattr(_DIM, "_mojo_dim_lib", None)
     monkeypatch.setattr(_DIM._os.path, "isfile", lambda _path: True)
     monkeypatch.setattr(_DIM._ctypes, "CDLL", lambda _path: object())
@@ -34,6 +48,7 @@ def test_ensure_mojo_false_when_symbol_missing(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_mojo_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With the Mojo backend unavailable, PCA, demixed PCA and factor analysis raise RuntimeError."""
     monkeypatch.setattr(_DIM, "_ensure_mojo_dim", lambda: False)
     with pytest.raises(RuntimeError, match="Mojo dimensionality backend is not available"):
         spike_train_pca(_trains(), backend="mojo")

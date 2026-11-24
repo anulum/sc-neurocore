@@ -10,16 +10,28 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_dimensionality_support import *  # noqa: F403
+import pytest
+from sc_neurocore.analysis.spike_stats.dimensionality import (
+    demixed_pca,
+    factor_analysis,
+    spike_train_pca,
+)
+from tests.spike_stats_dimensionality_support import (
+    _conditions,
+    _DIM,
+    _trains,
+)
 
 
 def test_ensure_julia_false_without_juliacall(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Julia backend probe returns False when juliacall is not installed."""
     monkeypatch.setattr(_DIM, "_julia_dim", None)
     monkeypatch.setattr(_DIM._importlib_util, "find_spec", lambda _name: None)
     assert _DIM._ensure_julia_dim() is False
 
 
 def test_ensure_julia_false_when_module_file_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Julia backend probe returns False when its Julia module file is missing."""
     monkeypatch.setattr(_DIM, "_julia_dim", None)
     monkeypatch.setattr(_DIM._importlib_util, "find_spec", lambda _name: object())
     monkeypatch.setattr(_DIM._os.path, "isfile", lambda _path: False)
@@ -27,6 +39,7 @@ def test_ensure_julia_false_when_module_file_missing(monkeypatch: pytest.MonkeyP
 
 
 def test_julia_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With the Julia backend unavailable, PCA, demixed PCA and factor analysis raise RuntimeError."""
     monkeypatch.setattr(_DIM, "_ensure_julia_dim", lambda: False)
     with pytest.raises(RuntimeError, match="Julia dimensionality backend is not available"):
         spike_train_pca(_trains(), backend="julia")

@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_sorting_quality_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+from tests.spike_stats_sorting_quality_support import (
+    _SQ,
+)
 
 
 class TestClusterMahalanobisSq:
+    """The Cholesky-solve squared Mahalanobis kernel."""
+
     def test_matches_closed_form_inverse(self) -> None:
+        """The kernel matches the dense-inverse squared Mahalanobis distance within 1e-9."""
         # The Cholesky-solve kernel must equal diffᵀ Σ⁻¹ diff with the dense
         # inverse, without ever forming Σ⁻¹ in the kernel itself.
         cluster = np.array([[0.0, 0.0], [2.0, 0.0], [0.0, 2.0], [2.0, 2.0]])
@@ -26,12 +33,14 @@ class TestClusterMahalanobisSq:
         npt.assert_allclose(mah[0], ref, atol=1e-9)
 
     def test_centre_is_zero(self) -> None:
+        """The cluster centre lies at distance zero."""
         cluster = np.array([[1.0, 4.0], [3.0, 4.0], [1.0, 8.0], [3.0, 8.0]])
         centre = cluster.mean(axis=0, keepdims=True)
         mah = _SQ._cluster_mahalanobis_sq(cluster, centre)
         assert abs(mah[0]) < 1e-9
 
     def test_single_feature(self) -> None:
+        """One feature gives one non-negative distance per point."""
         cluster = np.array([[1.0], [3.0], [5.0], [7.0]])
         noise = np.array([[10.0], [0.0]])
         mah = _SQ._cluster_mahalanobis_sq(cluster, noise)

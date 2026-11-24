@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_sorting_quality_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.sorting_quality import (
+    d_prime,
+)
+from tests.spike_stats_sorting_quality_support import (
+    _rng,
+)
 
 
 class TestDPrime:
+    """The d-prime separation of two clusters."""
+
     def test_typical(self) -> None:
+        """Separated clusters give a positive d-prime."""
         rng = _rng()
         a = rng.normal(0, 1, (20, 3))
         b = rng.normal(3, 1, (20, 3))
@@ -22,11 +31,13 @@ class TestDPrime:
         assert result > 0
 
     def test_identical_clusters(self) -> None:
+        """Identical clusters give a d-prime of zero."""
         data = _rng().normal(0, 1, (10, 2))
         result = d_prime(data, data.copy())
         assert result == 0.0
 
     def test_zero_variance(self) -> None:
+        """Zero-variance clusters give a finite d-prime (the check accepts any finite value)."""
         a = np.ones((5, 2))
         b = np.ones((5, 2)) * 2
         result = d_prime(a, b)

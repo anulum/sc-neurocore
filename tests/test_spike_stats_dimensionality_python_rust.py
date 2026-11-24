@@ -10,26 +10,48 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_dimensionality_support import *  # noqa: F403
+from collections.abc import Callable
+from typing import Any
+
+import numpy as np
+import numpy.testing as npt
+import pytest
+from sc_neurocore.analysis.spike_stats.dimensionality import (
+    demixed_pca,
+    factor_analysis,
+    spike_train_pca,
+)
+from tests.spike_stats_dimensionality_support import (
+    _conditions,
+    _DIM,
+    _trains,
+)
 
 
 def test_auto_uses_numpy_reference() -> None:
+    """The auto backend gives exactly the python result for PCA and factor analysis."""
     # auto resolves to the NumPy/LAPACK path (fastest for dense eigendecomposition)
-    for fn, args in (
+    cases: list[
+        tuple[Callable[..., tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]], tuple[Any, ...]]
+    ] = [
         (spike_train_pca, (_trains(), 3, 10)),
         (factor_analysis, (_trains(5), 2, 10, 30)),
-    ):
-        a = fn(*args, backend="auto")  # type: ignore[misc] # Preserved legacy generic dispatch AST
-        p = fn(*args, backend="python")  # type: ignore[misc] # Preserved legacy generic dispatch AST
+    ]
+    for fn, args in cases:
+        a = fn(*args, backend="auto")
+        p = fn(*args, backend="python")
         npt.assert_array_equal(a[0], p[0])
         npt.assert_array_equal(a[1], p[1])
 
 
 def test_rust_probe_returns_none_for_missing_symbol() -> None:
+    """The Rust engine probe returns None for a symbol the engine lacks."""
     assert _DIM._load_rust_dim("py_no_such_symbol") is None
 
 
 def test_rust_probe_returns_none_when_engine_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The Rust engine probe returns None when the engine cannot be imported."""
+
     def _raise(_name: str) -> object:
         raise ImportError("engine absent")
 
@@ -38,6 +60,7 @@ def test_rust_probe_returns_none_when_engine_missing(monkeypatch: pytest.MonkeyP
 
 
 def test_rust_backend_raises_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without the Rust engine the rust backend raises RuntimeError and auto falls back to NumPy."""
     monkeypatch.setattr(_DIM, "_rust_pca", None)
     monkeypatch.setattr(_DIM, "_rust_demixed", None)
     monkeypatch.setattr(_DIM, "_rust_fa", None)

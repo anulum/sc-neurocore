@@ -10,12 +10,25 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_sorting_quality_support import *  # noqa: F403
+import numpy.testing as npt
+import pytest
+from sc_neurocore.analysis.spike_stats.sorting_quality import (
+    isolation_distance,
+    l_ratio,
+)
+from tests.spike_stats_sorting_quality_support import (
+    _cluster_noise,
+    _MOJO_AVAILABLE,
+    _SQ,
+)
 
 
 @pytest.mark.skipif(not _MOJO_AVAILABLE, reason="Mojo sorting-quality library not built")
 class TestMojoParity:
+    """The Mojo sorting-quality backend against the Python reference."""
+
     def test_parity(self) -> None:
+        """Isolation distance and the L-ratio on Mojo match the Python reference within 1e-6 for three shapes."""
         for nc, nn, d in [(20, 30, 3), (15, 25, 2), (10, 20, 1)]:
             cluster, noise = _cluster_noise(nc, nn, d)
             for fn in (isolation_distance, l_ratio):
@@ -24,5 +37,6 @@ class TestMojoParity:
                 npt.assert_allclose(mo, py, atol=1e-6)
 
     def test_ensure_mojo_is_cached(self) -> None:
+        """The Mojo backend probe returns True on two successive calls."""
         assert _SQ._ensure_mojo_sq() is True
         assert _SQ._ensure_mojo_sq() is True

@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_sorting_quality_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.sorting_quality import (
+    presence_ratio,
+)
 
 
 class TestPresenceRatio:
+    """The presence ratio of a spike train."""
+
     def test_full_presence(self) -> None:
+        """A train spiking every tenth step gives a presence ratio above 0.5."""
         train = np.zeros(1000, dtype=np.int8)
         train[::10] = 1
         result = presence_ratio(train)
         assert result > 0.5
 
     def test_no_spikes(self) -> None:
+        """A train without spikes gives a presence ratio of zero."""
         result = presence_ratio(np.zeros(100, dtype=np.int8))
         assert result == 0.0

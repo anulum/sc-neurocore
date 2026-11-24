@@ -10,10 +10,17 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_dimensionality_support import *  # noqa: F403
+import pytest
+from tests.spike_stats_dimensionality_support import (
+    _parity,
+    _RUST_AVAILABLE,
+)
 
 
 @pytest.mark.skipif(not _RUST_AVAILABLE, reason="Rust engine not built")
 class TestRustParity:
+    """The Rust dimensionality backend against the Python reference."""
+
     def test_parity(self) -> None:
+        """PCA, demixed PCA and factor analysis on Rust match the Python reference within 1e-6."""
         _parity("rust")

@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_sorting_quality_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.sorting_quality import (
+    l_ratio,
+)
+from tests.spike_stats_sorting_quality_support import (
+    _rng,
+)
 
 
 class TestLRatio:
+    """The L-ratio of a cluster against noise."""
+
     def test_typical(self) -> None:
+        """A cluster separated from noise gives a finite L-ratio."""
         rng = _rng()
         cluster = rng.normal(0, 1, (15, 2))
         noise = rng.normal(3, 1, (25, 2))
@@ -22,21 +31,25 @@ class TestLRatio:
         assert np.isfinite(result)
 
     def test_small_cluster(self) -> None:
+        """A one-point cluster gives NaN."""
         result = l_ratio(np.array([[1, 2]]), np.array([[3, 4]]))
         assert np.isnan(result)
 
     def test_empty_noise(self) -> None:
+        """No noise points give NaN."""
         cluster = _rng().normal(0, 1, (10, 2))
         result = l_ratio(cluster, np.empty((0, 2)))
         assert np.isnan(result)
 
     def test_single_feature(self) -> None:
+        """One feature gives a finite L-ratio."""
         cluster = _rng().normal(0, 1, (10, 1))
         noise = _rng().normal(3, 1, (20, 1))
         result = l_ratio(cluster, noise)
         assert np.isfinite(result)
 
     def test_python_backend(self) -> None:
+        """The python backend gives an L-ratio inside [0, 1]."""
         cluster = _rng().normal(0, 1, (10, 2))
         noise = _rng().normal(3, 1, (30, 2))
         result = l_ratio(cluster, noise, backend="python")

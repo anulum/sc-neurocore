@@ -10,14 +10,23 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_dimensionality_support import *  # noqa: F403
+import pytest
+from tests.spike_stats_dimensionality_support import (
+    _DIM,
+    _MOJO_AVAILABLE,
+    _parity,
+)
 
 
 @pytest.mark.skipif(not _MOJO_AVAILABLE, reason="Mojo dimensionality library not built")
 class TestMojoParity:
+    """The Mojo dimensionality backend against the Python reference."""
+
     def test_parity(self) -> None:
+        """PCA, demixed PCA and factor analysis on Mojo match the Python reference within 1e-6."""
         _parity("mojo")
 
     def test_ensure_cached(self) -> None:
+        """The Mojo backend probe returns True on two successive calls."""
         assert _DIM._ensure_mojo_dim() is True
         assert _DIM._ensure_mojo_dim() is True

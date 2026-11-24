@@ -1378,6 +1378,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 29 top-level spike-statistics dimensionality and sorting-quality
+  test modules import their names explicitly instead of through a
+  suppressed star import, replace two type-ignore comments with a typed
+  case list, gain their missing docstrings and type annotations and are
+  enrolled in the docstring policy; the sorting-quality support is typed
+  and documented.
+
 - The 43 top-level quantisation-aware training, Rust integration, SC-NIR
   and security test modules import their names explicitly instead of
   through a suppressed star import, keep their support guards (torch, the

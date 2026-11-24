@@ -10,24 +10,37 @@
 
 from __future__ import annotations
 
-from tests.spike_stats_dimensionality_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.analysis.spike_stats.dimensionality import (
+    factor_analysis,
+)
+from tests.spike_stats_dimensionality_support import (
+    _trains,
+)
 
 
 class TestFactorAnalysis:
+    """Factor analysis of binned spike trains."""
+
     def test_typical(self) -> None:
+        """Two factors over five trains give 5x2 loadings and five positive noise variances."""
         loadings, psi = factor_analysis(_trains(5), n_factors=2)
         assert loadings.shape == (5, 2)
         assert psi.shape == (5,)
         assert np.all(psi > 0)
 
     def test_python_backend(self) -> None:
+        """The python backend gives 5x2 loadings."""
         loadings, psi = factor_analysis(_trains(5), n_factors=2, backend="python")
         assert loadings.shape == (5, 2)
 
     def test_empty_trains(self) -> None:
+        """No trains give empty loadings and noise variances."""
         loadings, psi = factor_analysis([])
         assert loadings.size == 0 and psi.size == 0
 
     def test_unknown_backend(self) -> None:
+        """An unknown backend is rejected with ValueError."""
         with pytest.raises(ValueError, match="not available"):
             factor_analysis(_trains(5), backend="cuda")
