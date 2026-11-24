@@ -10,7 +10,16 @@
 
 from __future__ import annotations
 
-from tests.cosim_emitters_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.equation_builder import (
+    EquationNeuron,
+)
+from tests.cosim_support import (
+    _fitzhugh_nagumo_substep_neuron,
+    _neuron_verilog_spike_count_q1616,
+    compile_to_verilog,
+    HAS_IVERILOG,
+)
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")

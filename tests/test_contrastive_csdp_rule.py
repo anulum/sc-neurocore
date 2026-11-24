@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.contrastive_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.contrastive import (
+    CSDPRule,
+)
+from tests.contrastive_support import (
+    FloatArray,
+)
 
 
 class TestCSDPRule:
+    """The contrastive spike-driven plasticity rule."""
+
     def test_positive_update_matches_hebbian_rule(self) -> None:
+        """The positive phase is the Hebbian update."""
         weights = np.array([[0.2, 0.4, 0.6], [0.1, 0.3, 0.5]], dtype=np.float64)
         pre = np.array([1.0, 0.0, 0.5], dtype=np.float64)
         post = np.array([0.25, 0.75], dtype=np.float64)
@@ -25,6 +35,7 @@ class TestCSDPRule:
         np.testing.assert_allclose(rule.positive_update(weights, pre, post), expected)
 
     def test_negative_update_matches_anti_hebbian_rule(self) -> None:
+        """The negative phase is the anti-Hebbian update."""
         weights = np.array([[0.2, 0.4, 0.6], [0.1, 0.3, 0.5]], dtype=np.float64)
         pre = np.array([0.5, 0.0, 1.0], dtype=np.float64)
         post = np.array([0.25, 0.75], dtype=np.float64)
@@ -35,6 +46,7 @@ class TestCSDPRule:
         np.testing.assert_allclose(rule.negative_update(weights, pre, post), expected)
 
     def test_contrastive_step_applies_positive_then_negative_phase(self) -> None:
+        """A step applies the positive and then the negative phase."""
         rule = CSDPRule(lr=0.1, decay=0.01)
         weights = np.array([[0.2, 0.4], [0.1, 0.3]], dtype=np.float64)
         pos_pre = np.array([1.0, 0.5], dtype=np.float64)
@@ -51,15 +63,18 @@ class TestCSDPRule:
         )
 
     def test_goodness_returns_sum_of_squares(self) -> None:
+        """Goodness is the sum of squared activations."""
         rule = CSDPRule()
         assert rule.goodness(np.array([1.0, -2.0, 0.5])) == pytest.approx(5.25)
 
     def test_goodness_rejects_non_finite_activations(self) -> None:
+        """Non-finite activations are rejected."""
         with pytest.raises(ValueError, match="activations"):
             CSDPRule().goodness(np.array([1.0, np.nan]))
 
     @pytest.mark.parametrize("field", ["lr", "decay"])
     def test_rule_parameters_must_be_finite_and_non_negative(self, field: str) -> None:
+        """Rule parameters must be finite and non-negative."""
         with pytest.raises(ValueError, match=field):
             CSDPRule(**{field: float("nan")})
         with pytest.raises(ValueError, match=field):
@@ -79,6 +94,7 @@ class TestCSDPRule:
         post: FloatArray,
         message: str,
     ) -> None:
+        """Invalid spike vectors are rejected."""
         with pytest.raises(ValueError, match=message):
             CSDPRule().positive_update(np.ones((2, 2)), pre, post)
 
@@ -95,5 +111,6 @@ class TestCSDPRule:
         weights: FloatArray,
         message: str,
     ) -> None:
+        """Invalid weight matrices are rejected."""
         with pytest.raises(ValueError, match=message):
             CSDPRule().negative_update(weights, np.ones(2), np.ones(2))

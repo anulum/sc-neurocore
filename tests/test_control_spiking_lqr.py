@@ -10,21 +10,29 @@
 
 from __future__ import annotations
 
-from tests.control_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.control import (
+    SpikingLQR,
+)
 
 
 class TestSpikingLQR:
-    def test_control(self):
+    """The spiking LQR controller."""
+
+    def test_control(self) -> None:
+        """The control has one output per actuator."""
         A = np.array([[1.0, 0.1], [0.0, 1.0]])
         B = np.array([[0.0], [0.1]])
         lqr = SpikingLQR(A, B)
         assert lqr.control(np.array([1.0, 0.5])).shape == (1,)
 
-    def test_gain(self):
+    def test_gain(self) -> None:
+        """The gain matrix maps the state to the actuator."""
         lqr = SpikingLQR(np.eye(2), np.array([[1.0], [0.0]]))
         assert lqr.gain_matrix.shape == (1, 2)
 
-    def test_stabilizes(self):
+    def test_stabilizes(self) -> None:
+        """The controller keeps the state bounded."""
         A = np.array([[1.0, 0.1], [0.0, 1.0]])
         B = np.array([[0.005], [0.1]])
         lqr = SpikingLQR(A, B)

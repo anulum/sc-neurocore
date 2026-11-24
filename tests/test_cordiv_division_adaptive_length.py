@@ -10,34 +10,44 @@
 
 from __future__ import annotations
 
-from tests.cordiv_division_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.utils.bitstreams import (
+    adaptive_length,
+)
 
 
 class TestAdaptiveLength:
-    def test_returns_positive_int(self):
+    """Choosing the bitstream length for CORDIV division."""
+
+    def test_returns_positive_int(self) -> None:
+        """The length is a positive integer."""
         L = adaptive_length(0.5, epsilon=0.01, confidence=0.95)
         assert isinstance(L, int)
         assert L > 0
 
-    def test_tighter_bound_needs_longer(self):
+    def test_tighter_bound_needs_longer(self) -> None:
+        """A tighter error bound needs a longer stream."""
         L1 = adaptive_length(0.5, epsilon=0.1, confidence=0.95)
         L2 = adaptive_length(0.5, epsilon=0.01, confidence=0.95)
         assert L2 > L1
 
-    def test_higher_confidence_needs_longer(self):
+    def test_higher_confidence_needs_longer(self) -> None:
+        """Higher confidence needs a longer stream."""
         L1 = adaptive_length(0.5, epsilon=0.05, confidence=0.90)
         L2 = adaptive_length(0.5, epsilon=0.05, confidence=0.99)
         assert L2 > L1
 
-    def test_respects_min_length(self):
+    def test_respects_min_length(self) -> None:
+        """The length is at least the minimum."""
         L = adaptive_length(0.5, epsilon=0.5, confidence=0.5, min_length=64)
         assert L >= 64
 
-    def test_respects_max_length(self):
+    def test_respects_max_length(self) -> None:
+        """The length is at most the maximum."""
         L = adaptive_length(0.5, epsilon=0.001, confidence=0.999, max_length=1024)
         assert L <= 1024
 
-    def test_hoeffding_formula(self):
+    def test_hoeffding_formula(self) -> None:
         """L >= ln(2/delta) / (2*eps^2) for Hoeffding bound."""
         eps = 0.05
         delta = 0.05  # 95% confidence

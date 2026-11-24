@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4726
+expected_file_count = 4786
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -8406,10 +8406,6 @@ rationale = "Synthetic and maintained locks prove that production installations,
 [[file]]
 path = "tests/test_hdl_sc_cordiv_mux_add_cosim.py"
 rationale = "An Icarus co-simulation binds sc_cordiv and sc_mux_add bit for bit to sc_divide and edge.bitstream.sc_mux on random, correlated and reset stimulus."
-
-[[file]]
-path = "tests/cordiv_division_support.py"
-rationale = "The shared imports of the CORDIV sc_divide and adaptive_length suites carry a module docstring that names the CORDIV source."
 
 [[file]]
 path = "tests/test_cordiv_division_sc_divide.py"
@@ -18948,3 +18944,247 @@ rationale = "Exercise SC-NeuroCore: studio evidence bundle weight restore."
 [[file]]
 path = "tests/test_studio_evidence_bundle_write.py"
 rationale = "Exercise SC-NeuroCore: studio evidence bundle write."
+
+[[file]]
+path = "tests/test_cli_deploy_deploy_nir.py"
+rationale = "Exercise SC-NeuroCore: cli deploy deploy nir."
+
+[[file]]
+path = "tests/test_cli_deploy_deploy_pytorch.py"
+rationale = "Exercise SC-NeuroCore: cli deploy deploy pytorch."
+
+[[file]]
+path = "tests/test_cli_deploy_deploy_web.py"
+rationale = "Exercise SC-NeuroCore: cli deploy deploy web."
+
+[[file]]
+path = "tests/test_cli_deploy_hdl_tree.py"
+rationale = "Exercise SC-NeuroCore: cli deploy hdl tree."
+
+[[file]]
+path = "tests/test_cli_deploy_validation.py"
+rationale = "Exercise SC-NeuroCore: cli deploy validation."
+
+[[file]]
+path = "tests/test_cli_formal_constraint_replays.py"
+rationale = "Exercise SC-NeuroCore: cli formal constraint replays."
+
+[[file]]
+path = "tests/test_cli_formal_input_validation.py"
+rationale = "Exercise SC-NeuroCore: cli formal input validation."
+
+[[file]]
+path = "tests/test_cli_formal_sva_report_write.py"
+rationale = "Exercise SC-NeuroCore: cli formal sva report write."
+
+[[file]]
+path = "tests/test_cli_formal_symbiyosys_integration.py"
+rationale = "Exercise SC-NeuroCore: cli formal symbiyosys integration."
+
+[[file]]
+path = "tests/test_codec_registry_codec_registry.py"
+rationale = "Exercise SC-NeuroCore: codec registry codec registry."
+
+[[file]]
+path = "tests/test_codec_registry_recommend_codec.py"
+rationale = "Exercise SC-NeuroCore: codec registry recommend codec."
+
+[[file]]
+path = "tests/test_comm_aer_aer_event.py"
+rationale = "Exercise SC-NeuroCore: comm aer aer event."
+
+[[file]]
+path = "tests/test_comm_aer_aer_sender_receiver.py"
+rationale = "Exercise SC-NeuroCore: comm aer aer sender receiver."
+
+[[file]]
+path = "tests/test_comm_aer_protocol_constants.py"
+rationale = "Exercise SC-NeuroCore: comm aer protocol constants."
+
+[[file]]
+path = "tests/test_compiler_live_control_mmio_contract.py"
+rationale = "Exercise SC-NeuroCore: compiler live control mmio contract."
+
+[[file]]
+path = "tests/test_compiler_live_control_parameter_bank.py"
+rationale = "Exercise SC-NeuroCore: compiler live control parameter bank."
+
+[[file]]
+path = "tests/test_compiler_live_control_readback_sequence.py"
+rationale = "Exercise SC-NeuroCore: compiler live control readback sequence."
+
+[[file]]
+path = "tests/test_compiler_live_control_traps.py"
+rationale = "Exercise SC-NeuroCore: compiler live control traps."
+
+[[file]]
+path = "tests/test_compiler_live_control_update_sequence.py"
+rationale = "Exercise SC-NeuroCore: compiler live control update sequence."
+
+[[file]]
+path = "tests/test_compiler_static_analysis_pipeline_analysis.py"
+rationale = "Exercise SC-NeuroCore: compiler static analysis pipeline analysis."
+
+[[file]]
+path = "tests/test_compiler_static_analysis_power_estimation.py"
+rationale = "Exercise SC-NeuroCore: compiler static analysis power estimation."
+
+[[file]]
+path = "tests/test_compiler_validation_units_coerce_precision.py"
+rationale = "Exercise SC-NeuroCore: compiler validation units coerce precision."
+
+[[file]]
+path = "tests/test_compiler_validation_units_validate_hysteresis.py"
+rationale = "Exercise SC-NeuroCore: compiler validation units validate hysteresis."
+
+[[file]]
+path = "tests/test_compiler_validation_units_validate_lp_hp.py"
+rationale = "Exercise SC-NeuroCore: compiler validation units validate lp hp."
+
+[[file]]
+path = "tests/test_compression_toolkit_prune_neurons.py"
+rationale = "Exercise SC-NeuroCore: compression toolkit prune neurons."
+
+[[file]]
+path = "tests/test_compression_toolkit_prune_stochastic.py"
+rationale = "Exercise SC-NeuroCore: compression toolkit prune stochastic."
+
+[[file]]
+path = "tests/test_compression_toolkit_prune_weights.py"
+rationale = "Exercise SC-NeuroCore: compression toolkit prune weights."
+
+[[file]]
+path = "tests/test_compression_toolkit_quantize_delays.py"
+rationale = "Exercise SC-NeuroCore: compression toolkit quantize delays."
+
+[[file]]
+path = "tests/test_compression_toolkit_quantize_weights.py"
+rationale = "Exercise SC-NeuroCore: compression toolkit quantize weights."
+
+[[file]]
+path = "tests/test_continual_continual_learner.py"
+rationale = "Exercise SC-NeuroCore: continual continual learner."
+
+[[file]]
+path = "tests/test_continual_plasticity_config.py"
+rationale = "Exercise SC-NeuroCore: continual plasticity config."
+
+[[file]]
+path = "tests/test_contrastive_csdp_rule.py"
+rationale = "Exercise SC-NeuroCore: contrastive csdp rule."
+
+[[file]]
+path = "tests/test_contrastive_spike_contrastive_loss.py"
+rationale = "Exercise SC-NeuroCore: contrastive spike contrastive loss."
+
+[[file]]
+path = "tests/test_control_spiking_kalman_filter.py"
+rationale = "Exercise SC-NeuroCore: control spiking kalman filter."
+
+[[file]]
+path = "tests/test_control_spiking_lqr.py"
+rationale = "Exercise SC-NeuroCore: control spiking lqr."
+
+[[file]]
+path = "tests/test_control_spiking_pid.py"
+rationale = "Exercise SC-NeuroCore: control spiking pid."
+
+[[file]]
+path = "tests/test_cordiv_division_adaptive_length.py"
+rationale = "Exercise SC-NeuroCore: cordiv division adaptive length."
+
+[[file]]
+path = "tests/test_cosim_emitters_co_simulation.py"
+rationale = "Exercise SC-NeuroCore: cosim emitters co simulation."
+
+[[file]]
+path = "tests/test_cosim_emitters_exp_euler_emitter.py"
+rationale = "Exercise SC-NeuroCore: cosim emitters exp euler emitter."
+
+[[file]]
+path = "tests/test_cosim_emitters_macro_step_substep_emitter.py"
+rationale = "Exercise SC-NeuroCore: cosim emitters macro step substep emitter."
+
+[[file]]
+path = "tests/test_cosim_emitters_multi_precision.py"
+rationale = "Exercise SC-NeuroCore: cosim emitters multi precision."
+
+[[file]]
+path = "tests/test_cosim_emitters_rk4_emitter.py"
+rationale = "Exercise SC-NeuroCore: cosim emitters rk4 emitter."
+
+[[file]]
+path = "tests/test_cosim_glif_q1616_precision.py"
+rationale = "Exercise SC-NeuroCore: cosim glif q1616 precision."
+
+[[file]]
+path = "tests/test_cosim_glif_transcendental_co_simulation.py"
+rationale = "Exercise SC-NeuroCore: cosim glif transcendental co simulation."
+
+[[file]]
+path = "tests/test_cosim_hindmarsh_rose_q1616_precision.py"
+rationale = "Exercise SC-NeuroCore: cosim hindmarsh rose q1616 precision."
+
+[[file]]
+path = "tests/test_cosim_hodgkin_huxley_q1616_precision.py"
+rationale = "Exercise SC-NeuroCore: cosim hodgkin huxley q1616 precision."
+
+[[file]]
+path = "tests/test_cosim_hodgkin_huxley_transcendental_co_simulation.py"
+rationale = "Exercise SC-NeuroCore: cosim hodgkin huxley transcendental co simulation."
+
+[[file]]
+path = "tests/test_cosim_lif_q1616_precision.py"
+rationale = "Exercise SC-NeuroCore: cosim lif q1616 precision."
+
+[[file]]
+path = "tests/test_cosim_lif_q412_precision.py"
+rationale = "Exercise SC-NeuroCore: cosim lif q412 precision."
+
+[[file]]
+path = "tests/test_cosim_morris_lecar_q1616_precision.py"
+rationale = "Exercise SC-NeuroCore: cosim morris lecar q1616 precision."
+
+[[file]]
+path = "tests/test_cosim_morris_lecar_transcendental_co_simulation.py"
+rationale = "Exercise SC-NeuroCore: cosim morris lecar transcendental co simulation."
+
+[[file]]
+path = "tests/test_cosim_terman_wang_transcendental_co_simulation.py"
+rationale = "Exercise SC-NeuroCore: cosim terman wang transcendental co simulation."
+
+[[file]]
+path = "tests/test_datasets_check_root.py"
+rationale = "Exercise SC-NeuroCore: datasets check root."
+
+[[file]]
+path = "tests/test_datasets_encoding.py"
+rationale = "Exercise SC-NeuroCore: datasets encoding."
+
+[[file]]
+path = "tests/test_datasets_latency_encode_strict.py"
+rationale = "Exercise SC-NeuroCore: datasets latency encode strict."
+
+[[file]]
+path = "tests/test_datasets_shd_real_loader.py"
+rationale = "Exercise SC-NeuroCore: datasets shd real loader."
+
+[[file]]
+path = "tests/test_datasets_synthetic_loaders.py"
+rationale = "Exercise SC-NeuroCore: datasets synthetic loaders."
+
+[[file]]
+path = "tests/test_dcls_tent_kernel_batch_forward.py"
+rationale = "Exercise SC-NeuroCore: dcls tent kernel batch forward."
+
+[[file]]
+path = "tests/test_dcls_tent_kernel_dispatch.py"
+rationale = "Exercise SC-NeuroCore: dcls tent kernel dispatch."
+
+[[file]]
+path = "tests/test_dcls_tent_kernel_single_forward.py"
+rationale = "Exercise SC-NeuroCore: dcls tent kernel single forward."
+
+[[file]]
+path = "tests/test_dcls_tent_kernel_tent_gate.py"
+rationale = "Exercise SC-NeuroCore: dcls tent kernel tent gate."

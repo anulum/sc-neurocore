@@ -10,40 +10,55 @@
 
 from __future__ import annotations
 
-from tests.datasets_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.datasets.loaders import (
+    load_dvs_cifar10,
+    load_nmnist,
+    load_shd,
+)
 
 
 class TestSyntheticLoaders:
-    def test_nmnist_synthetic_shapes(self):
+    """The synthetic dataset loaders."""
+
+    def test_nmnist_synthetic_shapes(self) -> None:
+        """Synthetic N-MNIST gives ten-class samples."""
         samples, labels = load_nmnist(synthetic=True, n_samples=10, seed=42)
         assert len(samples) == 10
         assert labels.shape == (10,)
         assert all(0 <= l < 10 for l in labels)
 
-    def test_shd_synthetic_shapes(self):
+    def test_shd_synthetic_shapes(self) -> None:
+        """Synthetic SHD gives twenty-class samples."""
         samples, labels = load_shd(synthetic=True, n_samples=5, seed=0)
         assert len(samples) == 5
         assert labels.shape == (5,)
         assert all(0 <= l < 20 for l in labels)
 
-    def test_dvs_cifar10_synthetic_shapes(self):
+    def test_dvs_cifar10_synthetic_shapes(self) -> None:
+        """Synthetic DVS-CIFAR10 gives labelled samples."""
         samples, labels = load_dvs_cifar10(synthetic=True, n_samples=8, seed=1)
         assert len(samples) == 8
         assert labels.shape == (8,)
 
-    def test_nmnist_missing_root_raises(self):
+    def test_nmnist_missing_root_raises(self) -> None:
+        """A missing N-MNIST root is rejected."""
         with pytest.raises(FileNotFoundError):
             load_nmnist(root="/nonexistent/path", synthetic=False)
 
-    def test_shd_missing_root_raises(self):
+    def test_shd_missing_root_raises(self) -> None:
+        """A missing SHD root is rejected."""
         with pytest.raises(FileNotFoundError):
             load_shd(root="/nonexistent/path", synthetic=False)
 
-    def test_dvs_missing_root_raises(self):
+    def test_dvs_missing_root_raises(self) -> None:
+        """A missing DVS root is rejected."""
         with pytest.raises(FileNotFoundError):
             load_dvs_cifar10(root="/nonexistent/path", synthetic=False)
 
-    def test_reproducibility(self):
+    def test_reproducibility(self) -> None:
+        """The same seed gives the same samples."""
         s1, l1 = load_nmnist(synthetic=True, n_samples=5, seed=99)
         s2, l2 = load_nmnist(synthetic=True, n_samples=5, seed=99)
         np.testing.assert_array_equal(l1, l2)

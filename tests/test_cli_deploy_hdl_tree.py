@@ -6,9 +6,22 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (hdl_tree) from former test_cli_deploy.py
 
+"""Tests of the HDL tree the CLI deploy writes."""
+
 from __future__ import annotations
 
-from tests.cli_deploy_support import *  # noqa: F403
+import pytest
+import types
+from pathlib import (
+    Path,
+)
+from tests.cli_test_support import (
+    fake_module,
+    run_cli,
+)
+from unittest import (
+    mock,
+)
 
 
 def test_deploy_replaces_existing_hdl_copy(

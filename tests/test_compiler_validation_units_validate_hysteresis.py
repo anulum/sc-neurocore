@@ -10,29 +10,41 @@
 
 from __future__ import annotations
 
-from tests.compiler_validation_units_support import *  # noqa: F403
+import math
+import pytest
+from sc_neurocore.compiler.validation import (
+    _validate_hysteresis,
+)
 
 
 class TestValidateHysteresis:
-    """Hysteresis thresholds must be finite, strictly ordered inside the unit
-    interval, and quantise to a usable 1 <= down < up < max_lp_code range."""
+    """Validating the hysteresis thresholds.
+
+    Thresholds must be finite, strictly ordered inside the unit interval, and
+    quantise to a usable 1 <= down < up < max_lp_code range.
+    """
 
     def test_accepts_valid_thresholds(self) -> None:
+        """Ordered thresholds in range are accepted."""
         _validate_hysteresis(0.5, 0.2, max_lp_code=16)  # ordered thresholds validate silently
 
     def test_rejects_non_finite_threshold(self) -> None:
+        """A non-finite threshold is rejected."""
         with pytest.raises(ValueError, match="must be finite"):
             _validate_hysteresis(math.inf, 0.2, max_lp_code=16)
 
     def test_rejects_up_outside_unit_interval(self) -> None:
+        """An upper threshold outside (0, 1) is rejected."""
         with pytest.raises(ValueError, match="threshold_up_pct must satisfy"):
             _validate_hysteresis(1.5, 0.2, max_lp_code=16)
 
     def test_rejects_down_not_below_up(self) -> None:
+        """A lower threshold not below the upper one is rejected."""
         with pytest.raises(ValueError, match="threshold_down_pct must satisfy"):
             _validate_hysteresis(0.5, 0.6, max_lp_code=16)
 
     def test_rejects_degenerate_quantised_codes(self) -> None:
+        """Thresholds that quantise to unusable codes are rejected."""
         # Valid float thresholds, but a tiny max_lp_code collapses both quantised
         # codes so the 1 <= down < up < max_lp_code ordering cannot hold.
         with pytest.raises(ValueError, match="Quantised threshold codes must satisfy"):

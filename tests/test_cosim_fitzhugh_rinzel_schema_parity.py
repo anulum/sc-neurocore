@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from tests.cosim_fitzhugh_rinzel_support import *  # noqa: F403
+from pathlib import (
+    Path,
+)
+from sc_neurocore.neurons.models.fitzhugh_rinzel import (
+    FitzHughRinzelNeuron,
+)
+from sc_neurocore.neurons.universal_dsl import (
+    UniversalNeuron,
+)
 
 
 class TestSchemaModelParity:

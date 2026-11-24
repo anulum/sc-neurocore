@@ -6,9 +6,21 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (deploy_web) from former test_cli_deploy.py
 
+"""Tests of deploying a model for the web with the CLI."""
+
 from __future__ import annotations
 
-from tests.cli_deploy_support import *  # noqa: F403
+import pytest
+import types
+from pathlib import (
+    Path,
+)
+from tests.cli_test_support import (
+    run_cli,
+)
+from unittest import (
+    mock,
+)
 
 
 def test_deploy_web_generates_browser_manifest(

@@ -6,12 +6,28 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (validation) from former test_cli_deploy.py
 
+"""Tests of the CLI deploy command's input checks."""
+
 from __future__ import annotations
 
-from tests.cli_deploy_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from tests.cli_deploy_support import (
+    _checkpoint_digest,
+    _run_checkpoint_deploy,
+)
+from tests.cli_test_support import (
+    run_cli,
+)
+from unittest import (
+    mock,
+)
 
 
 def test_deploy_without_model_reports_usage(capsys: pytest.CaptureFixture[str]) -> None:
+    """Deploy without a model file reports its usage."""
     assert run_cli("deploy") == 1
     assert "deploy requires a model file" in capsys.readouterr().out
 
@@ -20,6 +36,7 @@ def test_deploy_rejects_unsupported_extension(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """An unsupported model file format is rejected."""
     model = tmp_path / "model.onnx"
     model.write_bytes(b"\x00")
     assert run_cli("deploy", str(model), "--output", str(tmp_path / "out")) == 1
@@ -30,6 +47,7 @@ def test_deploy_rejects_non_tensor_state_entry(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """A state entry that is not a tensor is rejected."""
     torch = pytest.importorskip("torch")
     checkpoint = tmp_path / "bad_state.pt"
     torch.save({"layer.weight": [1, 2, 3]}, checkpoint)
@@ -49,6 +67,7 @@ def test_deploy_rejects_checkpoint_without_dense_weights(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """A checkpoint without 2-D dense weights is rejected."""
     torch = pytest.importorskip("torch")
     checkpoint = tmp_path / "conv_only.pt"
     torch.save({"conv.weight": torch.randn(8, 1, 3, 3)}, checkpoint)
@@ -68,6 +87,7 @@ def test_deploy_rejects_non_floating_dense_weight(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """A dense weight that is not floating point is rejected."""
     torch = pytest.importorskip("torch")
     checkpoint = tmp_path / "int_dense.pt"
     torch.save({"layer.weight": torch.ones(4, 4, dtype=torch.int64)}, checkpoint)
@@ -87,6 +107,7 @@ def test_deploy_rejects_empty_dense_weight(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """An empty dense weight is rejected."""
     torch = pytest.importorskip("torch")
     checkpoint = tmp_path / "empty_dense.pt"
     torch.save({"layer.weight": torch.empty(0, 4)}, checkpoint)
@@ -106,6 +127,7 @@ def test_deploy_rejects_non_finite_dense_weight(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """A dense weight with non-finite values is rejected."""
     torch = pytest.importorskip("torch")
     weight = torch.randn(4, 4, dtype=torch.float32)
     weight[0, 0] = torch.nan
@@ -127,6 +149,7 @@ def test_deploy_rejects_excessive_dense_parameter_count(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """Too many dense parameters are rejected."""
     torch = pytest.importorskip("torch")
     expanded_weight = torch.ones(1, dtype=torch.float32).expand(1, 20_000_001)
     checkpoint = tmp_path / "too_many_dense_params.pt"
@@ -147,6 +170,7 @@ def test_deploy_rejects_incompatible_dense_weight_chain(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """Dense weights whose shapes do not chain are rejected."""
     torch = pytest.importorskip("torch")
     checkpoint = tmp_path / "bad_chain.pt"
     torch.save(

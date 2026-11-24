@@ -10,18 +10,29 @@
 
 from __future__ import annotations
 
-from tests.comm_aer_support import *  # noqa: F403
+from sc_neurocore.comm.aer_udp import (
+    EVENT_SIZE,
+    HEADER_SIZE,
+    MAGIC,
+    MAX_EVENTS_PER_PACKET,
+)
 
 
 class TestProtocolConstants:
-    def test_magic(self):
+    """The AER wire protocol constants."""
+
+    def test_magic(self) -> None:
+        """The packet magic is 0xAE01."""
         assert MAGIC == 0xAE01
 
-    def test_header_size(self):
+    def test_header_size(self) -> None:
+        """The header is eight bytes."""
         assert HEADER_SIZE == 8
 
-    def test_event_size(self):
+    def test_event_size(self) -> None:
+        """Each event is eight bytes."""
         assert EVENT_SIZE == 8
 
-    def test_max_events_fits_mtu(self):
+    def test_max_events_fits_mtu(self) -> None:
+        """A full packet fits in the network MTU."""
         assert MAX_EVENTS_PER_PACKET * EVENT_SIZE + HEADER_SIZE <= 1500

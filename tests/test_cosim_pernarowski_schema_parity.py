@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from tests.cosim_pernarowski_support import *  # noqa: F403
+from pathlib import (
+    Path,
+)
+from sc_neurocore.neurons.models.pernarowski import (
+    PernarowskiNeuron,
+)
+from sc_neurocore.neurons.universal_dsl import (
+    UniversalNeuron,
+)
 
 
 class TestSchemaModelParity:

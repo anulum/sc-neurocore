@@ -6,12 +6,37 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (update_sequence) from former test_compiler_live_control.py
 
+"""Tests of the live-control update sequence."""
+
 from __future__ import annotations
 
-from tests.compiler_live_control_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.live_control import (
+    CONTROL_COMMIT,
+    CONTROL_REGISTER_SPAN_BYTES,
+    CONTROL_ROLLBACK,
+    CONTROL_UPDATE_VALID,
+    MMIOUpdateSpec,
+    ParameterBankSpec,
+    STATUS_APPLIED,
+    STATUS_CHECKSUM_VALID,
+    STATUS_ROLLBACK_ACK,
+    STATUS_SHADOW_LOADED,
+    STATUS_TRAP_LATCHED,
+    STATUS_UPDATE_ACK,
+    TRAP_CHECKSUM_MISMATCH,
+    TRAP_INVALID_SELECTION,
+    TRAP_PARTIAL_WRITE,
+    TRAP_READ_ONLY_BANK,
+    TRAP_STAGED_OVERFLOW,
+    TRAP_STAGED_UNDERFLOW,
+    TrapSpec,
+    UPDATE_CHECKSUM_ALGORITHM,
+)
 
 
 def test_mmio_update_serialization_roundtrip() -> None:
+    """An MMIO specification round-trips through serialisation."""
     bank = ParameterBankSpec(
         bank_name="control",
         start_address_bytes=0x5000,
@@ -55,6 +80,7 @@ def test_mmio_update_serialization_roundtrip() -> None:
 
 
 def test_mmio_update_protocol_alias_and_width_guards() -> None:
+    """The protocol alias resolves and the address space is sized."""
     bank = ParameterBankSpec(
         bank_name="weights",
         start_address_bytes=0x6000,
@@ -72,6 +98,7 @@ def test_mmio_update_protocol_alias_and_width_guards() -> None:
 
 
 def test_mmio_update_sequence_stages_and_commits_wide_bfp_word() -> None:
+    """A wide word is staged and then committed."""
     bank = ParameterBankSpec(
         bank_name="bfp_weights",
         start_address_bytes=0x9000,
@@ -115,6 +142,7 @@ def test_mmio_update_sequence_stages_and_commits_wide_bfp_word() -> None:
 
 
 def test_mmio_update_checksum_uses_ieee_crc32_update_guard() -> None:
+    """The update checksum is the IEEE CRC-32."""
     bank = ParameterBankSpec(
         bank_name="weights",
         start_address_bytes=0x9000,
@@ -138,6 +166,7 @@ def test_mmio_update_checksum_uses_ieee_crc32_update_guard() -> None:
 
 
 def test_mmio_update_sequence_zeroes_high_word_for_narrow_entries() -> None:
+    """A narrow entry writes a zero high word."""
     bank = ParameterBankSpec(
         bank_name="weights",
         start_address_bytes=0x9000,
@@ -170,6 +199,7 @@ def test_mmio_update_sequence_zeroes_high_word_for_narrow_entries() -> None:
 
 
 def test_mmio_update_sequence_supports_explicit_apply_and_rollback() -> None:
+    """Apply and rollback write their control values."""
     bank = ParameterBankSpec(
         bank_name="weights",
         start_address_bytes=0x9000,
@@ -193,6 +223,7 @@ def test_mmio_update_sequence_supports_explicit_apply_and_rollback() -> None:
 
 
 def test_mmio_update_sequence_rejects_read_only_and_unknown_entries() -> None:
+    """Read-only and unknown entries cannot be updated."""
     bank = ParameterBankSpec(
         bank_name="coefficients",
         start_address_bytes=0xA000,

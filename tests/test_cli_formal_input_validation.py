@@ -6,12 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (input_validation) from former test_cli_formal.py
 
+"""Tests of the formal verify-network command's input checks."""
+
 from __future__ import annotations
 
-from tests.cli_formal_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from tests.cli_test_support import (
+    run_cli,
+)
+from unittest import (
+    mock,
+)
 
 
 def test_formal_verify_network_rejects_missing_action(capsys: pytest.CaptureFixture[str]) -> None:
+    """A missing formal action is rejected with its usage."""
     rc = run_cli("formal")
 
     assert rc == 1
@@ -21,6 +33,7 @@ def test_formal_verify_network_rejects_missing_action(capsys: pytest.CaptureFixt
 def test_formal_verify_network_rejects_invalid_formal_depth(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """An invalid formal depth is rejected."""
     rc = run_cli(
         "formal",
         "verify-network",
@@ -51,6 +64,7 @@ def test_formal_verify_network_rejects_invalid_formal_depth(
 def test_formal_verify_network_rejects_negative_refractory_cycles(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """Negative refractory cycles are rejected."""
     rc = run_cli(
         "formal",
         "verify-network",
@@ -81,6 +95,7 @@ def test_formal_verify_network_rejects_negative_refractory_cycles(
 def test_formal_verify_network_rejects_non_positive_population_inactivity(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """A non-positive inactivity bound is rejected and nothing is written."""
     rc = run_cli(
         "formal",
         "verify-network",
@@ -112,6 +127,7 @@ def test_formal_verify_network_rejects_non_positive_population_inactivity(
 def test_formal_verify_network_rejects_negative_coactivation_cap(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """A negative co-activation cap is rejected and nothing is written."""
     rc = run_cli(
         "formal",
         "verify-network",
@@ -143,6 +159,7 @@ def test_formal_verify_network_rejects_negative_coactivation_cap(
 def test_formal_verify_network_rejects_non_positive_temporal_separation(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """A non-positive temporal separation is rejected and nothing is written."""
     rc = run_cli(
         "formal",
         "verify-network",
@@ -174,6 +191,7 @@ def test_formal_verify_network_rejects_non_positive_temporal_separation(
 def test_formal_verify_network_rejects_non_positive_population_silence(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """A non-positive silence window is rejected and nothing is written."""
     rc = run_cli(
         "formal",
         "verify-network",

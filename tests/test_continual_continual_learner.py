@@ -10,26 +10,35 @@
 
 from __future__ import annotations
 
-from tests.continual_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.continual import (
+    ContinualLearner,
+    ContinualReport,
+)
 
 
 class TestContinualLearner:
-    def _make_learner(self):
+    """Continual learning with elastic weight consolidation."""
+
+    def _make_learner(self) -> ContinualLearner:
         weights = [np.random.randn(16, 8) * 0.3, np.random.randn(4, 16) * 0.3]
         return ContinualLearner(weights, layer_names=["hidden", "output"])
 
-    def test_init(self):
+    def test_init(self) -> None:
+        """The learner keeps its layers and EWC strength."""
         cl = self._make_learner()
         assert len(cl.weights) == 2
         assert cl.ewc_lambda == 1000.0
 
-    def test_weights_are_copies(self):
+    def test_weights_are_copies(self) -> None:
+        """The learner copies the given weights."""
         w = [np.ones((4, 4))]
         cl = ContinualLearner(w)
         w[0][0, 0] = 999.0
         assert cl.weights[0][0, 0] == 1.0
 
-    def test_compute_fisher(self):
+    def test_compute_fisher(self) -> None:
+        """The Fisher diagonal matches the weight shapes."""
         cl = self._make_learner()
         grads = [[np.random.randn(16, 8), np.random.randn(4, 16)] for _ in range(10)]
         cl.compute_fisher(grads)
@@ -37,31 +46,36 @@ class TestContinualLearner:
         assert cl._star_weights is not None
         assert all(f.shape == w.shape for f, w in zip(cl._fisher_diag, cl.weights))
 
-    def test_ewc_penalty_before_fisher(self):
+    def test_ewc_penalty_before_fisher(self) -> None:
+        """Before the Fisher pass the penalty is 0."""
         cl = self._make_learner()
         assert cl.ewc_penalty() == 0.0
 
-    def test_ewc_penalty_zero_when_unchanged(self):
+    def test_ewc_penalty_zero_when_unchanged(self) -> None:
+        """Unchanged weights give no penalty."""
         cl = self._make_learner()
         grads = [[np.random.randn(16, 8), np.random.randn(4, 16)] for _ in range(10)]
         cl.compute_fisher(grads)
         assert cl.ewc_penalty() < 1e-10
 
-    def test_ewc_penalty_positive_after_weight_change(self):
+    def test_ewc_penalty_positive_after_weight_change(self) -> None:
+        """Changed weights give a positive penalty."""
         cl = self._make_learner()
         grads = [[np.random.randn(16, 8), np.random.randn(4, 16)] for _ in range(10)]
         cl.compute_fisher(grads)
         cl.update_weights([w + 0.1 for w in cl.weights])
         assert cl.ewc_penalty() > 0
 
-    def test_register_task(self):
+    def test_register_task(self) -> None:
+        """Registered tasks are counted with their accuracies."""
         cl = self._make_learner()
         cl.register_task(0.95)
         cl.register_task(0.92)
         assert cl._task_count == 2
         assert cl._accuracy_history == [0.95, 0.92]
 
-    def test_extract_plasticity_configs(self):
+    def test_extract_plasticity_configs(self) -> None:
+        """One plasticity configuration is made per layer."""
         cl = self._make_learner()
         configs = cl.extract_plasticity_configs()
         assert len(configs) == 2
@@ -70,7 +84,8 @@ class TestContinualLearner:
         assert configs[0].lr_potentiation > 0
         assert configs[0].lr_depression > configs[0].lr_potentiation
 
-    def test_report(self):
+    def test_report(self) -> None:
+        """The report counts the trained tasks and configurations."""
         cl = self._make_learner()
         cl.register_task(0.95)
         r = cl.report()
@@ -81,12 +96,14 @@ class TestContinualLearner:
         assert "Continual Learning" in s
         assert "0.9500" in s
 
-    def test_default_layer_names(self):
+    def test_default_layer_names(self) -> None:
+        """Layers are named by index by default."""
         weights = [np.random.randn(8, 4)]
         cl = ContinualLearner(weights)
         assert cl.layer_names == ["layer_0"]
 
-    def test_update_weights(self):
+    def test_update_weights(self) -> None:
+        """Updated weights replace the stored ones."""
         cl = self._make_learner()
         new_w = [np.ones_like(w) for w in cl.weights]
         cl.update_weights(new_w)

@@ -10,13 +10,21 @@
 
 from __future__ import annotations
 
-from tests.dcls_tent_kernel_support import *  # noqa: F403
+import pytest
+from sc_neurocore.scpn import (
+    dcls_tent_kernel as kernel,
+)
+from sc_neurocore.scpn.dcls_tent_kernel import (
+    dcls_max_forward_q88,
+    DclsForwardResult,
+)
 
 
 class TestSingleForward:
     """Single DCLS-max contraction."""
 
     def test_hand_computed_accumulator(self) -> None:
+        """The accumulator matches a hand computation."""
         result = dcls_max_forward_q88([1, 1, 1], [256, 128, -64], 256, 512)
         assert isinstance(result, DclsForwardResult)
         assert result.accumulator_q16_16 == 57_344
@@ -26,6 +34,7 @@ class TestSingleForward:
         assert result.overflow is False
 
     def test_silent_taps_excluded(self) -> None:
+        """Silent taps do not contribute."""
         result = dcls_max_forward_q88([0, 1, 0], [256, 128, -64], 256, 512)
         assert result.accumulator_q16_16 == 32_768
         assert result.output_q88 == 128
@@ -33,11 +42,13 @@ class TestSingleForward:
         assert result.max_gate_q88 == 256
 
     def test_negative_contribution(self) -> None:
+        """Negative weights give a negative output."""
         result = dcls_max_forward_q88([1, 1], [-512, -256], 0, 512)
         assert result.output_q88 < 0
         assert result.overflow is False
 
     def test_positive_saturation(self) -> None:
+        """A large positive sum saturates at the maximum."""
         # Many active taps at the maximum weight drive the accumulator past the
         # Q8.8 output range, so the output saturates high and overflow latches.
         result = dcls_max_forward_q88([1] * 1024, [32767] * 1024, 0, 32767)
@@ -47,12 +58,14 @@ class TestSingleForward:
         assert result.overflow is True
 
     def test_negative_saturation(self) -> None:
+        """A large negative sum saturates at the minimum."""
         result = dcls_max_forward_q88([1] * 1024, [-32768] * 1024, 0, 32767)
         assert result.output_q88 == -32768
         assert result.accumulator_q16_16 < kernel.I16_MIN_Q16_16
         assert result.overflow is True
 
     def test_saturate_contraction_clamps_i32(self) -> None:
+        """Contraction clamps 32-bit overflow both ways."""
         # i32 accumulator clamping is unreachable through the public API with
         # valid int16 inputs, so it is pinned directly on the helper.
         assert kernel._saturate_contraction(5_000_000_000) == (32767, 2_147_483_647, True)
@@ -60,13 +73,16 @@ class TestSingleForward:
         assert kernel._saturate_contraction(1_000) == (3, 1_000, False)
 
     def test_empty_rejected(self) -> None:
+        """An empty input is rejected."""
         with pytest.raises(ValueError, match="at least one tap"):
             dcls_max_forward_q88([], [], 0, 256)
 
     def test_length_mismatch_rejected(self) -> None:
+        """Inputs of different lengths are rejected."""
         with pytest.raises(ValueError, match="length mismatch"):
             dcls_max_forward_q88([1, 1], [256], 0, 256)
 
     def test_non_positive_sigma_rejected(self) -> None:
+        """A non-positive sigma is rejected."""
         with pytest.raises(ValueError, match="sigma must be positive"):
             dcls_max_forward_q88([1], [256], 0, 0)

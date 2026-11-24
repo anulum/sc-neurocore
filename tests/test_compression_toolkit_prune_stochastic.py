@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.compression_toolkit_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.compression import (
+    prune_stochastic,
+)
 
 
 class TestPruneStochastic:
-    def test_near_zero_pruned(self):
+    """Stochastic weight pruning."""
+
+    def test_near_zero_pruned(self) -> None:
         """Weights near 0 produce deterministic 0-bitstreams → pruned."""
         w = [np.array([[0.001, 0.5], [0.999, 0.01]])]
         pruned, report = prune_stochastic(w, bitstream_length=256, min_popcount_bits=1.0)
@@ -23,7 +28,7 @@ class TestPruneStochastic:
         assert pruned[0][0, 0] == 0.0
         assert pruned[0][0, 1] == 0.5
 
-    def test_near_one_pruned(self):
+    def test_near_one_pruned(self) -> None:
         """Weights near 1 produce deterministic 1-bitstreams → pruned."""
         w = [np.array([[0.998, 0.5]])]
         pruned, _ = prune_stochastic(w, bitstream_length=256, min_popcount_bits=1.0)
@@ -31,7 +36,7 @@ class TestPruneStochastic:
         assert pruned[0][0, 0] == 0.0
         assert pruned[0][0, 1] == 0.5
 
-    def test_half_weight_never_pruned(self):
+    def test_half_weight_never_pruned(self) -> None:
         """Weight 0.5 has maximum entropy → always kept."""
         w = [np.array([[0.5]])]
         pruned, report = prune_stochastic(w, bitstream_length=256, min_popcount_bits=1.0)
@@ -39,27 +44,30 @@ class TestPruneStochastic:
         assert pruned[0][0, 0] == 0.5
         assert report.pruned_params == 0
 
-    def test_sparsity_increases_with_threshold(self):
+    def test_sparsity_increases_with_threshold(self) -> None:
+        """A higher threshold never lowers sparsity."""
         rng = np.random.RandomState(42)
         w = [rng.uniform(0, 1, (20, 20))]
         _, r1 = prune_stochastic(w, bitstream_length=256, min_popcount_bits=1.0)
         _, r2 = prune_stochastic(w, bitstream_length=256, min_popcount_bits=10.0)
         assert r2.sparsity >= r1.sparsity
 
-    def test_longer_bitstream_less_pruning(self):
+    def test_longer_bitstream_less_pruning(self) -> None:
         """Longer bitstreams → higher contribution → less pruning."""
         w = [np.array([[0.01, 0.5]])]
         _, r_short = prune_stochastic(w, bitstream_length=64, min_popcount_bits=1.0)
         _, r_long = prune_stochastic(w, bitstream_length=1024, min_popcount_bits=1.0)
         assert r_long.sparsity <= r_short.sparsity
 
-    def test_does_not_modify_original(self):
+    def test_does_not_modify_original(self) -> None:
+        """Pruning leaves the original weights unchanged."""
         w = [np.array([[0.001, 0.5]])]
         original = w[0].copy()
         prune_stochastic(w, bitstream_length=256, min_popcount_bits=1.0)
         np.testing.assert_array_equal(w[0], original)
 
-    def test_report_fields(self):
+    def test_report_fields(self) -> None:
+        """The report counts pruned and remaining parameters."""
         w = [np.array([[0.001, 0.5, 0.999]])]
         _, report = prune_stochastic(w, bitstream_length=256, min_popcount_bits=1.0)
         assert report.original_params == 3

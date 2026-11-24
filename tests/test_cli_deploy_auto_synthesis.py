@@ -12,7 +12,23 @@ from __future__ import annotations
 
 import shutil
 
-from tests.cli_deploy_support import *  # noqa: F403
+import json
+import pytest
+import subprocess
+import types
+from pathlib import (
+    Path,
+)
+from tests.cli_deploy_support import (
+    _synthesis_project,
+)
+from tests.cli_test_support import (
+    fake_module,
+    run_cli,
+)
+from unittest import (
+    mock,
+)
 
 
 def test_deploy_reports_successful_open_source_synthesis(

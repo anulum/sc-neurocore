@@ -10,7 +10,16 @@
 
 from __future__ import annotations
 
-from tests.cosim_terman_wang_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.neurons.models.terman_wang import (
+    TermanWangOscillator,
+)
+from sc_neurocore.neurons.universal_dsl import (
+    UniversalNeuron,
+)
 
 
 class TestSchemaModelParity:

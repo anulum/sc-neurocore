@@ -10,7 +10,18 @@
 
 from __future__ import annotations
 
-from tests.dcls_tent_kernel_support import *  # noqa: F403
+import numpy as np
+import numpy.testing as npt
+import pytest
+from sc_neurocore.scpn import (
+    dcls_tent_kernel as kernel,
+)
+from sc_neurocore.scpn.dcls_tent_kernel import (
+    available_backends,
+    dcls_max_forward_batch,
+    dcls_max_forward_batch_q88,
+    DclsBatchResult,
+)
 
 
 class TestDispatch:
@@ -27,12 +38,14 @@ class TestDispatch:
         return spikes, weights, centres, sigmas, n_taps
 
     def test_explicit_python_backend(self) -> None:
+        """The Python backend matches the reference."""
         spikes, weights, centres, sigmas, n_taps = self._workload()
         ref = dcls_max_forward_batch_q88(spikes, weights, centres, sigmas, n_taps)
         out = dcls_max_forward_batch(spikes, weights, centres, sigmas, n_taps, backend="python")
         npt.assert_array_equal(out.outputs_q88, ref.outputs_q88)
 
     def test_auto_backend_matches_python(self) -> None:
+        """The automatic backend matches Python."""
         spikes, weights, centres, sigmas, n_taps = self._workload()
         ref = dcls_max_forward_batch_q88(spikes, weights, centres, sigmas, n_taps)
         out = dcls_max_forward_batch(spikes, weights, centres, sigmas, n_taps, backend="auto")
@@ -40,15 +53,19 @@ class TestDispatch:
         npt.assert_array_equal(out.accumulators_q16_16, ref.accumulators_q16_16)
 
     def test_unknown_backend_rejected(self) -> None:
+        """An unknown backend is rejected."""
         with pytest.raises(ValueError, match="unknown backend"):
             dcls_max_forward_batch([1], [256], [256], [512], 1, backend="cuda")
 
     def test_available_backends_reports_python(self) -> None:
+        """Python is always reported available."""
         status = available_backends()
         assert status["python"] is True
         assert set(status) == set(kernel.FASTEST_FIRST_BACKENDS)
 
     def test_auto_falls_back_to_python(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Without a native backend the call falls back to Python."""
+
         # Force every accelerator to fail so the auto loop exhausts and lands on
         # the Python floor.
         def _boom(*_args: object, **_kwargs: object) -> DclsBatchResult:
@@ -64,6 +81,8 @@ class TestDispatch:
         npt.assert_array_equal(out.outputs_q88, ref.outputs_q88)
 
     def test_available_backends_marks_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A failing backend is reported unavailable."""
+
         def _boom(*_args: object, **_kwargs: object) -> DclsBatchResult:
             raise OSError("library missing")
 

@@ -10,14 +10,22 @@
 
 from __future__ import annotations
 
-from tests.datasets_support import *  # noqa: F403
+from pathlib import Path
+import pytest
+from sc_neurocore.datasets.loaders import (
+    _check_root,
+)
 
 
 class TestCheckRoot:
-    def test_valid_root_returns_path(self, tmp_path):
+    """Checking a dataset root folder."""
+
+    def test_valid_root_returns_path(self, tmp_path: Path) -> None:
+        """An existing root is returned."""
         p = _check_root(tmp_path, "test", "http://test")
         assert p == tmp_path
 
-    def test_missing_root_raises(self):
+    def test_missing_root_raises(self) -> None:
+        """A missing root is rejected with download advice."""
         with pytest.raises(FileNotFoundError, match="download from"):
             _check_root("/nonexistent_xyz_abc_123", "TestDS", "http://test")

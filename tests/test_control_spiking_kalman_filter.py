@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from tests.control_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.control import (
+    SpikingKalmanFilter,
+)
 
 
 class TestSpikingKalmanFilter:
-    def test_step(self):
+    """The spiking Kalman filter."""
+
+    def test_step(self) -> None:
+        """A step returns a state estimate per dimension."""
         kf = SpikingKalmanFilter(n_states=2, n_measurements=2)
         assert kf.step(np.array([1.0, 0.5])).shape == (2,)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset zeroes the state."""
         kf = SpikingKalmanFilter(2, 2)
         kf.step(np.ones(2))
         kf.reset()

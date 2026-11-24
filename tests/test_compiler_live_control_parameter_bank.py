@@ -6,12 +6,19 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (parameter_bank) from former test_compiler_live_control.py
 
+"""Tests of live-control parameter banks."""
+
 from __future__ import annotations
 
-from tests.compiler_live_control_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.live_control import (
+    MMIOUpdateSpec,
+    ParameterBankSpec,
+)
 
 
 def test_parameter_bank_q88_bounds_and_widths() -> None:
+    """A Q8.8 bank has 16-bit entries and its span."""
     bank = ParameterBankSpec(
         bank_name="weights",
         start_address_bytes=0x1000,
@@ -28,6 +35,7 @@ def test_parameter_bank_q88_bounds_and_widths() -> None:
 
 
 def test_parameter_bank_rejects_invalid_q_format() -> None:
+    """An invalid Q format is rejected."""
     with pytest.raises(ValueError, match="Expected format"):
         ParameterBankSpec(
             bank_name="weights",
@@ -40,6 +48,7 @@ def test_parameter_bank_rejects_invalid_q_format() -> None:
 
 
 def test_parameter_bank_supports_q16_16() -> None:
+    """A Q16.16 bank has 32-bit entries at their addresses."""
     bank = ParameterBankSpec(
         bank_name="kuramoto",
         start_address_bytes=0x2000,
@@ -55,6 +64,7 @@ def test_parameter_bank_supports_q16_16() -> None:
 
 
 def test_parameter_bank_supports_bfp() -> None:
+    """A block-floating bank has 16-bit entries at their addresses."""
     bank = ParameterBankSpec(
         bank_name="bfp_weights",
         start_address_bytes=0x3000,
@@ -71,6 +81,7 @@ def test_parameter_bank_supports_bfp() -> None:
 
 
 def test_parameter_bank_rejects_out_of_range_encoded_word() -> None:
+    """A word wider than the entry is rejected."""
     bank = ParameterBankSpec(
         bank_name="weights",
         start_address_bytes=0x3000,
@@ -87,6 +98,7 @@ def test_parameter_bank_rejects_out_of_range_encoded_word() -> None:
 
 
 def test_parameter_bank_overlap_detected_by_mmio_contract() -> None:
+    """Overlapping banks are rejected."""
     first = ParameterBankSpec(
         bank_name="a",
         start_address_bytes=0x4000,
@@ -108,6 +120,7 @@ def test_parameter_bank_overlap_detected_by_mmio_contract() -> None:
 
 
 def test_mmio_control_window_must_not_overlap_parameter_banks() -> None:
+    """The control window must not overlap a bank."""
     bank = ParameterBankSpec(
         bank_name="weights",
         start_address_bytes=0x10,

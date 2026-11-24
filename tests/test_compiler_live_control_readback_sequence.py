@@ -6,12 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (readback_sequence) from former test_compiler_live_control.py
 
+"""Tests of the live-control readback sequence."""
+
 from __future__ import annotations
 
-from tests.compiler_live_control_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.live_control_ops import MMIOWrite
+from sc_neurocore.compiler.live_control import (
+    MMIOUpdateSpec,
+    ParameterBankSpec,
+)
 
 
 def test_mmio_readback_sequence_selects_committed_q16_entry() -> None:
+    """Readback selects the bank and entry, then reads the data."""
     bank = ParameterBankSpec(
         bank_name="weights",
         start_address_bytes=0x9000,
@@ -33,14 +41,17 @@ def test_mmio_readback_sequence_selects_committed_q16_entry() -> None:
         "read_active_data_lo",
     ]
     assert ops[0].address_bytes == 0x108
+    assert isinstance(ops[0], MMIOWrite)
     assert ops[0].value == 0
     assert ops[1].address_bytes == 0x10C
+    assert isinstance(ops[1], MMIOWrite)
     assert ops[1].value == 1
     assert ops[2].address_bytes == 0x124
     assert ops[2].width_bits == 32
 
 
 def test_mmio_readback_sequence_reads_wide_bfp_high_word() -> None:
+    """Readback of a wide entry also reads its high word."""
     bank = ParameterBankSpec(
         bank_name="bfp_weights",
         start_address_bytes=0x9000,
@@ -71,6 +82,7 @@ def test_mmio_readback_sequence_reads_wide_bfp_high_word() -> None:
 
 
 def test_mmio_readback_sequence_rejects_unknown_entries() -> None:
+    """Reading back an unknown entry is rejected."""
     bank = ParameterBankSpec(
         bank_name="weights",
         start_address_bytes=0x9000,

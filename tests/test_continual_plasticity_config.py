@@ -10,17 +10,23 @@
 
 from __future__ import annotations
 
-from tests.continual_support import *  # noqa: F403
+from sc_neurocore.continual import (
+    PlasticityConfig,
+)
 
 
 class TestPlasticityConfig:
-    def test_defaults(self):
+    """Plasticity configurations."""
+
+    def test_defaults(self) -> None:
+        """The default rule is STDP with its time constants."""
         c = PlasticityConfig(layer_name="h")
         assert c.rule == "stdp"
         assert c.tau_pre == 20.0
         assert c.w_min == 0.0
 
-    def test_custom_values(self):
+    def test_custom_values(self) -> None:
+        """Custom rule settings are kept."""
         c = PlasticityConfig(layer_name="x", rule="r_stdp", tau_pre=10.0, w_max=2.0)
         assert c.rule == "r_stdp"
         assert c.tau_pre == 10.0

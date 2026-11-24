@@ -10,7 +10,19 @@
 
 from __future__ import annotations
 
-from tests.cosim_glif_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.neurons.models.glif import (
+    GLIFNeuron,
+)
+from sc_neurocore.neurons.models.sc_four_state_glif import (
+    SCFourStateGLIFNeuron,
+)
+from sc_neurocore.neurons.universal_dsl import (
+    UniversalNeuron,
+)
 
 
 _ModelType = type[GLIFNeuron] | type[SCFourStateGLIFNeuron]

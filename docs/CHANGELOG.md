@@ -1378,6 +1378,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 68 top-level test modules of the CLI deploy and formal, codec
+  registry, AER communication, compiler live-control, static-analysis
+  and validation, compression, continual-learning, contrastive,
+  control, CORDIV, co-simulation, dataset and DCLS suites import their
+  names explicitly instead of through a suppressed star import, gain
+  their missing docstrings and type annotations and are enrolled in
+  the docstring policy. Thirteen support modules left without an
+  importer are deleted.
+
 - The 20 top-level Studio endpoint and evidence-bundle test modules
   import their names explicitly instead of through a suppressed star
   import, take every name bound after the endpoint support's web-stack

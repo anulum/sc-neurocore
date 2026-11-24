@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.codec_registry_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.spike_codec.registry import (
+    get_codec,
+    list_codecs,
+)
 
 
 class TestCodecRegistry:
-    def test_list_codecs(self):
+    """The spike codec registry."""
+
+    def test_list_codecs(self) -> None:
+        """The registry lists the ISI, predictive and delta codecs."""
         codecs = list_codecs()
         assert "isi" in codecs
         assert "predictive" in codecs
@@ -23,13 +31,15 @@ class TestCodecRegistry:
         assert "aer" in codecs
         assert len(codecs) == 5
 
-    def test_get_all_codecs(self):
+    def test_get_all_codecs(self) -> None:
+        """Every listed codec can compress and decompress."""
         for name in list_codecs():
             codec = get_codec(name)
             assert hasattr(codec, "compress")
             assert hasattr(codec, "decompress")
 
-    def test_get_codec_with_kwargs(self):
+    def test_get_codec_with_kwargs(self) -> None:
+        """Codec options reach the created codec."""
         c = get_codec("predictive", alpha=0.01)
         assert c.alpha == 0.01
         c = get_codec("delta", group_size=16)
@@ -37,11 +47,12 @@ class TestCodecRegistry:
         c = get_codec("streaming", window_size=10)
         assert c.window_size == 10
 
-    def test_unknown_codec_raises(self):
+    def test_unknown_codec_raises(self) -> None:
+        """An unknown codec name is rejected."""
         with pytest.raises(ValueError, match="Unknown codec"):
             get_codec("nonexistent")
 
-    def test_all_codecs_roundtrip(self):
+    def test_all_codecs_roundtrip(self) -> None:
         """Every codec must roundtrip the same data."""
         rng = np.random.RandomState(42)
         spikes = (rng.random((100, 16)) < 0.05).astype(np.int8)

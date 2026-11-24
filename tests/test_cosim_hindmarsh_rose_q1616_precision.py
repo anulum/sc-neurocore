@@ -12,7 +12,16 @@ from __future__ import annotations
 
 import subprocess
 
-from tests.cosim_hindmarsh_rose_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from tests.cosim_support import (
+    _hindmarsh_rose_hand_spike_count,
+    _python_spike_count,
+    _verilog_spike_count_q1616,
+    HAS_IVERILOG,
+)
 from tests.toolchain_support import require_executable
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -20,6 +29,7 @@ _RTL = _ROOT / "hdl/formal/catalogue/sc_hindmarsh_rose.v"
 
 
 def test_yosys_synthesises_committed_rtl() -> None:
+    """Yosys synthesises the committed RTL."""
     completed = subprocess.run(
         [
             require_executable("yosys"),

@@ -10,13 +10,24 @@
 
 from __future__ import annotations
 
-from tests.datasets_support import *  # noqa: F403
+from pathlib import Path
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.datasets.loaders import (
+    load_shd,
+)
+from unittest.mock import (
+    MagicMock,
+    patch,
+)
 
 
 class TestSHDRealLoader:
     """Test SHD real-data path with mocked h5py."""
 
-    def test_load_shd_real_path(self, tmp_path):
+    def test_load_shd_real_path(self, tmp_path: Path) -> None:
+        """SHD records load as 700-channel samples with labels."""
         rng = np.random.default_rng(0)
         n_samples = 5
         labs = rng.integers(0, 20, size=n_samples)
@@ -34,19 +45,19 @@ class TestSHDRealLoader:
         h5_path.touch()
 
         class FakeDataset:
-            def __init__(self, data):
+            def __init__(self, data: list[Any] | np.ndarray[Any, Any]) -> None:
                 self._data = data
 
-            def __getitem__(self, key):
+            def __getitem__(self, key: int | slice) -> Any:
                 if isinstance(key, slice):
                     return np.array(self._data)[key]
                 return self._data[key]
 
-            def __len__(self):
+            def __len__(self) -> int:
                 return len(self._data)
 
         class FakeFile:
-            def __init__(self):
+            def __init__(self) -> None:
                 self._groups = {
                     "spikes": {
                         "times": FakeDataset(spike_times_data),
@@ -55,13 +66,13 @@ class TestSHDRealLoader:
                     "labels": FakeDataset(labs),
                 }
 
-            def __enter__(self):
+            def __enter__(self) -> FakeFile:
                 return self
 
-            def __exit__(self, *a):
+            def __exit__(self, *a: object) -> None:
                 pass
 
-            def __getitem__(self, key):
+            def __getitem__(self, key: str) -> Any:
                 return self._groups[key]
 
         mock_h5py = MagicMock()
@@ -73,13 +84,14 @@ class TestSHDRealLoader:
         assert labels_out.shape == (n_samples,)
         assert samples[0].shape[1] == 700
 
-    def test_load_shd_missing_h5_raises(self, tmp_path):
+    def test_load_shd_missing_h5_raises(self, tmp_path: Path) -> None:
+        """A missing SHD file is rejected."""
         (tmp_path / "sentinel").touch()
         with pytest.raises(FileNotFoundError, match="not found"):
             load_shd(root=tmp_path, train=True, synthetic=False)
 
 
-def test_load_shd_drops_spikes_after_the_window_instead_of_piling_them_up(tmp_path):
+def test_load_shd_drops_spikes_after_the_window_instead_of_piling_them_up(tmp_path: Path) -> None:
     """A real HDF5 file in the SHD layout: times in seconds, one ragged array per sample."""
     import h5py
 

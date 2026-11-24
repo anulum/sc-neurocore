@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.contrastive_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.contrastive import (
+    SpikeContrastiveLoss,
+)
+from tests.contrastive_support import (
+    FloatArray,
+)
 
 
 class TestSpikeContrastiveLoss:
+    """The spike contrastive loss."""
+
     def test_compute_matches_manual_infonce(self) -> None:
+        """The loss matches a hand-computed InfoNCE."""
         loss_fn = SpikeContrastiveLoss(temperature=0.5)
         view_a = np.array(
             [[1.0, 0.0, 0.5], [0.0, 1.0, 0.5], [0.4, 0.2, 1.0]],
@@ -35,6 +45,7 @@ class TestSpikeContrastiveLoss:
         assert loss_fn.compute(view_a, view_b) == pytest.approx(expected)
 
     def test_identical_views_have_lower_loss_than_permuted_views(self) -> None:
+        """Matching views cost less than permuted ones."""
         view = np.eye(4, dtype=np.float64)
         permuted = view[[1, 2, 3, 0]]
 
@@ -43,10 +54,12 @@ class TestSpikeContrastiveLoss:
         assert loss_fn.compute(view, view) < loss_fn.compute(view, permuted)
 
     def test_single_sample_has_no_negatives(self) -> None:
+        """A single sample has no negatives and no loss."""
         assert SpikeContrastiveLoss().compute(np.random.rand(1, 4), np.random.rand(1, 4)) == 0.0
 
     @pytest.mark.parametrize("temperature", [0.0, -1.0, float("nan"), float("inf")])
     def test_temperature_must_be_finite_and_positive(self, temperature: float) -> None:
+        """The temperature must be finite and positive."""
         with pytest.raises(ValueError, match="temperature"):
             SpikeContrastiveLoss(temperature=temperature)
 
@@ -65,5 +78,6 @@ class TestSpikeContrastiveLoss:
         view_b: FloatArray,
         message: str,
     ) -> None:
+        """Invalid views are rejected."""
         with pytest.raises(ValueError, match=message):
             SpikeContrastiveLoss().compute(view_a, view_b)

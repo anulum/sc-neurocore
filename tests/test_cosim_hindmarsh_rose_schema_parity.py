@@ -10,7 +10,16 @@
 
 from __future__ import annotations
 
-from tests.cosim_hindmarsh_rose_support import *  # noqa: F403
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.neurons.models.hindmarsh_rose import (
+    HindmarshRoseNeuron,
+)
+from sc_neurocore.neurons.universal_dsl import (
+    UniversalNeuron,
+)
 
 
 class TestSchemaModelParity:

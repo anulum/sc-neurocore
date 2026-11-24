@@ -10,8 +10,6 @@
 
 from __future__ import annotations
 
-from tests.compiler_static_analysis_support import *  # noqa: F403
-
 
 class TestPipelineAnalysis:
     """Tests for critical path depth and pipeline budget."""
@@ -35,13 +33,13 @@ class TestPipelineAnalysis:
         assert critical_path_depth("a * b * c") == 2
 
     def test_deep_chain(self) -> None:
-        """a * b * c * d has depth 3."""
+        """The product a * b * c * d has depth 3."""
         from sc_neurocore.compiler.static_analysis import critical_path_depth
 
         assert critical_path_depth("a * b * c * d") == 3
 
     def test_mixed(self) -> None:
-        """a * b + c * d: both branches have depth 1."""
+        """In a * b + c * d both branches have depth 1."""
         from sc_neurocore.compiler.static_analysis import critical_path_depth
 
         assert critical_path_depth("a * b + c * d") == 1

@@ -6,14 +6,28 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (symbiyosys_integration) from former test_cli_formal.py
 
+"""Tests of running SymbiYosys from the formal command."""
+
 from __future__ import annotations
 
-from tests.cli_formal_support import *  # noqa: F403
+import json
+import pytest
+import subprocess
+from pathlib import (
+    Path,
+)
+from tests.cli_test_support import (
+    run_cli,
+)
+from unittest import (
+    mock,
+)
 
 
 def test_formal_verify_network_records_missing_symbiyosys(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """A missing SymbiYosys is recorded in the report."""
     out_dir = tmp_path / "formal"
 
     with mock.patch("sc_neurocore.cli.commands.formal.shutil.which", return_value=None):
@@ -51,6 +65,7 @@ def test_formal_verify_network_records_missing_symbiyosys(
 def test_formal_verify_network_runs_symbiyosys_when_available(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """An available SymbiYosys is run and its pass recorded."""
     out_dir = tmp_path / "formal"
     completed = subprocess.CompletedProcess(
         args=["/usr/bin/sby", "-f", str(out_dir / "dense_lif_frontier_fixture.sby")],
@@ -104,6 +119,7 @@ def test_formal_verify_network_runs_symbiyosys_when_available(
 def test_formal_verify_network_returns_nonzero_on_symbiyosys_failure(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """A SymbiYosys failure makes the command fail."""
     out_dir = tmp_path / "formal"
     completed = subprocess.CompletedProcess(
         args=["/usr/bin/sby", "-f", str(out_dir / "dense_lif_frontier_fixture.sby")],

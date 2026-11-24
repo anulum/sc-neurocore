@@ -10,14 +10,24 @@
 
 from __future__ import annotations
 
-from tests.compiler_validation_units_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.quantizer import (
+    BlockFloatingMode,
+    QFormat,
+)
+from sc_neurocore.compiler.validation import (
+    _coerce_precision,
+)
 
 
 class TestCoercePrecision:
-    """Each precision input resolves the expected datapath parameters and tags
-    its manifest with the matching provenance and kind."""
+    """Resolving each precision input to datapath parameters.
+
+    Each input also tags its manifest with the matching provenance and kind.
+    """
 
     def test_none_falls_back_to_default_qformat(self) -> None:
+        """No precision falls back to Q8.8."""
         width, fraction, label, manifest, fmt = _coerce_precision(
             None, default_width=16, default_frac=8, tag="weights"
         )
@@ -27,6 +37,7 @@ class TestCoercePrecision:
         assert manifest["kind"] == "fixed"
 
     def test_qformat_string_resolves_total_and_fraction(self) -> None:
+        """A Q16.16 string resolves its widths."""
         width, fraction, label, manifest, fmt = _coerce_precision(
             "Q16.16", default_width=16, default_frac=8, tag="state"
         )
@@ -36,6 +47,7 @@ class TestCoercePrecision:
         assert manifest["kind"] == "fixed"
 
     def test_block_floating_string_resolves_mantissa_and_passes_parameter_count(self) -> None:
+        """A block-floating string resolves its mantissa."""
         width, fraction, label, manifest, fmt = _coerce_precision(
             "BFP16E3X32", default_width=16, default_frac=8, tag="weights", parameter_count=5
         )
@@ -46,5 +58,6 @@ class TestCoercePrecision:
         assert manifest["parameter_count"] == 5
 
     def test_unparsable_format_raises(self) -> None:
+        """An unparsable precision is rejected."""
         with pytest.raises(ValueError, match="must be a fixed Q-format or block-floating format"):
             _coerce_precision("not-a-format", default_width=16, default_frac=8, tag="weights")

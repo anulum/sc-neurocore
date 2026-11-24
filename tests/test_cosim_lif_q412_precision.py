@@ -10,7 +10,23 @@
 
 from __future__ import annotations
 
-from tests.cosim_lif_support import *  # noqa: F403
+import pytest
+import subprocess
+import sys
+from sc_neurocore.compiler.equation_compiler import (
+    Q88,
+)
+from tests.cosim_lif_support import (
+    _INPUT_CURRENT,
+    _N_STEPS,
+)
+from tests.cosim_support import (
+    _lif_schema_precision_values,
+    _python_spike_count,
+    _verilog_spike_count,
+    _verilog_spike_count_q412,
+    HAS_IVERILOG,
+)
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")

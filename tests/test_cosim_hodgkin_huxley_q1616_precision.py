@@ -10,7 +10,13 @@
 
 from __future__ import annotations
 
-from tests.cosim_hodgkin_huxley_support import *  # noqa: F403
+import pytest
+from tests.cosim_support import (
+    _hodgkin_huxley_hand_spike_count,
+    _python_spike_count,
+    _verilog_spike_count_q1616,
+    HAS_IVERILOG,
+)
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")

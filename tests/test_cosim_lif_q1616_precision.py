@@ -10,7 +10,16 @@
 
 from __future__ import annotations
 
-from tests.cosim_lif_support import *  # noqa: F403
+import pytest
+from tests.cosim_lif_support import (
+    _INPUT_CURRENT,
+    _N_STEPS,
+)
+from tests.cosim_support import (
+    _python_spike_count,
+    _verilog_spike_count_q1616,
+    HAS_IVERILOG,
+)
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")

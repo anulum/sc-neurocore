@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.compression_toolkit_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.compression import (
+    prune_neurons,
+)
 
 
 class TestPruneNeurons:
-    def test_structural_pruning_by_weight_norm(self):
+    """Structural pruning of neurons."""
+
+    def test_structural_pruning_by_weight_norm(self) -> None:
+        """The weakest neuron is removed from both layers."""
         w1 = np.array([[1.0, 0.5], [0.0001, 0.0001], [0.8, 0.3]])
         w2 = np.array([[0.5, 0.3, 0.1]])
         pruned, report = prune_neurons([w1, w2], activity_threshold=0.001)
@@ -22,13 +28,15 @@ class TestPruneNeurons:
         assert pruned[0].shape[0] == 2
         assert pruned[1].shape[1] == 2
 
-    def test_no_pruning_when_all_active(self):
+    def test_no_pruning_when_all_active(self) -> None:
+        """Active neurons are all kept."""
         w = [np.ones((3, 3))]
         pruned, report = prune_neurons(w, activity_threshold=0.001)
         assert report.pruned_neurons == 0
         np.testing.assert_array_equal(pruned[0], w[0])
 
-    def test_with_firing_rates(self):
+    def test_with_firing_rates(self) -> None:
+        """Silent neurons are pruned by firing rate."""
         w = [np.ones((4, 3))]
         rates = [np.array([0.1, 0.0, 0.05, 0.0002])]
         pruned, report = prune_neurons(w, firing_rates=rates, activity_threshold=0.001)
@@ -36,7 +44,8 @@ class TestPruneNeurons:
         assert report.pruned_neurons == 2
         assert pruned[0].shape[0] == 2
 
-    def test_report_fields(self):
+    def test_report_fields(self) -> None:
+        """The report counts the original neurons and parameters."""
         w = [np.eye(3)]
         _, report = prune_neurons(w)
         assert report.original_neurons == 3

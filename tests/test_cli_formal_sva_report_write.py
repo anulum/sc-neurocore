@@ -6,14 +6,27 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (sva_report_write) from former test_cli_formal.py
 
+"""Tests of the SVA and report files the formal command writes."""
+
 from __future__ import annotations
 
-from tests.cli_formal_support import *  # noqa: F403
+import json
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.formal import (
+    validate_formal_network_report,
+)
+from tests.cli_test_support import (
+    run_cli,
+)
 
 
 def test_formal_verify_network_writes_sva_and_report(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """Formal verification writes the SVA properties and a report."""
     out_dir = tmp_path / "formal"
 
     rc = run_cli(

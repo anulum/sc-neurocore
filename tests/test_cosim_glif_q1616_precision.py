@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from tests.cosim_glif_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.sc_four_state_glif import (
+    SCFourStateGLIFNeuron,
+)
+from tests.cosim_support import (
+    _python_spike_count,
+    _verilog_spike_count_q1616,
+    HAS_IVERILOG,
+)
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")

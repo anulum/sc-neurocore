@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from tests.compiler_static_analysis_support import *  # noqa: F403
+import pytest
 
 
 class TestPowerEstimation:

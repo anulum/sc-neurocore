@@ -10,15 +10,21 @@
 
 from __future__ import annotations
 
-from tests.comm_aer_support import *  # noqa: F403
+from sc_neurocore.comm.aer_udp import (
+    AEREvent,
+)
 
 
 class TestAEREvent:
-    def test_default_data(self):
+    """Address-event records."""
+
+    def test_default_data(self) -> None:
+        """An event's data defaults to 0."""
         e = AEREvent(timestamp=100, neuron_id=5)
         assert e.data == 0
 
-    def test_fields(self):
+    def test_fields(self) -> None:
+        """An event keeps its time, neuron and data."""
         e = AEREvent(timestamp=42, neuron_id=7, data=255)
         assert e.timestamp == 42
         assert e.neuron_id == 7

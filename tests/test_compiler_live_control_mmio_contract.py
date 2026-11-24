@@ -6,12 +6,19 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (mmio_contract) from former test_compiler_live_control.py
 
+"""Tests of the live-control MMIO contract."""
+
 from __future__ import annotations
 
-from tests.compiler_live_control_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.live_control import (
+    MMIOUpdateSpec,
+    ParameterBankSpec,
+)
 
 
 def test_mmio_rejects_invalid_bus_protocol() -> None:
+    """An unsupported bus protocol is rejected."""
     bank = ParameterBankSpec(
         bank_name="weights",
         start_address_bytes=0x7000,
@@ -23,6 +30,7 @@ def test_mmio_rejects_invalid_bus_protocol() -> None:
 
 
 def test_mmio_rejects_duplicate_bank_name() -> None:
+    """Duplicate bank names are rejected."""
     a = ParameterBankSpec(
         bank_name="weights",
         start_address_bytes=0x8000,

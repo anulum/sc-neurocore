@@ -10,36 +10,46 @@
 
 from __future__ import annotations
 
-from tests.compression_toolkit_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.compression import (
+    quantize_weights,
+)
 
 
 class TestQuantizeWeights:
-    def test_8bit_symmetric(self):
+    """Quantising weights to fewer bits."""
+
+    def test_8bit_symmetric(self) -> None:
+        """Symmetric 8-bit quantisation keeps the shape and changes the values."""
         w = [np.array([[0.123456, -0.789012, 0.5]])]
         q = quantize_weights(w, bits=8, symmetric=True)
         assert len(q) == 1
         assert q[0].shape == w[0].shape
         assert not np.array_equal(q[0], w[0])
 
-    def test_quantization_reduces_unique_values(self):
+    def test_quantization_reduces_unique_values(self) -> None:
+        """Quantisation reduces the number of distinct values."""
         rng = np.random.RandomState(42)
         w = [rng.randn(100, 100)]
         q = quantize_weights(w, bits=4)
         assert len(np.unique(q[0])) < len(np.unique(w[0]))
 
-    def test_asymmetric_quantization(self):
+    def test_asymmetric_quantization(self) -> None:
+        """Asymmetric quantisation keeps the shape."""
         w = [np.array([[0.1, 0.5, 0.9]])]
         q = quantize_weights(w, bits=8, symmetric=False)
         assert q[0].shape == w[0].shape
 
-    def test_bits_clamped(self):
+    def test_bits_clamped(self) -> None:
+        """Extreme bit widths are clamped."""
         w = [np.array([[1.0]])]
         q_low = quantize_weights(w, bits=1)
         q_high = quantize_weights(w, bits=32)
         assert len(q_low) == 1
         assert len(q_high) == 1
 
-    def test_multiple_layers(self):
+    def test_multiple_layers(self) -> None:
+        """Each layer keeps its shape."""
         w = [np.random.randn(5, 5), np.random.randn(3, 5)]
         q = quantize_weights(w, bits=8)
         assert len(q) == 2

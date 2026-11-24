@@ -6,12 +6,23 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (deploy_pytorch) from former test_cli_deploy.py
 
+"""Tests of deploying a PyTorch checkpoint with the CLI."""
+
 from __future__ import annotations
 
-from tests.cli_deploy_support import *  # noqa: F403
+import json
+import pytest
+from pathlib import (
+    Path,
+)
+from tests.cli_deploy_support import (
+    _checkpoint_digest,
+    _run_checkpoint_deploy,
+)
 
 
 def test_deploy_pytorch_writes_yosys_project(tmp_path: Path) -> None:
+    """A checkpoint deploys to a Yosys project with RTL and a Makefile."""
     torch = pytest.importorskip("torch")
     model = torch.nn.Sequential(
         torch.nn.Linear(4, 8),
@@ -39,6 +50,7 @@ def test_deploy_pytorch_writes_yosys_project(tmp_path: Path) -> None:
 
 
 def test_deploy_pytorch_writes_vivado_project(tmp_path: Path) -> None:
+    """A checkpoint deploys to a Vivado project without a Makefile."""
     torch = pytest.importorskip("torch")
     model = torch.nn.Sequential(torch.nn.Linear(4, 4))
     checkpoint = tmp_path / "tiny.pt"
@@ -63,6 +75,7 @@ def test_deploy_pytorch_requires_digest(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """Deploying a checkpoint requires its SHA-256 digest."""
     torch = pytest.importorskip("torch")
     checkpoint = tmp_path / "nohash.pt"
     torch.save(torch.nn.Linear(2, 2).state_dict(), checkpoint)
@@ -77,6 +90,7 @@ def test_deploy_pytorch_rejects_invalid_digest(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """A digest that is not 64 hex characters is rejected."""
     torch = pytest.importorskip("torch")
     checkpoint = tmp_path / "badsha.pt"
     torch.save(torch.nn.Linear(2, 2).state_dict(), checkpoint)

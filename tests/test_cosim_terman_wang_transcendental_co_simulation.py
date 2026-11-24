@@ -10,7 +10,17 @@
 
 from __future__ import annotations
 
-from tests.cosim_terman_wang_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.universal_dsl import (
+    UniversalNeuron,
+)
+from tests.cosim_support import (
+    _verilog_compiles,
+    HAS_IVERILOG,
+)
+from tests.cosim_terman_wang_support import (
+    _TRANSCENDENTAL_COMPILE_MODELS,
+)
 
 
 @pytest.mark.skipif(not HAS_IVERILOG, reason="Icarus Verilog not available")

@@ -6,14 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (constraint_replays) from former test_cli_formal.py
 
+"""Tests of replaying traces against formal network constraints."""
+
 from __future__ import annotations
 
-from tests.cli_formal_support import *  # noqa: F403
+import json
+import pytest
+from pathlib import (
+    Path,
+)
+from tests.cli_test_support import (
+    run_cli,
+)
 
 
 def test_formal_verify_network_replays_safe_trace(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """A safe trace replays with no violation over six cycles."""
     trace_path = tmp_path / "safe_trace.json"
     trace_path.write_text("[1, 0, 1, 0, 1, 1]", encoding="utf-8")
     out_dir = tmp_path / "formal"
@@ -51,6 +61,7 @@ def test_formal_verify_network_replays_safe_trace(
 def test_formal_verify_network_replays_unsafe_trace(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """An unsafe trace is reported at its first violating cycle."""
     trace_path = tmp_path / "unsafe_trace.json"
     trace_path.write_text("[1, 0, 1, 1]", encoding="utf-8")
     out_dir = tmp_path / "formal"
@@ -89,6 +100,7 @@ def test_formal_verify_network_replays_unsafe_trace(
 def test_formal_verify_network_replays_refractory_violation(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """A refractory violation is reported with its property."""
     trace_path = tmp_path / "refractory_unsafe_trace.json"
     trace_path.write_text("[1, 0, 1, 0]", encoding="utf-8")
     out_dir = tmp_path / "formal"
@@ -136,6 +148,7 @@ def test_formal_verify_network_replays_refractory_violation(
 def test_formal_verify_network_replays_antagonistic_violation(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """An exclusion violation is reported with its property."""
     trace_path = tmp_path / "antagonistic_unsafe_trace.json"
     trace_path.write_text("[[1, 0], [0, 1], [1, 1]]", encoding="utf-8")
     out_dir = tmp_path / "formal"
@@ -183,6 +196,7 @@ def test_formal_verify_network_replays_antagonistic_violation(
 def test_formal_verify_network_replays_temporal_separation_violation(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """A temporal-separation violation is reported with its property."""
     trace_path = tmp_path / "temporal_unsafe_trace.json"
     trace_path.write_text("[[1, 0], [0, 1], [0, 0]]", encoding="utf-8")
     out_dir = tmp_path / "formal"
@@ -232,6 +246,7 @@ def test_formal_verify_network_replays_temporal_separation_violation(
 def test_formal_verify_network_replays_population_coactivation_violation(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """A co-activation cap violation is reported with its property."""
     trace_path = tmp_path / "population_unsafe_trace.json"
     trace_path.write_text("[[1, 0, 1], [0, 1, 0]]", encoding="utf-8")
     out_dir = tmp_path / "formal"
@@ -281,6 +296,7 @@ def test_formal_verify_network_replays_population_coactivation_violation(
 def test_formal_verify_network_replays_population_silence_violation(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """A silence-after-co-activation violation is reported."""
     trace_path = tmp_path / "population_silence_unsafe_trace.json"
     trace_path.write_text("[[1, 1, 0], [0, 0, 0], [0, 1, 0]]", encoding="utf-8")
     out_dir = tmp_path / "formal"
@@ -330,6 +346,7 @@ def test_formal_verify_network_replays_population_silence_violation(
 def test_formal_verify_network_replays_population_inactivity_violation(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """An inactivity-bound violation is reported."""
     trace_path = tmp_path / "population_inactivity_unsafe_trace.json"
     trace_path.write_text("[[0, 0], [1, 0], [0, 0], [0, 0], [0, 0]]", encoding="utf-8")
     out_dir = tmp_path / "formal"

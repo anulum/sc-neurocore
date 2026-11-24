@@ -6,17 +6,29 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (traps) from former test_compiler_live_control.py
 
+"""Tests of the live-control trap registers."""
+
 from __future__ import annotations
 
-from tests.compiler_live_control_support import *  # noqa: F403
+import pytest
+from sc_neurocore.compiler.live_control import (
+    CONTROL_CLEAR_TRAP,
+    MMIOUpdateSpec,
+    ParameterBankSpec,
+    TRAP_PARTIAL_WRITE,
+    TRAP_STAGED_OVERFLOW,
+    TrapSpec,
+)
 
 
 def test_trap_spec_offset_aligned_validation() -> None:
+    """A trap offset must be 4-byte aligned."""
     with pytest.raises(ValueError, match="4-byte aligned"):
         TrapSpec(flag_register_offset=3)
 
 
 def test_mmio_trap_clear_sequence_requires_enabled_traps() -> None:
+    """Clearing traps writes the clear register."""
     bank = ParameterBankSpec(
         bank_name="weights",
         start_address_bytes=0xB000,
@@ -56,6 +68,7 @@ def test_mmio_trap_clear_sequence_requires_enabled_traps() -> None:
 
 
 def test_mmio_selective_trap_clear_sequence_preserves_unselected_faults() -> None:
+    """A selective clear keeps the other faults."""
     bank = ParameterBankSpec(
         bank_name="weights",
         start_address_bytes=0xB000,

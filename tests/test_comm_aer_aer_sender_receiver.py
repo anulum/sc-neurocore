@@ -10,11 +10,24 @@
 
 from __future__ import annotations
 
-from tests.comm_aer_support import *  # noqa: F403
+import numpy as np
+import struct
+from sc_neurocore.comm.aer_udp import (
+    AEREvent,
+    AERReceiver,
+    AERSender,
+    EVENT_FMT,
+    HEADER_FMT,
+    MAGIC,
+    MAX_EVENTS_PER_PACKET,
+)
 
 
 class TestAERSenderReceiver:
-    def test_send_receive_roundtrip(self):
+    """Sending and receiving AER packets over UDP."""
+
+    def test_send_receive_roundtrip(self) -> None:
+        """Three events arrive in one packet with their times."""
         port = 19876
         receiver = AERReceiver(host="127.0.0.1", port=port, timeout=2.0)
         sender = AERSender(host="127.0.0.1", port=port)
@@ -39,7 +52,8 @@ class TestAERSenderReceiver:
             sender.close()
             receiver.close()
 
-    def test_send_spikes_vector(self):
+    def test_send_spikes_vector(self) -> None:
+        """A spike vector is sent as events for its active neurons."""
         port = 19877
         receiver = AERReceiver(host="127.0.0.1", port=port, timeout=2.0)
         sender = AERSender(host="127.0.0.1", port=port)
@@ -58,7 +72,8 @@ class TestAERSenderReceiver:
             sender.close()
             receiver.close()
 
-    def test_send_empty_spikes(self):
+    def test_send_empty_spikes(self) -> None:
+        """An empty spike vector sends no packet."""
         sender = AERSender(host="127.0.0.1", port=19878)
         try:
             sent = sender.send_spikes(np.zeros(10), timestamp=0)
@@ -66,7 +81,8 @@ class TestAERSenderReceiver:
         finally:
             sender.close()
 
-    def test_receive_timeout(self):
+    def test_receive_timeout(self) -> None:
+        """A receive that times out returns no event."""
         receiver = AERReceiver(host="127.0.0.1", port=19879, timeout=0.1)
         try:
             events = receiver.receive()
@@ -74,7 +90,8 @@ class TestAERSenderReceiver:
         finally:
             receiver.close()
 
-    def test_receive_as_vector(self):
+    def test_receive_as_vector(self) -> None:
+        """Received events form a spike vector."""
         port = 19880
         receiver = AERReceiver(host="127.0.0.1", port=port, timeout=2.0)
         sender = AERSender(host="127.0.0.1", port=port)
@@ -91,7 +108,8 @@ class TestAERSenderReceiver:
             sender.close()
             receiver.close()
 
-    def test_receive_as_vector_timeout(self):
+    def test_receive_as_vector_timeout(self) -> None:
+        """A timed-out vector receive is all zeros with time -1."""
         receiver = AERReceiver(host="127.0.0.1", port=19881, timeout=0.1)
         try:
             vec, ts = receiver.receive_as_vector(n_neurons=10)
@@ -100,7 +118,8 @@ class TestAERSenderReceiver:
         finally:
             receiver.close()
 
-    def test_receive_bad_magic(self):
+    def test_receive_bad_magic(self) -> None:
+        """A packet with a bad magic is dropped."""
         import socket
 
         port = 19882
@@ -116,7 +135,8 @@ class TestAERSenderReceiver:
             sock.close()
             receiver.close()
 
-    def test_receive_truncated_packet(self):
+    def test_receive_truncated_packet(self) -> None:
+        """A truncated packet is dropped."""
         import socket
 
         port = 19883
@@ -130,7 +150,8 @@ class TestAERSenderReceiver:
             sock.close()
             receiver.close()
 
-    def test_receive_truncated_events(self):
+    def test_receive_truncated_events(self) -> None:
+        """Only the whole events of a truncated payload are kept."""
         import socket
 
         port = 19886
@@ -147,7 +168,8 @@ class TestAERSenderReceiver:
             sock.close()
             receiver.close()
 
-    def test_receive_as_vector_out_of_range_neuron(self):
+    def test_receive_as_vector_out_of_range_neuron(self) -> None:
+        """An event for an out-of-range neuron is ignored."""
         port = 19884
         receiver = AERReceiver(host="127.0.0.1", port=port, timeout=2.0)
         sender = AERSender(host="127.0.0.1", port=port)
@@ -160,7 +182,8 @@ class TestAERSenderReceiver:
             sender.close()
             receiver.close()
 
-    def test_large_batch_multiple_packets(self):
+    def test_large_batch_multiple_packets(self) -> None:
+        """A large batch is split over two packets."""
         port = 19885
         receiver = AERReceiver(host="127.0.0.1", port=port, timeout=2.0)
         sender = AERSender(host="127.0.0.1", port=port)

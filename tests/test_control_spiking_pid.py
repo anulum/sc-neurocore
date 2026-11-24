@@ -10,24 +10,32 @@
 
 from __future__ import annotations
 
-from tests.control_support import *  # noqa: F403
+from sc_neurocore.control import (
+    SpikingPID,
+)
 
 
 class TestSpikingPID:
-    def test_step(self):
+    """The spiking PID controller."""
+
+    def test_step(self) -> None:
+        """An error gives a non-zero output."""
         assert SpikingPID(Kp=1.0).step(1.0) != 0
 
-    def test_converges(self):
+    def test_converges(self) -> None:
+        """The controlled state approaches its set point."""
         pid = SpikingPID(Kp=0.5, Ki=0.01, Kd=0.001, dt=0.1)
         state = 0.0
         for _ in range(200):
             state += pid.step(1.0 - state) * 0.1
         assert abs(state - 1.0) < 1.0
 
-    def test_spike_output(self):
+    def test_spike_output(self) -> None:
+        """The spiking output has one entry per neuron and term."""
         assert SpikingPID(n_neurons=5).step_spike(0.5).shape == (15,)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset clears the integral."""
         pid = SpikingPID()
         pid.step(1.0)
         pid.reset()
