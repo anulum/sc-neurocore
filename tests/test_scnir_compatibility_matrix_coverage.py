@@ -6,12 +6,26 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (matrix_coverage) from former test_scnir_compatibility.py
 
+"""Coverage, evidence paths and determinism of the SC-NIR compatibility matrix."""
+
 from __future__ import annotations
 
-from tests.scnir_compatibility_support import *  # noqa: F403
+import json
+import pytest
+from pathlib import (
+    Path,
+)
+from tests.scnir_compatibility_support import (
+    NODE_MAP,
+    REPO_ROOT,
+    scnir_compatibility_matrix,
+    scnir_compatibility_matrix_dicts,
+    validate_scnir_compatibility_matrix,
+)
 
 
 def test_scnir_compatibility_matrix_covers_parser_primitives() -> None:
+    """SC-NIR compatibility matrix covers parser primitives."""
     validate_scnir_compatibility_matrix()
 
     primitives = {row.nir_primitive for row in scnir_compatibility_matrix()}
@@ -20,15 +34,18 @@ def test_scnir_compatibility_matrix_covers_parser_primitives() -> None:
 
 
 def test_scnir_compatibility_matrix_evidence_paths_exist() -> None:
+    """SC-NIR compatibility matrix evidence paths exist."""
     validate_scnir_compatibility_matrix(evidence_root=REPO_ROOT)
 
 
 def test_scnir_compatibility_matrix_rejects_missing_evidence_root(tmp_path: Path) -> None:
+    """SC-NIR compatibility matrix rejects missing evidence root."""
     with pytest.raises(ValueError, match="missing audit evidence paths"):
         validate_scnir_compatibility_matrix(evidence_root=tmp_path)
 
 
 def test_scnir_compatibility_matrix_is_deterministic_json() -> None:
+    """SC-NIR compatibility matrix is deterministic JSON."""
     left = scnir_compatibility_matrix_dicts()
     right = scnir_compatibility_matrix_dicts()
 
@@ -37,6 +54,7 @@ def test_scnir_compatibility_matrix_is_deterministic_json() -> None:
 
 
 def test_scnir_compatibility_matrix_marks_closed_hdl_population_rows() -> None:
+    """SC-NIR compatibility matrix marks closed HDL population rows."""
     rows = {row.nir_primitive: row for row in scnir_compatibility_matrix()}
 
     lif = rows["LIF"]
@@ -53,6 +71,7 @@ def test_scnir_compatibility_matrix_marks_closed_hdl_population_rows() -> None:
 
 
 def test_scnir_compatibility_matrix_does_not_overclaim_parser_only_rows() -> None:
+    """SC-NIR compatibility matrix does not overclaim parser only rows."""
     rows = {row.nir_primitive: row for row in scnir_compatibility_matrix()}
 
     conv1d = rows["Conv1d"]
@@ -123,6 +142,7 @@ def test_scnir_compatibility_matrix_does_not_overclaim_parser_only_rows() -> Non
 
 
 def test_scnir_compatibility_matrix_records_weight_and_recurrent_delay_semantics() -> None:
+    """SC-NIR compatibility matrix records weight and recurrent delay semantics."""
     rows = {row.nir_primitive: row for row in scnir_compatibility_matrix()}
 
     affine = rows["Affine"]

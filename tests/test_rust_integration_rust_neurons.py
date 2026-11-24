@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.rust_integration_support import *  # noqa: F403
+import pytest
+from tests.rust_integration_support import (
+    engine,
+)
 
 
 class TestRustNeurons:
+    """Neurons from the Rust engine: spiking, determinism and reset."""
+
     @pytest.mark.parametrize(
         ("model", "current"),
         [
@@ -24,12 +29,14 @@ class TestRustNeurons:
         ],
     )
     def test_neuron_produces_spikes(self, model: str, current: float) -> None:
+        """Neuron produces spikes."""
         cls = getattr(engine, model)
         neuron = cls()
         spikes = sum(neuron.step(current) for _ in range(500))
         assert spikes > 0
 
     def test_izhikevich_deterministic(self) -> None:
+        """Izhikevich deterministic."""
         a = engine.Izhikevich()
         b = engine.Izhikevich()
         sa = [a.step(10.0) for _ in range(100)]
@@ -37,6 +44,7 @@ class TestRustNeurons:
         assert sa == sb
 
     def test_izhikevich_reset(self) -> None:
+        """A reset Izhikevich neuron steps like a fresh one."""
         n = engine.Izhikevich()
         for _ in range(100):
             n.step(10.0)
@@ -45,6 +53,7 @@ class TestRustNeurons:
         assert n.step(0.0) == fresh.step(0.0)
 
     def test_arcane_neuron_exists(self) -> None:
+        """Arcane neuron exists."""
         n = engine.ArcaneNeuron()
         spike = n.step(5.0)
         assert spike in (0, 1)

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4423
+expected_file_count = 4467
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -17736,3 +17736,179 @@ rationale = "Exercise SC-NeuroCore: spike profiler profile report."
 [[file]]
 path = "tests/test_spike_profiler_spike_profiler_basic.py"
 rationale = "Exercise SC-NeuroCore: spike profiler spike profiler basic."
+
+[[file]]
+path = "tests/security_support.py"
+rationale = "Provide the mock layers of the security tests and put the source path first before importing the security modules."
+
+[[file]]
+path = "tests/test_qat_lsq_lsq_gradients.py"
+rationale = "Exercise SC-NeuroCore: qat lsq lsq gradients."
+
+[[file]]
+path = "tests/test_qat_lsq_lsq_linear.py"
+rationale = "Exercise SC-NeuroCore: qat lsq lsq linear."
+
+[[file]]
+path = "tests/test_qat_lsq_lsq_per_channel.py"
+rationale = "Exercise SC-NeuroCore: qat lsq lsq per channel."
+
+[[file]]
+path = "tests/test_qat_lsq_lsq_quantizer_forward.py"
+rationale = "Exercise SC-NeuroCore: qat lsq lsq quantizer forward."
+
+[[file]]
+path = "tests/test_qat_lsq_sum_to.py"
+rationale = "Exercise SC-NeuroCore: qat lsq sum to."
+
+[[file]]
+path = "tests/test_qat_observers_fake_quantize.py"
+rationale = "Exercise SC-NeuroCore: qat observers fake quantize."
+
+[[file]]
+path = "tests/test_qat_observers_min_max_observer.py"
+rationale = "Exercise SC-NeuroCore: qat observers min max observer."
+
+[[file]]
+path = "tests/test_qat_observers_per_channel_min_max_observer.py"
+rationale = "Exercise SC-NeuroCore: qat observers per channel min max observer."
+
+[[file]]
+path = "tests/test_qat_observers_quant_bounds.py"
+rationale = "Exercise SC-NeuroCore: qat observers quant bounds."
+
+[[file]]
+path = "tests/test_qat_pact_pact_activation.py"
+rationale = "Exercise SC-NeuroCore: qat pact pact activation."
+
+[[file]]
+path = "tests/test_qat_pact_pact_clip.py"
+rationale = "Exercise SC-NeuroCore: qat pact pact clip."
+
+[[file]]
+path = "tests/test_qat_pact_round_ste.py"
+rationale = "Exercise SC-NeuroCore: qat pact round ste."
+
+[[file]]
+path = "tests/test_qat_quantized_snn_layer.py"
+rationale = "Exercise SC-NeuroCore: qat quantized snn layer."
+
+[[file]]
+path = "tests/test_qat_ste_quantize.py"
+rationale = "Exercise SC-NeuroCore: qat ste quantize."
+
+[[file]]
+path = "tests/test_qat_ternary_weights.py"
+rationale = "Exercise SC-NeuroCore: qat ternary weights."
+
+[[file]]
+path = "tests/test_qat_torch_lsqpactlif_net.py"
+rationale = "Exercise SC-NeuroCore: qat torch lsqpactlif net."
+
+[[file]]
+path = "tests/test_qat_torch_quantized_lif_net.py"
+rationale = "Exercise SC-NeuroCore: qat torch quantized lif net."
+
+[[file]]
+path = "tests/test_qat_torch_quantized_linear.py"
+rationale = "Exercise SC-NeuroCore: qat torch quantized linear."
+
+[[file]]
+path = "tests/test_qat_torch_sc_aware_lif_net.py"
+rationale = "Exercise SC-NeuroCore: qat torch sc aware lif net."
+
+[[file]]
+path = "tests/test_qat_torch_sc_aware_linear.py"
+rationale = "Exercise SC-NeuroCore: qat torch sc aware linear."
+
+[[file]]
+path = "tests/test_qat_torch_ste_quantize.py"
+rationale = "Exercise SC-NeuroCore: qat torch ste quantize."
+
+[[file]]
+path = "tests/test_rust_integration_network_runner.py"
+rationale = "Exercise SC-NeuroCore: rust integration network runner."
+
+[[file]]
+path = "tests/test_rust_integration_rust_neurons.py"
+rationale = "Exercise SC-NeuroCore: rust integration rust neurons."
+
+[[file]]
+path = "tests/test_scnir_compatibility_audit_report.py"
+rationale = "Exercise SC-NeuroCore: scnir compatibility audit report."
+
+[[file]]
+path = "tests/test_scnir_compatibility_cli.py"
+rationale = "Exercise SC-NeuroCore: scnir compatibility cli."
+
+[[file]]
+path = "tests/test_scnir_compatibility_matrix_coverage.py"
+rationale = "Exercise SC-NeuroCore: scnir compatibility matrix coverage."
+
+[[file]]
+path = "tests/test_scnir_compatibility_validate_flags.py"
+rationale = "Exercise SC-NeuroCore: scnir compatibility validate flags."
+
+[[file]]
+path = "tests/test_scnir_handoff_audit_cli.py"
+rationale = "Exercise SC-NeuroCore: scnir handoff audit cli."
+
+[[file]]
+path = "tests/test_scnir_handoff_audit_handoff_accept.py"
+rationale = "Exercise SC-NeuroCore: scnir handoff audit handoff accept."
+
+[[file]]
+path = "tests/test_scnir_handoff_audit_unit_helpers.py"
+rationale = "Exercise SC-NeuroCore: scnir handoff audit unit helpers."
+
+[[file]]
+path = "tests/test_scnir_schema_cli_and_schema_resource.py"
+rationale = "Exercise SC-NeuroCore: scnir schema cli and schema resource."
+
+[[file]]
+path = "tests/test_scnir_schema_hierarchy.py"
+rationale = "Exercise SC-NeuroCore: scnir schema hierarchy."
+
+[[file]]
+path = "tests/test_scnir_schema_round_trip_and_upgrade.py"
+rationale = "Exercise SC-NeuroCore: scnir schema round trip and upgrade."
+
+[[file]]
+path = "tests/test_scnir_schema_stream_validation.py"
+rationale = "Exercise SC-NeuroCore: scnir schema stream validation."
+
+[[file]]
+path = "tests/test_security_asimov_governor.py"
+rationale = "Exercise SC-NeuroCore: security asimov governor."
+
+[[file]]
+path = "tests/test_security_digital_immune_system.py"
+rationale = "Exercise SC-NeuroCore: security digital immune system."
+
+[[file]]
+path = "tests/test_security_security_integration.py"
+rationale = "Exercise SC-NeuroCore: security security integration."
+
+[[file]]
+path = "tests/test_security_side_channel_benchmark_benchmark_contracts.py"
+rationale = "Exercise SC-NeuroCore: security side channel benchmark benchmark contracts."
+
+[[file]]
+path = "tests/test_security_side_channel_benchmark_happy_path_report.py"
+rationale = "Exercise SC-NeuroCore: security side channel benchmark happy path report."
+
+[[file]]
+path = "tests/test_security_side_channel_benchmark_payload_and_metrics.py"
+rationale = "Exercise SC-NeuroCore: security side channel benchmark payload and metrics."
+
+[[file]]
+path = "tests/test_security_side_channel_benchmark_write_path_rejects.py"
+rationale = "Exercise SC-NeuroCore: security side channel benchmark write path rejects."
+
+[[file]]
+path = "tests/test_security_watermark_injector.py"
+rationale = "Exercise SC-NeuroCore: security watermark injector."
+
+[[file]]
+path = "tests/test_security_zkp_verifier.py"
+rationale = "Exercise SC-NeuroCore: security zkp verifier."

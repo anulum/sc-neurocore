@@ -6,12 +6,33 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (cli_and_schema_resource) from former test_scnir_schema.py
 
+"""The SC-NIR schema resource and its validate and upgrade commands."""
+
 from __future__ import annotations
 
-from tests.scnir_schema_support import *  # noqa: F403
+import json
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.cli import (
+    main,
+)
+from sc_neurocore.ir.scnir_schema import (
+    SCNIR_SCHEMA_VERSION,
+    scnir_to_dict,
+    write_scnir,
+)
+from tests.scnir_schema_support import (
+    _valid_document,
+)
+from unittest import (
+    mock,
+)
 
 
 def test_scnir_json_schema_resource_is_bundled() -> None:
+    """SC-NIR JSON schema resource is bundled."""
     schema_path = Path(__file__).resolve().parents[1] / "schemas/scnir/scnir.schema.json"
     payload = json.loads(schema_path.read_text(encoding="utf-8"))
 
@@ -30,6 +51,7 @@ def test_scnir_json_schema_resource_is_bundled() -> None:
 def test_scnir_validate_cli_reports_valid_document(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """SC-NIR validate CLI reports valid document."""
     path = tmp_path / "valid.scnir.json"
     write_scnir(path, _valid_document())
 
@@ -43,6 +65,7 @@ def test_scnir_validate_cli_reports_valid_document(
 def test_scnir_validate_cli_reports_invalid_document(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """SC-NIR validate CLI reports invalid document."""
     path = tmp_path / "invalid.scnir.json"
     payload = scnir_to_dict(_valid_document())
     payload["streams"][0]["source"]["seed"] = -1
@@ -58,6 +81,7 @@ def test_scnir_validate_cli_reports_invalid_document(
 def test_scnir_upgrade_cli_writes_canonical_document(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """SC-NIR upgrade CLI writes canonical document."""
     input_path = tmp_path / "input.scnir.json"
     output_path = tmp_path / "upgraded.scnir.json"
     write_scnir(input_path, _valid_document())

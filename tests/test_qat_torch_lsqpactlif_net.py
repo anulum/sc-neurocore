@@ -10,24 +10,33 @@
 
 from __future__ import annotations
 
-from tests.qat_torch_support import *  # noqa: F403
+from typing import Any, cast
+from tests.qat_torch_support import (
+    LSQPACTLIFNet,
+    torch,
+)
 
 
 class TestLSQPACTLIFNet:
-    def test_forward_shape(self):
+    """The LIF network with LSQ weights and PACT activations."""
+
+    def test_forward_shape(self) -> None:
+        """The network returns spikes and membranes of the expected shape."""
         net = LSQPACTLIFNet(784, 128, 10, weight_bits=4, act_bits=4)
         x = torch.randn(25, 32, 784)
         spikes, mem = net(x)
         assert spikes.shape == (32, 10)
         assert mem.shape == (32, 10)
 
-    def test_per_channel_weight_steps(self):
+    def test_per_channel_weight_steps(self) -> None:
+        """Per channel weight steps."""
         net = LSQPACTLIFNet(20, 16, 5, n_layers=1, weight_bits=4, per_channel=True)
         net(torch.randn(5, 4, 20))  # initialise LSQ steps
         # First hidden layer has 16 output neurons -> 16 per-channel steps.
-        assert net.linears[0].weight_quant.step.shape == torch.Size([16])
+        assert cast(Any, net.linears[0]).weight_quant.step.shape == torch.Size([16])
 
-    def test_trainable_end_to_end(self):
+    def test_trainable_end_to_end(self) -> None:
+        """Trainable end to end."""
         net = LSQPACTLIFNet(20, 16, 3, n_layers=1, weight_bits=4, act_bits=4)
         x = torch.randn(6, 8, 20)
         target = torch.randint(0, 3, (8,))
@@ -35,10 +44,11 @@ class TestLSQPACTLIFNet:
         loss = torch.nn.functional.cross_entropy(spikes, target)
         loss.backward()
         # Both the LSQ steps and the PACT alpha must receive gradients.
-        assert net.linears[0].weight_quant.step.grad is not None
+        assert cast(Any, net.linears[0]).weight_quant.step.grad is not None
         assert net.input_quant.alpha.grad is not None
 
-    def test_export_quantized(self):
+    def test_export_quantized(self) -> None:
+        """The export lists both layers, the activation bits and the input scale."""
         net = LSQPACTLIFNet(20, 16, 3, n_layers=1, weight_bits=4, act_bits=4)
         net(torch.randn(5, 4, 20))
         export = net.export_quantized()

@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.security_support import *  # noqa: F403
+import numpy as np
+from tests.security_support import (
+    ZKPVerifier,
+)
 
 
 class TestZKPVerifier:
     """Test suite for Zero-Knowledge Proof spike verification."""
 
-    def test_commit_generates_hash(self):
+    def test_commit_generates_hash(self) -> None:
         """Commitment should generate a valid SHA256 hash."""
         bitstream = np.array([1, 0, 1, 1, 0, 1, 0, 0], dtype=np.uint8)
         commitment = ZKPVerifier.commit(bitstream)
@@ -25,7 +28,7 @@ class TestZKPVerifier:
         assert len(commitment) == 64  # SHA256 hex digest length
         assert all(c in "0123456789abcdef" for c in commitment)
 
-    def test_commit_deterministic(self):
+    def test_commit_deterministic(self) -> None:
         """Same input should produce same commitment."""
         bitstream = np.array([1, 0, 1, 1], dtype=np.uint8)
         c1 = ZKPVerifier.commit(bitstream)
@@ -33,7 +36,7 @@ class TestZKPVerifier:
 
         assert c1 == c2
 
-    def test_commit_different_inputs_different_hashes(self):
+    def test_commit_different_inputs_different_hashes(self) -> None:
         """Different inputs should produce different commitments."""
         bs1 = np.array([1, 0, 1, 1], dtype=np.uint8)
         bs2 = np.array([1, 0, 1, 0], dtype=np.uint8)
@@ -43,7 +46,7 @@ class TestZKPVerifier:
 
         assert c1 != c2
 
-    def test_generate_challenge_deterministic(self):
+    def test_generate_challenge_deterministic(self) -> None:
         """Challenge should be deterministic based on commitment."""
         commitment = "abc123def456abc123def456abc123def456abc123def456abc123def456abcd"
         ch1 = ZKPVerifier.generate_challenge(commitment)
@@ -51,14 +54,14 @@ class TestZKPVerifier:
 
         assert ch1 == ch2
 
-    def test_generate_challenge_in_range(self):
+    def test_generate_challenge_in_range(self) -> None:
         """Challenge index should be in valid range (0-9)."""
         for i in range(100):
             commitment = f"{i:064x}"
             challenge = ZKPVerifier.generate_challenge(commitment)
             assert 0 <= challenge < 10
 
-    def test_verify_returns_bool(self):
+    def test_verify_returns_bool(self) -> None:
         """Verify should return a boolean result."""
         bitstream = np.array([1, 0, 1, 1, 0, 1, 0, 0], dtype=np.uint8)
         commitment = ZKPVerifier.commit(bitstream)
@@ -73,7 +76,7 @@ class TestZKPVerifier:
 
         assert isinstance(result, bool)
 
-    def test_full_zkp_protocol_flow(self):
+    def test_full_zkp_protocol_flow(self) -> None:
         """Test complete ZKP protocol: commit -> challenge -> verify."""
         # Prover has a bitstream
         prover_bitstream = np.array([1, 0, 1, 1, 0, 1, 0, 0, 1, 1], dtype=np.uint8)

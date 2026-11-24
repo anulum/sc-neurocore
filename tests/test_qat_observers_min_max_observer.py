@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.qat_observers_support import *  # noqa: F403
+import pytest
+from tests.qat_observers_support import (
+    MinMaxObserver,
+    torch,
+)
 
 
 class TestMinMaxObserver:
+    """The min-max observer's running range and its scale and zero point."""
+
     def test_tracks_running_range(self) -> None:
+        """Tracks running range."""
         obs = MinMaxObserver(8)
         obs.observe(torch.tensor([-1.0, 2.0]))
         obs.observe(torch.tensor([-3.0, 1.0]))
@@ -22,11 +29,13 @@ class TestMinMaxObserver:
         assert obs.max_val.item() == 2.0
 
     def test_observe_returns_input(self) -> None:
+        """Observe returns input."""
         obs = MinMaxObserver(8)
         x = torch.randn(5)
         assert torch.equal(obs.observe(x), x)
 
     def test_symmetric_scale_scalar_and_zero_point(self) -> None:
+        """Symmetric scale scalar and zero point."""
         obs = MinMaxObserver(8, symmetric=True)
         obs.observe(torch.tensor([-4.0, 2.0]))
         scale, zp = obs.calculate_qparams()
@@ -36,6 +45,7 @@ class TestMinMaxObserver:
         assert zp.item() == 0.0
 
     def test_affine_scale_and_zero_point(self) -> None:
+        """Affine scale and zero point."""
         obs = MinMaxObserver(8, symmetric=False)
         obs.observe(torch.tensor([0.0, 4.0]))
         scale, zp = obs.calculate_qparams()
@@ -43,11 +53,13 @@ class TestMinMaxObserver:
         assert scale.item() == pytest.approx(4.0 / 255, rel=1e-5)
 
     def test_calculate_before_observe_raises(self) -> None:
+        """Calculate before observe raises."""
         obs = MinMaxObserver(8)
         with pytest.raises(RuntimeError, match="before any observation"):
             obs.calculate_qparams()
 
     def test_quantize_round_trips_within_tolerance(self) -> None:
+        """Quantize round trips within tolerance."""
         obs = MinMaxObserver(8, symmetric=True)
         x = torch.randn(1000)
         obs.observe(x)
@@ -56,6 +68,7 @@ class TestMinMaxObserver:
         assert (xq - x).abs().max().item() < x.abs().max().item() / 100
 
     def test_zero_is_included_in_symmetric_range(self) -> None:
+        """Zero is included in symmetric range."""
         obs = MinMaxObserver(8, symmetric=True)
         obs.observe(torch.tensor([2.0, 5.0]))  # all positive
         scale, _ = obs.calculate_qparams()

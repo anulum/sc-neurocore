@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5621
+    "test_files": 5619
   },
   "documentation": {
     "public_pages": [
@@ -3707,7 +3707,6 @@
       "tests/qat_lsq_support.py",
       "tests/qat_observers_support.py",
       "tests/qat_pact_support.py",
-      "tests/qat_support.py",
       "tests/qat_torch_support.py",
       "tests/qc_e2e_support.py",
       "tests/quadratic_if_backends_support.py",
@@ -3730,7 +3729,6 @@
       "tests/scnir_schema_support.py",
       "tests/scpn_l7_symbolic_support.py",
       "tests/scpn_neurocore_bridge_support.py",
-      "tests/security_side_channel_benchmark_support.py",
       "tests/security_support.py",
       "tests/security_thermal_sc_encoding_support.py",
       "tests/sensors_dvs_support.py",

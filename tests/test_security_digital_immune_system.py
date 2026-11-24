@@ -10,29 +10,33 @@
 
 from __future__ import annotations
 
-from tests.security_support import *  # noqa: F403
+import numpy as np
+from tests.security_support import (
+    DigitalImmuneSystem,
+)
 
 
 class TestDigitalImmuneSystem:
     """Test suite for the Artificial Immune System anomaly detector."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
+        """Create a fresh immune system for each test."""
         self.immune = DigitalImmuneSystem(tolerance=0.2)
 
-    def test_untrained_system_allows_all(self):
+    def test_untrained_system_allows_all(self) -> None:
         """Untrained system should allow all states (no self patterns)."""
         state = np.array([0.5, 0.5, 0.5])
         result = self.immune.scan(state)
         assert result is True, "Untrained system should pass all scans"
 
-    def test_train_self_stores_pattern(self):
+    def test_train_self_stores_pattern(self) -> None:
         """Training should store the normal state pattern."""
         normal = np.array([1.0, 0.0, 1.0])
         self.immune.train_self(normal)
         assert len(self.immune.self_patterns) == 1
         assert np.array_equal(self.immune.self_patterns[0], normal)
 
-    def test_scan_passes_similar_state(self):
+    def test_scan_passes_similar_state(self) -> None:
         """States similar to training should pass scan."""
         normal = np.array([1.0, 0.0, 1.0])
         self.immune.train_self(normal)
@@ -42,7 +46,7 @@ class TestDigitalImmuneSystem:
         result = self.immune.scan(similar)
         assert result is True, "Similar state should pass scan"
 
-    def test_scan_detects_anomaly(self):
+    def test_scan_detects_anomaly(self) -> None:
         """States far from training should be detected as anomalies."""
         normal = np.array([1.0, 0.0, 1.0])
         self.immune.train_self(normal)
@@ -52,7 +56,7 @@ class TestDigitalImmuneSystem:
         result = self.immune.scan(anomaly)
         assert result is False, "Anomalous state should fail scan"
 
-    def test_multiple_self_patterns(self):
+    def test_multiple_self_patterns(self) -> None:
         """System should handle multiple normal patterns."""
         patterns = [
             np.array([1.0, 0.0, 0.0]),
@@ -68,7 +72,7 @@ class TestDigitalImmuneSystem:
         close_to_first = np.array([1.0, 0.1, 0.0])
         assert self.immune.scan(close_to_first) is True
 
-    def test_tolerance_threshold(self):
+    def test_tolerance_threshold(self) -> None:
         """Test that tolerance controls detection sensitivity."""
         normal = np.array([0.5, 0.5, 0.5])
         self.immune.train_self(normal)
@@ -84,7 +88,7 @@ class TestDigitalImmuneSystem:
         result = self.immune.scan(outside)
         # Depends on exact tolerance, may be True or False
 
-    def test_max_patterns_limit(self):
+    def test_max_patterns_limit(self) -> None:
         """System limits stored patterns to 100."""
         for i in range(150):
             self.immune.train_self(np.array([float(i), 0.0, 0.0]))

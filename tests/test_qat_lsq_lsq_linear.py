@@ -10,25 +10,34 @@
 
 from __future__ import annotations
 
-from tests.qat_lsq_support import *  # noqa: F403
+from tests.qat_lsq_support import (
+    LSQLinear,
+    torch,
+)
 
 
 class TestLSQLinear:
+    """The LSQ-quantised linear layer: shapes, step granularity, gradients and export."""
+
     def test_forward_shape(self) -> None:
+        """The forward pass returns the expected output shape."""
         layer = LSQLinear(8, 5, n_bits=4)
         out = layer(torch.randn(3, 8))
         assert out.shape == (3, 5)
 
     def test_default_is_per_channel(self) -> None:
+        """Default is per channel."""
         layer = LSQLinear(8, 5, n_bits=4)
         assert layer.weight_quant.per_channel
         assert layer.weight_quant.step.shape == torch.Size([5])
 
     def test_scalar_step_when_not_per_channel(self) -> None:
+        """Scalar step when not per channel."""
         layer = LSQLinear(8, 5, n_bits=4, per_channel=False)
         assert layer.weight_quant.step.shape == torch.Size([])
 
     def test_gradients_reach_weights_and_step(self) -> None:
+        """Gradients reach weights and step."""
         layer = LSQLinear(8, 5, n_bits=4)
         out = layer(torch.randn(3, 8))
         out.sum().backward()
@@ -36,6 +45,7 @@ class TestLSQLinear:
         assert layer.weight_quant.step.grad is not None
 
     def test_export_quantized_shapes(self) -> None:
+        """Export quantized shapes."""
         layer = LSQLinear(8, 5, n_bits=4, per_channel=True)
         layer(torch.randn(3, 8))  # initialise step
         export = layer.export_quantized()
@@ -47,12 +57,14 @@ class TestLSQLinear:
         assert export["weight_int"].abs().max() <= 8
 
     def test_export_without_bias(self) -> None:
+        """Export without bias."""
         layer = LSQLinear(8, 5, n_bits=4, bias=False)
         layer(torch.randn(3, 8))
         export = layer.export_quantized()
         assert "bias" not in export
 
     def test_export_with_bias(self) -> None:
+        """Exporting a layer built with a bias includes the bias."""
         layer = LSQLinear(8, 5, n_bits=4, bias=True)
         layer(torch.randn(3, 8))
         export = layer.export_quantized()

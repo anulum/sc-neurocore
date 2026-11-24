@@ -6,15 +6,28 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (cli) from former test_scnir_compatibility.py
 
+"""The SC-NIR compatibility and closure-audit command-line interfaces."""
+
 from __future__ import annotations
 
-from tests.scnir_compatibility_support import *  # noqa: F403
+import json
+import pytest
+from pathlib import (
+    Path,
+)
+from tests.scnir_compatibility_support import (
+    main,
+    REPO_ROOT,
+    scnir_compatibility_matrix,
+    scnir_compatibility_matrix_dicts,
+)
 
 
 def test_scnir_compatibility_cli_validates_evidence_root(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """SC-NIR compatibility CLI validates evidence root."""
     monkeypatch.setattr(
         "sys.argv",
         ["sc-neurocore", "scnir", "compatibility", str(REPO_ROOT)],
@@ -29,6 +42,7 @@ def test_scnir_compatibility_cli_writes_matrix_report(
     capsys: pytest.CaptureFixture[str],
     tmp_path: Path,
 ) -> None:
+    """SC-NIR compatibility CLI writes matrix report."""
     output = tmp_path / "scnir_compatibility.json"
     monkeypatch.setattr(
         "sys.argv",
@@ -48,6 +62,7 @@ def test_scnir_closure_audit_cli_writes_versioned_report(
     capsys: pytest.CaptureFixture[str],
     tmp_path: Path,
 ) -> None:
+    """SC-NIR closure audit CLI writes versioned report."""
     output = tmp_path / "scnir_closure_audit.json"
     monkeypatch.setattr(
         "sys.argv",
@@ -78,6 +93,7 @@ def test_scnir_compatibility_cli_rejects_missing_evidence_root(
     capsys: pytest.CaptureFixture[str],
     tmp_path: Path,
 ) -> None:
+    """SC-NIR compatibility CLI rejects missing evidence root."""
     monkeypatch.setattr(
         "sys.argv",
         ["sc-neurocore", "scnir", "compatibility", str(tmp_path)],

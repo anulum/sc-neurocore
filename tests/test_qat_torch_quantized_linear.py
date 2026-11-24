@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.qat_torch_support import *  # noqa: F403
+from tests.qat_torch_support import (
+    QuantizedLinear,
+    torch,
+)
 
 
 class TestQuantizedLinear:
-    def test_forward_shape(self):
+    """The quantised torch linear layer: shapes, gradients and export."""
+
+    def test_forward_shape(self) -> None:
+        """The forward pass returns the expected output shape."""
         layer = QuantizedLinear(784, 128, n_bits=4)
         x = torch.randn(32, 784)
         out = layer(x)
         assert out.shape == (32, 128)
 
-    def test_gradient_flows_through_qat(self):
+    def test_gradient_flows_through_qat(self) -> None:
+        """Gradient flows through QAT."""
         layer = QuantizedLinear(10, 5, n_bits=4)
         x = torch.randn(4, 10)
         out = layer(x)
@@ -28,7 +35,8 @@ class TestQuantizedLinear:
         loss.backward()
         assert layer.linear.weight.grad is not None
 
-    def test_export_quantized(self):
+    def test_export_quantized(self) -> None:
+        """The export holds int8 weights and the bit width."""
         layer = QuantizedLinear(10, 5, n_bits=8)
         result = layer.export_quantized()
         assert "weight_int" in result
@@ -36,7 +44,8 @@ class TestQuantizedLinear:
         assert result["n_bits"] == 8
         assert "scale" in result
 
-    def test_different_bits(self):
+    def test_different_bits(self) -> None:
+        """A layer of another bit width also returns the expected shape."""
         for bits in [2, 4, 8, 16]:
             layer = QuantizedLinear(10, 5, n_bits=bits)
             x = torch.randn(4, 10)

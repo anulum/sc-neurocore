@@ -10,18 +10,25 @@
 
 from __future__ import annotations
 
-from tests.qat_torch_support import *  # noqa: F403
+from tests.qat_torch_support import (
+    QuantizedLIFNet,
+    torch,
+)
 
 
 class TestQuantizedLIFNet:
-    def test_forward_shape(self):
+    """The quantised torch LIF network: shapes, training and export."""
+
+    def test_forward_shape(self) -> None:
+        """The network returns spikes and membranes of the expected shape."""
         net = QuantizedLIFNet(784, 128, 10, n_bits=8)
         x = torch.randn(25, 32, 784)
         spikes, mem = net(x)
         assert spikes.shape == (32, 10)
         assert mem.shape == (32, 10)
 
-    def test_trainable(self):
+    def test_trainable(self) -> None:
+        """Every parameter receives a gradient after a backward pass."""
         net = QuantizedLIFNet(784, 64, 10, n_layers=1, n_bits=4)
         x = torch.randn(10, 8, 784)
         target = torch.randint(0, 10, (8,))
@@ -32,17 +39,20 @@ class TestQuantizedLIFNet:
             if p.requires_grad:
                 assert p.grad is not None
 
-    def test_export(self):
+    def test_export(self) -> None:
+        """The export has one entry per layer, each with integer weights."""
         net = QuantizedLIFNet(784, 64, 10, n_layers=1, n_bits=4)
         exported = net.export_quantized()
         assert len(exported) == 2  # 1 hidden + 1 output
         assert all("weight_int" in e for e in exported)
 
-    def test_effective_bits(self):
+    def test_effective_bits(self) -> None:
+        """A 4-bit network reports 4 effective bits."""
         net = QuantizedLIFNet(10, 5, 3, n_bits=4)
         assert net.effective_bits() == 4.0
 
-    def test_4bit_vs_8bit_different_output(self):
+    def test_4bit_vs_8bit_different_output(self) -> None:
+        """Networks with 4-bit and 8-bit weights give different outputs."""
         torch.manual_seed(42)
         net4 = QuantizedLIFNet(10, 5, 3, n_bits=4)
         torch.manual_seed(42)

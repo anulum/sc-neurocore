@@ -6,9 +6,32 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (benchmark_contracts) from former test_security_side_channel_benchmark.py
 
+"""Input and record contracts of the side-channel benchmark."""
+
 from __future__ import annotations
 
-from tests.security_side_channel_benchmark_support import *  # noqa: F403
+from typing import Any, cast
+from pathlib import Path
+import pytest
+from sc_neurocore.security import (
+    side_channel_benchmark as benchmark_mod,
+)
+from sc_neurocore.security.side_channel_benchmark import (
+    _with_artifact_path,
+    run_side_channel_leakage_benchmark,
+    SIDE_CHANNEL_DEPLOY_MANIFEST_SCHEMA_VERSION,
+    SideChannelBenchmarkArm,
+    SideChannelBenchmarkError,
+    SideChannelBenchmarkRecord,
+    SideChannelBenchmarkReport,
+    SideChannelDeployManifest,
+)
+from sc_neurocore.security.side_channel_metrics import (
+    compute_class_activity_proxy,
+)
+from sc_neurocore.security.thermal_sc_encoding import (
+    ThermalSCEncodingConfig,
+)
 
 
 @pytest.mark.parametrize(
@@ -30,6 +53,7 @@ def test_side_channel_benchmark_rejects_invalid_sample_contracts(
     probabilities: tuple[float, ...],
     labels: tuple[int, ...],
 ) -> None:
+    """Side channel benchmark rejects invalid sample contracts."""
     with pytest.raises(SideChannelBenchmarkError):
         run_side_channel_leakage_benchmark(
             probabilities=probabilities,
@@ -39,6 +63,7 @@ def test_side_channel_benchmark_rejects_invalid_sample_contracts(
 
 
 def test_side_channel_benchmark_maps_thermal_encoder_contract_errors() -> None:
+    """Side channel benchmark maps thermal encoder contract errors."""
     with pytest.raises(SideChannelBenchmarkError, match="dummy stream insertion exceeds"):
         run_side_channel_leakage_benchmark(
             probabilities=(0.25, 0.5),
@@ -52,15 +77,20 @@ def test_side_channel_benchmark_maps_thermal_encoder_contract_errors() -> None:
 
 
 def test_side_channel_benchmark_rejects_invalid_protected_config() -> None:
+    """Side channel benchmark rejects invalid protected config."""
     with pytest.raises(SideChannelBenchmarkError, match="protected_config"):
         run_side_channel_leakage_benchmark(
             probabilities=(0.25, 0.5),
             labels=(0, 1),
-            protected_config="bad",  # type: ignore[arg-type]
+            protected_config=cast(Any, "bad"),
         )
 
 
-def test_side_channel_benchmark_rejects_mismatched_encoder_batch_length(monkeypatch) -> None:
+def test_side_channel_benchmark_rejects_mismatched_encoder_batch_length(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Side channel benchmark rejects mismatched encoder batch length."""
+
     class _DummySummary:
         dummy_stream_overhead_ratio = 0.0
         class_activity_proxy = compute_class_activity_proxy((((0, 1),), ((1, 0),)), (0, 1))
@@ -96,9 +126,12 @@ def test_side_channel_benchmark_rejects_mismatched_encoder_batch_length(monkeypa
         ({"bitstream_count": -1}, "bitstream_count"),
     ],
 )
-def test_side_channel_benchmark_arm_rejects_invalid_contracts(kwargs, match) -> None:
+def test_side_channel_benchmark_arm_rejects_invalid_contracts(
+    kwargs: dict[str, Any], match: str
+) -> None:
+    """Side channel benchmark arm rejects invalid contracts."""
     proxy = compute_class_activity_proxy((((0, 1),), ((1, 0),)), (0, 1))
-    values = {
+    values: dict[str, Any] = {
         "name": "baseline",
         "class_activity_proxy": proxy,
         "dummy_stream_overhead_ratio": 0.0,
@@ -120,8 +153,11 @@ def test_side_channel_benchmark_arm_rejects_invalid_contracts(kwargs, match) -> 
         ({"protected_dummy_streams_inserted": -1}, "protected_dummy_streams_inserted"),
     ],
 )
-def test_side_channel_benchmark_record_rejects_invalid_contracts(kwargs, match) -> None:
-    values = {
+def test_side_channel_benchmark_record_rejects_invalid_contracts(
+    kwargs: dict[str, Any], match: str
+) -> None:
+    """Side channel benchmark record rejects invalid contracts."""
+    values: dict[str, Any] = {
         "label": 0,
         "probability": 0.5,
         "protected_realised_probability": 0.5,
@@ -144,8 +180,11 @@ def test_side_channel_benchmark_record_rejects_invalid_contracts(kwargs, match) 
         ({"boundary_notes": ("",)}, "boundary_notes"),
     ],
 )
-def test_side_channel_deploy_manifest_rejects_invalid_contracts(kwargs, match) -> None:
-    values = {
+def test_side_channel_deploy_manifest_rejects_invalid_contracts(
+    kwargs: dict[str, Any], match: str
+) -> None:
+    """Side channel deploy manifest rejects invalid contracts."""
+    values: dict[str, Any] = {
         "schema_version": SIDE_CHANNEL_DEPLOY_MANIFEST_SCHEMA_VERSION,
         "evidence_class": "analytic_simulation",
         "benchmark_artifact": {"path": "x.json"},
@@ -175,13 +214,16 @@ def test_side_channel_deploy_manifest_rejects_invalid_contracts(kwargs, match) -
         ({"records": ("bad",)}, "records"),
     ],
 )
-def test_side_channel_benchmark_report_rejects_invalid_contracts(kwargs, match) -> None:
+def test_side_channel_benchmark_report_rejects_invalid_contracts(
+    kwargs: dict[str, Any], match: str
+) -> None:
+    """Side channel benchmark report rejects invalid contracts."""
     report = run_side_channel_leakage_benchmark(
         probabilities=(0.25, 0.5),
         labels=(0, 1),
         protected_config=ThermalSCEncodingConfig(bitstream_length=16, seed=3),
     )
-    values = {
+    values: dict[str, Any] = {
         "schema_version": report.schema_version,
         "evidence_boundary": report.evidence_boundary,
         "threat_model": report.threat_model,
@@ -197,13 +239,14 @@ def test_side_channel_benchmark_report_rejects_invalid_contracts(kwargs, match) 
         SideChannelBenchmarkReport(**values)
 
 
-def test_with_artifact_path_rejects_invalid_contracts(tmp_path) -> None:
+def test_with_artifact_path_rejects_invalid_contracts(tmp_path: Path) -> None:
+    """With artifact path rejects invalid contracts."""
     report = run_side_channel_leakage_benchmark(
         probabilities=(0.25, 0.5),
         labels=(0, 1),
         protected_config=ThermalSCEncodingConfig(bitstream_length=16, seed=3),
     )
     with pytest.raises(SideChannelBenchmarkError, match="report"):
-        _with_artifact_path("bad", tmp_path / "a.json")  # type: ignore[arg-type]
+        _with_artifact_path(cast(Any, "bad"), tmp_path / "a.json")
     with pytest.raises(SideChannelBenchmarkError, match="path"):
-        _with_artifact_path(report, "bad")  # type: ignore[arg-type]
+        _with_artifact_path(report, cast(Any, "bad"))

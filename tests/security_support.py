@@ -6,17 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_security.py
 
+"""Mock layers for the security-module tests, after the source path is put first on sys.path.
+
+Importing this module inserts the repository's src directory at the front of sys.path, then imports the
+security classes; importers that take those classes from here run that insertion first.
+"""
+
 from __future__ import annotations
 
-"""
-Comprehensive test suite for SC-NeuroCore Security Modules.
-
-Tests:
-- AsimovGovernor (ethics.py) - Three Laws of Robotics enforcement
-- DigitalImmuneSystem (immune.py) - Anomaly detection
-- WatermarkInjector (watermark.py) - Model fingerprinting
-- ZKPVerifier (zkp.py) - Zero-knowledge proofs for spike validity
-"""
 import pytest
 import numpy as np
 import sys
@@ -32,11 +29,13 @@ from sc_neurocore.security.zkp import ZKPVerifier
 class MockLayer:
     """Mock layer with weights for watermark testing."""
 
-    def __init__(self, n_neurons, n_inputs):
+    def __init__(self, n_neurons: int, n_inputs: int) -> None:
+        """Create random weights of shape (n_neurons, n_inputs)."""
         self.weights = np.random.rand(n_neurons, n_inputs)
         self._refresh_called = False
 
-    def _refresh_packed_weights(self):
+    def _refresh_packed_weights(self) -> None:
+        """Record that the injector asked for a weight refresh."""
         self._refresh_called = True
 
 

@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.qat_torch_support import *  # noqa: F403
+from tests.qat_torch_support import (
+    SCAwareLinear,
+    torch,
+)
 
 
 class TestSCAwareLinear:
-    def test_forward_shape(self):
+    """The stochastic-computing-aware linear layer: clamping, training noise and gradients."""
+
+    def test_forward_shape(self) -> None:
+        """The forward pass returns the expected output shape."""
         layer = SCAwareLinear(784, 128, bitstream_length=256)
         x = torch.randn(32, 784)
         out = layer(x)
         assert out.shape == (32, 128)
 
-    def test_weights_clamped(self):
+    def test_weights_clamped(self) -> None:
+        """A forward pass with oversized weights runs (the test asserts nothing)."""
         layer = SCAwareLinear(10, 5, bitstream_length=256)
         # Force large weights
         with torch.no_grad():
@@ -30,7 +37,8 @@ class TestSCAwareLinear:
         # After forward, weight itself isn't mutated, but forward uses clamped
         # The clamp happens in forward, not in-place
 
-    def test_training_adds_noise(self):
+    def test_training_adds_noise(self) -> None:
+        """Training adds noise."""
         torch.manual_seed(42)
         layer = SCAwareLinear(10, 5, bitstream_length=64)
         x = torch.randn(4, 10)
@@ -40,7 +48,8 @@ class TestSCAwareLinear:
         # With noise, outputs differ between calls
         assert not torch.allclose(out1, out2)
 
-    def test_eval_no_noise(self):
+    def test_eval_no_noise(self) -> None:
+        """In evaluation mode two forward passes agree."""
         torch.manual_seed(42)
         layer = SCAwareLinear(10, 5, bitstream_length=64)
         x = torch.randn(4, 10)
@@ -49,7 +58,8 @@ class TestSCAwareLinear:
         out2 = layer(x).detach().clone()
         assert torch.allclose(out1, out2)
 
-    def test_gradient_flows(self):
+    def test_gradient_flows(self) -> None:
+        """A backward pass reaches the linear weights."""
         layer = SCAwareLinear(10, 5, bitstream_length=256)
         layer.train()
         x = torch.randn(4, 10)

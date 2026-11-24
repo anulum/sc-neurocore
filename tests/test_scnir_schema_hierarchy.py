@@ -6,12 +6,30 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (hierarchy) from former test_scnir_schema.py
 
+"""SC-NIR hierarchy instance and port metadata."""
+
 from __future__ import annotations
 
-from tests.scnir_schema_support import *  # noqa: F403
+from typing import Any
+from collections.abc import Callable
+import pytest
+from sc_neurocore.ir.scnir_schema import (
+    scnir_from_dict,
+    SCNIR_SCHEMA_VERSION,
+    scnir_to_dict,
+    SCNIRDocument,
+    SCNIRHierarchyInstance,
+    SCNIRHierarchyPort,
+    SCNIRValidationError,
+    validate_scnir_dict,
+)
+from tests.scnir_schema_support import (
+    _valid_document,
+)
 
 
 def test_scnir_records_hierarchy_instance_port_metadata() -> None:
+    """SC-NIR records hierarchy instance port metadata."""
     base = _valid_document()
     doc = SCNIRDocument(
         producer=base.producer,
@@ -106,7 +124,10 @@ def test_scnir_records_hierarchy_instance_port_metadata() -> None:
         ),
     ],
 )
-def test_scnir_rejects_invalid_hierarchy_metadata(mutator: object, message: str) -> None:
+def test_scnir_rejects_invalid_hierarchy_metadata(
+    mutator: Callable[[dict[str, Any]], object], message: str
+) -> None:
+    """SC-NIR rejects invalid hierarchy metadata."""
     base = _valid_document()
     payload = scnir_to_dict(
         SCNIRDocument(

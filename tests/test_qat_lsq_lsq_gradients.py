@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.qat_lsq_support import *  # noqa: F403
+import math
+from tests.qat_lsq_support import (
+    _LSQQuantize,
+    LSQQuantizer,
+    torch,
+)
 
 
 class TestLSQGradients:
+    """The straight-through and step gradients of the LSQ quantiser."""
+
     def test_value_gradient_is_ste_in_range(self) -> None:
+        """Value gradient is STE in range."""
         q = LSQQuantizer(4)
         x = (torch.randn(100) * 0.1).requires_grad_(True)  # leaf, well inside the grid
         out = q(x)
@@ -24,6 +32,7 @@ class TestLSQGradients:
         assert torch.allclose(x.grad, torch.ones_like(x.grad))
 
     def test_value_gradient_zero_outside_range(self) -> None:
+        """Value gradient zero outside range."""
         q = LSQQuantizer(3)
         q(torch.randn(50))  # initialise step
         step = q.step.detach()
@@ -35,6 +44,7 @@ class TestLSQGradients:
         assert torch.allclose(x.grad, torch.zeros_like(x.grad))
 
     def test_step_gradient_matches_lsq_formula_in_range(self) -> None:
+        """Step gradient matches LSQ formula in range."""
         # Analytic LSQ step gradient for an in-range element:
         #   d out / d step = (round(v/s) - v/s) * grad_scale
         v = torch.tensor([0.12])
@@ -50,6 +60,7 @@ class TestLSQGradients:
         assert math.isclose(step.grad.item(), expected, rel_tol=1e-5)
 
     def test_step_gradient_saturates_below(self) -> None:
+        """Step gradient saturates below."""
         v = torch.tensor([-100.0])  # far below qmin
         step = torch.tensor([1.0], requires_grad=True)
         out = _LSQQuantize.apply(v, step, -4, 3, 1.0)
@@ -59,6 +70,7 @@ class TestLSQGradients:
         assert math.isclose(step.grad.item(), -4.0, rel_tol=1e-6)
 
     def test_grad_scale_uses_qmax_and_element_count(self) -> None:
+        """Grad scale uses qmax and element count."""
         q = LSQQuantizer(4, per_channel=True, ch_axis=0, num_channels=4)
         w = torch.randn(4, 16, requires_grad=True)
         # 4 channels, 64 elements -> 16 per step.

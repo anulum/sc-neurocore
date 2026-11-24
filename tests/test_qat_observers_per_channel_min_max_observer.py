@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.qat_observers_support import *  # noqa: F403
+import pytest
+from tests.qat_observers_support import (
+    MinMaxObserver,
+    PerChannelMinMaxObserver,
+    torch,
+)
 
 
 class TestPerChannelMinMaxObserver:
+    """The per-channel min-max observer and its per-channel scales."""
+
     def test_per_channel_scale_shape(self) -> None:
+        """Per channel scale shape."""
         obs = PerChannelMinMaxObserver(8, ch_axis=0)
         obs.observe(torch.randn(6, 8))
         scale, zp = obs.calculate_qparams()
@@ -22,6 +30,7 @@ class TestPerChannelMinMaxObserver:
         assert zp.shape == torch.Size([6])
 
     def test_per_channel_scales_track_channel_magnitude(self) -> None:
+        """Per channel scales track channel magnitude."""
         obs = PerChannelMinMaxObserver(8, ch_axis=0, symmetric=True)
         w = torch.stack([torch.ones(8) * 0.1, torch.ones(8) * 1.0, torch.ones(8) * 10.0])
         obs.observe(w)
@@ -29,6 +38,7 @@ class TestPerChannelMinMaxObserver:
         assert scale[2] > scale[1] > scale[0]
 
     def test_running_min_max_across_batches(self) -> None:
+        """Running min max across batches."""
         obs = PerChannelMinMaxObserver(8, ch_axis=0)
         obs.observe(torch.zeros(3, 4))
         obs.observe(torch.stack([torch.full((4,), 5.0), torch.zeros(4), torch.full((4,), -2.0)]))
@@ -36,17 +46,20 @@ class TestPerChannelMinMaxObserver:
         assert obs.min_vals[2].item() == -2.0
 
     def test_non_zero_ch_axis(self) -> None:
+        """A channel axis other than 0 gives one scale per channel on that axis."""
         obs = PerChannelMinMaxObserver(8, ch_axis=1)
         obs.observe(torch.randn(4, 6))
         scale, _ = obs.calculate_qparams()
         assert scale.shape == torch.Size([6])
 
     def test_calculate_before_observe_raises(self) -> None:
+        """Calculate before observe raises."""
         obs = PerChannelMinMaxObserver(8)
         with pytest.raises(RuntimeError, match="before any observation"):
             obs.calculate_qparams()
 
     def test_quantize_uses_per_channel_scales(self) -> None:
+        """Quantize uses per channel scales."""
         obs = PerChannelMinMaxObserver(8, ch_axis=0, symmetric=True)
         w = torch.stack([torch.ones(8) * 0.1, torch.ones(8) * 10.0])
         obs.observe(w)
@@ -55,6 +68,7 @@ class TestPerChannelMinMaxObserver:
         assert (wq - w).abs().max().item() < 0.5
 
     def test_per_channel_beats_per_tensor_on_skewed_channels(self) -> None:
+        """Per channel beats per tensor on skewed channels."""
         # Channels with very different scales: per-channel should quantise the
         # small channel far more accurately than a single per-tensor scale.
         w = torch.stack([torch.linspace(-0.1, 0.1, 32), torch.linspace(-10, 10, 32)])

@@ -6,9 +6,28 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (stream_validation) from former test_scnir_schema.py
 
+"""Validation of SC-NIR stream fields, transforms, precision and random sources."""
+
 from __future__ import annotations
 
-from tests.scnir_schema_support import *  # noqa: F403
+import pytest
+from sc_neurocore.ir.scnir_schema import (
+    scnir_from_dict,
+    scnir_to_dict,
+    SCNIRDocument,
+    SCNIRPrecision,
+    SCNIRSource,
+    SCNIRStream,
+    SCNIRStreamTransform,
+    SCNIRValidationError,
+    validate_scnir_dict,
+)
+from sc_neurocore.learning.online_o1 import (
+    OnlineO1Config,
+)
+from tests.scnir_schema_support import (
+    _valid_document,
+)
 
 
 @pytest.mark.parametrize(
@@ -23,6 +42,7 @@ from tests.scnir_schema_support import *  # noqa: F403
     ],
 )
 def test_scnir_rejects_invalid_stream_core_fields(field: str, value: object, message: str) -> None:
+    """SC-NIR rejects invalid stream core fields."""
     payload = scnir_to_dict(_valid_document())
     payload["streams"][0][field] = value
 
@@ -31,6 +51,7 @@ def test_scnir_rejects_invalid_stream_core_fields(field: str, value: object, mes
 
 
 def test_scnir_rejects_unknown_fields_fail_closed() -> None:
+    """SC-NIR rejects unknown fields fail closed."""
     payload = scnir_to_dict(_valid_document())
     payload["streams"][0]["unmodelled_runtime_hint"] = "accepting this would be unsafe"
 
@@ -39,6 +60,7 @@ def test_scnir_rejects_unknown_fields_fail_closed() -> None:
 
 
 def test_scnir_records_threshold_stream_transform_metadata() -> None:
+    """SC-NIR records threshold stream transform metadata."""
     doc = SCNIRDocument(
         producer="sc-neurocore-test",
         streams=[
@@ -88,6 +110,7 @@ def test_scnir_records_threshold_stream_transform_metadata() -> None:
 
 
 def test_scnir_rejects_invalid_threshold_transform_values() -> None:
+    """SC-NIR rejects invalid threshold transform values."""
     payload = scnir_to_dict(_valid_document())
     payload["streams"][0]["transforms"] = [
         {
@@ -103,6 +126,7 @@ def test_scnir_rejects_invalid_threshold_transform_values() -> None:
 
 
 def test_scnir_rejects_invalid_precision() -> None:
+    """SC-NIR rejects invalid precision."""
     payload = scnir_to_dict(_valid_document())
     payload["streams"][0]["precision"]["fractional_bits"] = 16
 
@@ -111,6 +135,7 @@ def test_scnir_rejects_invalid_precision() -> None:
 
 
 def test_scnir_rejects_invalid_random_source_metadata() -> None:
+    """SC-NIR rejects invalid random source metadata."""
     payload = scnir_to_dict(_valid_document())
     payload["streams"][0]["source"].pop("lfsr_polynomial")
 
@@ -119,6 +144,7 @@ def test_scnir_rejects_invalid_random_source_metadata() -> None:
 
 
 def test_scnir_rejects_invalid_correlation_reference() -> None:
+    """SC-NIR rejects invalid correlation reference."""
     payload = scnir_to_dict(_valid_document())
     payload["streams"][0]["correlation_constraints"][0]["peer_stream_id"] = "missing"
 
@@ -127,6 +153,7 @@ def test_scnir_rejects_invalid_correlation_reference() -> None:
 
 
 def test_scnir_records_validated_online_learning_metadata() -> None:
+    """SC-NIR records validated online learning metadata."""
     annotation = OnlineO1Config(
         weight_bits=10,
         trace_bits=6,
@@ -162,6 +189,7 @@ def test_scnir_records_validated_online_learning_metadata() -> None:
 
 
 def test_scnir_rejects_online_learning_metadata_on_non_weight_stream() -> None:
+    """SC-NIR rejects online learning metadata on non-weight stream."""
     payload = scnir_to_dict(_valid_document())
     payload["streams"][0]["online_learning"] = OnlineO1Config().to_scnir_annotation(
         rule_id="bad_spike_rule"
@@ -172,6 +200,7 @@ def test_scnir_rejects_online_learning_metadata_on_non_weight_stream() -> None:
 
 
 def test_scnir_rejects_duplicate_stream_ids() -> None:
+    """SC-NIR rejects duplicate stream ids."""
     payload = scnir_to_dict(_valid_document())
     payload["streams"][1]["stream_id"] = payload["streams"][0]["stream_id"]
 

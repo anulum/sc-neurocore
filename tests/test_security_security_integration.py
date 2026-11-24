@@ -10,13 +10,29 @@
 
 from __future__ import annotations
 
-from tests.security_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.security.ethics import (
+    ActionRequest,
+    AsimovGovernor,
+)
+from sc_neurocore.security.immune import (
+    DigitalImmuneSystem,
+)
+from sc_neurocore.security.watermark import (
+    WatermarkInjector,
+)
+from sc_neurocore.security.zkp import (
+    ZKPVerifier,
+)
+from tests.security_support import (
+    MockLayer,
+)
 
 
 class TestSecurityIntegration:
     """Integration tests combining multiple security modules."""
 
-    def test_ethics_and_immune_combined(self):
+    def test_ethics_and_immune_combined(self) -> None:
         """Test ethical action filtering with immune system monitoring."""
         governor = AsimovGovernor()
         immune = DigitalImmuneSystem(tolerance=0.3)
@@ -32,7 +48,7 @@ class TestSecurityIntegration:
 
         assert ethics_ok and immune_ok
 
-    def test_watermark_survives_zkp_verification(self):
+    def test_watermark_survives_zkp_verification(self) -> None:
         """Test that watermarked weights can be ZKP-committed."""
         layer = MockLayer(n_neurons=5, n_inputs=8)
         trigger = np.array([1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0])

@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.qat_lsq_support import *  # noqa: F403
+import math
+import pytest
+from tests.qat_lsq_support import (
+    LSQQuantizer,
+    torch,
+)
 
 
 class TestLSQQuantizerForward:
+    """The LSQ quantiser's forward pass, bounds and step initialisation."""
+
     def test_output_on_integer_grid(self) -> None:
+        """Output on integer grid."""
         q = LSQQuantizer(3)  # signed 3-bit: grid [-4, 3]
         x = torch.linspace(-2, 2, 50)
         out = q(x)
@@ -24,11 +32,13 @@ class TestLSQQuantizerForward:
         assert codes.max() <= q.qmax + 1e-6
 
     def test_signed_bounds(self) -> None:
+        """A signed 4-bit quantiser spans -8 to 7."""
         q = LSQQuantizer(4)
         assert q.qmin == -8
         assert q.qmax == 7
 
     def test_step_initialised_from_first_input(self) -> None:
+        """Step initialised from first input."""
         q = LSQQuantizer(4)
         assert not bool(q._initialized)
         x = torch.randn(64)
@@ -38,6 +48,7 @@ class TestLSQQuantizerForward:
         assert torch.allclose(q.step.detach(), expected, rtol=1e-5)
 
     def test_step_not_reinitialised(self) -> None:
+        """Step not reinitialised."""
         q = LSQQuantizer(4)
         q(torch.randn(64))
         first = q.step.detach().clone()
@@ -45,9 +56,11 @@ class TestLSQQuantizerForward:
         assert torch.allclose(q.step.detach(), first)
 
     def test_rejects_low_bits(self) -> None:
+        """A bit width below the supported minimum is refused."""
         with pytest.raises(ValueError, match="n_bits must be >= 2"):
             LSQQuantizer(1)
 
     def test_per_channel_requires_num_channels(self) -> None:
+        """Per channel requires num channels."""
         with pytest.raises(ValueError, match="requires num_channels"):
             LSQQuantizer(4, per_channel=True)

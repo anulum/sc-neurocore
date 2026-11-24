@@ -6,12 +6,34 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (round_trip_and_upgrade) from former test_scnir_schema.py
 
+"""SC-NIR round trips and upgrades from earlier schema versions."""
+
 from __future__ import annotations
 
-from tests.scnir_schema_support import *  # noqa: F403
+import json
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.ir.scnir_schema import (
+    load_scnir,
+    scnir_from_dict,
+    SCNIR_PREVIOUS_SCHEMA_VERSION,
+    SCNIR_SCHEMA_VERSION,
+    scnir_to_dict,
+    SCNIR_V02_SCHEMA_VERSION,
+    SCNIRValidationError,
+    upgrade_scnir_dict,
+    validate_scnir_dict,
+    write_scnir,
+)
+from tests.scnir_schema_support import (
+    _valid_document,
+)
 
 
 def test_scnir_round_trip_is_deterministic(tmp_path: Path) -> None:
+    """SC-NIR round trip is deterministic."""
     doc = _valid_document()
     payload = scnir_to_dict(doc)
 
@@ -25,6 +47,7 @@ def test_scnir_round_trip_is_deterministic(tmp_path: Path) -> None:
 
 
 def test_scnir_upgrade_canonicalises_supported_current_payload() -> None:
+    """SC-NIR upgrade canonicalises supported current payload."""
     payload = scnir_to_dict(_valid_document())
     payload["streams"] = list(reversed(payload["streams"]))
 
@@ -35,6 +58,7 @@ def test_scnir_upgrade_canonicalises_supported_current_payload() -> None:
 
 
 def test_scnir_upgrade_migrates_v02_documents_with_signal_kind() -> None:
+    """SC-NIR upgrade migrates v0.2 documents with signal kind."""
     payload = scnir_to_dict(_valid_document())
     payload["schema_version"] = SCNIR_V02_SCHEMA_VERSION
     for stream in payload["streams"]:
@@ -52,6 +76,7 @@ def test_scnir_upgrade_migrates_v02_documents_with_signal_kind() -> None:
 
 
 def test_scnir_upgrade_migrates_v03_documents_with_transform_metadata() -> None:
+    """SC-NIR upgrade migrates v0.3 documents with transform metadata."""
     payload = scnir_to_dict(_valid_document())
     payload["schema_version"] = SCNIR_PREVIOUS_SCHEMA_VERSION
     for stream in payload["streams"]:
@@ -65,6 +90,7 @@ def test_scnir_upgrade_migrates_v03_documents_with_transform_metadata() -> None:
 
 
 def test_scnir_upgrade_migrates_v01_documents_with_zero_delay_and_signal_kind() -> None:
+    """SC-NIR upgrade migrates v0.1 documents with zero delay and signal kind."""
     payload = scnir_to_dict(_valid_document())
     payload["schema_version"] = "sc-neurocore.scnir.v0.1"
     for stream in payload["streams"]:
@@ -82,6 +108,7 @@ def test_scnir_upgrade_migrates_v01_documents_with_zero_delay_and_signal_kind() 
 
 
 def test_scnir_preserves_delay_step_vectors() -> None:
+    """SC-NIR preserves delay step vectors."""
     payload = scnir_to_dict(_valid_document())
     payload["streams"][1]["delay_steps"] = [1, 2]
 
@@ -92,6 +119,7 @@ def test_scnir_preserves_delay_step_vectors() -> None:
 
 
 def test_scnir_upgrade_migrates_v05_documents_with_empty_hierarchy() -> None:
+    """SC-NIR upgrade migrates v0.5 documents with empty hierarchy."""
     payload = scnir_to_dict(_valid_document())
     payload["schema_version"] = SCNIR_PREVIOUS_SCHEMA_VERSION
     payload.pop("hierarchy")
@@ -104,6 +132,7 @@ def test_scnir_upgrade_migrates_v05_documents_with_empty_hierarchy() -> None:
 
 
 def test_scnir_upgrade_rejects_unknown_schema_version() -> None:
+    """SC-NIR upgrade rejects unknown schema version."""
     payload = scnir_to_dict(_valid_document())
     payload["schema_version"] = "sc-neurocore.scnir.v9.9"
 

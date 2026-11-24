@@ -10,17 +10,25 @@
 
 from __future__ import annotations
 
-from tests.qat_pact_support import *  # noqa: F403
+import pytest
+from tests.qat_pact_support import (
+    _PACTClip,
+    torch,
+)
 
 
 class TestPACTClip:
+    """The PACT clip function and its value and alpha gradients."""
+
     def test_clips_to_zero_alpha(self) -> None:
+        """Clips to zero alpha."""
         x = torch.tensor([-1.0, 0.5, 3.0])
         alpha = torch.tensor(2.0)
         out = _PACTClip.apply(x, alpha)
         assert torch.allclose(out, torch.tensor([0.0, 0.5, 2.0]))
 
     def test_value_gradient_passes_inside_range(self) -> None:
+        """Value gradient passes inside range."""
         x = torch.tensor([-1.0, 0.5, 1.5, 3.0], requires_grad=True)
         alpha = torch.tensor(2.0, requires_grad=True)
         out = _PACTClip.apply(x, alpha)
@@ -30,6 +38,7 @@ class TestPACTClip:
         assert torch.allclose(x.grad, torch.tensor([0.0, 1.0, 1.0, 0.0]))
 
     def test_alpha_gradient_counts_saturated_inputs(self) -> None:
+        """Alpha gradient counts saturated inputs."""
         x = torch.tensor([-1.0, 0.5, 3.0, 4.0], requires_grad=True)
         alpha = torch.tensor(2.0, requires_grad=True)
         out = _PACTClip.apply(x, alpha)

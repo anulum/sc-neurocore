@@ -6,12 +6,26 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (happy_path_report) from former test_security_side_channel_benchmark.py
 
+"""The side-channel benchmark's report on a valid run."""
+
 from __future__ import annotations
 
-from tests.security_side_channel_benchmark_support import *  # noqa: F403
+from pathlib import Path
+import json
+import pytest
+from sc_neurocore.security.side_channel_benchmark import (
+    run_side_channel_leakage_benchmark,
+    SIDE_CHANNEL_BENCHMARK_SCHEMA_VERSION,
+    SIDE_CHANNEL_DEPLOY_MANIFEST_SCHEMA_VERSION,
+    write_side_channel_benchmark_report,
+)
+from sc_neurocore.security.thermal_sc_encoding import (
+    ThermalSCEncodingConfig,
+)
 
 
 def test_side_channel_benchmark_reports_protected_reduction_and_overhead() -> None:
+    """Side channel benchmark reports protected reduction and overhead."""
     report = run_side_channel_leakage_benchmark(
         probabilities=(0.25, 0.5),
         labels=(0, 1),
@@ -52,7 +66,8 @@ def test_side_channel_benchmark_reports_protected_reduction_and_overhead() -> No
     )
 
 
-def test_side_channel_benchmark_report_writes_canonical_json(tmp_path) -> None:
+def test_side_channel_benchmark_report_writes_canonical_json(tmp_path: Path) -> None:
+    """Side channel benchmark report writes canonical JSON."""
     output = tmp_path / "side_channel_benchmark.json"
     report = write_side_channel_benchmark_report(
         output,

@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.qat_lsq_support import *  # noqa: F403
+from tests.qat_lsq_support import (
+    _sum_to,
+    torch,
+)
 
 
 class TestSumTo:
+    """Reducing a gradient to a scalar or per-channel step shape."""
+
     def test_reduces_to_scalar(self) -> None:
+        """A gradient reduces to a scalar sum for a scalar step."""
         g = torch.ones(4, 5)
         out = _sum_to(g, ())
         assert out.shape == torch.Size([])
         assert out.item() == 20.0
 
     def test_reduces_to_channel_vector(self) -> None:
+        """Reduces to channel vector."""
         g = torch.ones(3, 4)
         out = _sum_to(g, (3, 1))
         assert out.shape == torch.Size([3, 1])

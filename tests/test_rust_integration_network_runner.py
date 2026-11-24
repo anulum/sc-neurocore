@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.rust_integration_support import *  # noqa: F403
+from tests.rust_integration_support import (
+    engine,
+)
 
 
 class TestNetworkRunner:
+    """The Rust network runner: populations, projections, spikes and voltages."""
+
     def test_create_and_run(self) -> None:
+        """A runner with one population runs and returns spike data and voltages."""
         r = engine.NetworkRunner()
         idx = r.add_population("Izhikevich", 10)
         assert idx == 0
@@ -24,6 +29,7 @@ class TestNetworkRunner:
         assert "spike_counts" in results
 
     def test_multiple_populations(self) -> None:
+        """Multiple populations."""
         r = engine.NetworkRunner()
         i0 = r.add_population("Izhikevich", 5)
         i1 = r.add_population("AdEx", 5)
@@ -34,6 +40,7 @@ class TestNetworkRunner:
         assert len(results["voltages"]) == 2
 
     def test_spike_data_u64_format(self) -> None:
+        """Spike data u64 format."""
         r = engine.NetworkRunner()
         r.add_population("Lapicque", 20)
         results = r.run(200)
@@ -44,6 +51,7 @@ class TestNetworkRunner:
             assert 0 <= t < 200
 
     def test_voltages_returned(self) -> None:
+        """The runner returns one voltage per neuron."""
         r = engine.NetworkRunner()
         r.add_population("HodgkinHuxley", 3)
         results = r.run(50)
@@ -51,6 +59,7 @@ class TestNetworkRunner:
         assert len(v) == 3
 
     def test_projection_csr(self) -> None:
+        """An all-to-all CSR projection runs and both populations report spikes."""
         r = engine.NetworkRunner()
         r.add_population("Izhikevich", 3)
         r.add_population("Izhikevich", 3)
@@ -63,6 +72,7 @@ class TestNetworkRunner:
         assert len(results["spike_data"]) == 2
 
     def test_spike_counts(self) -> None:
+        """The runner returns a non-negative spike count per population."""
         r = engine.NetworkRunner()
         r.add_population("Izhikevich", 10)
         results = r.run(100)

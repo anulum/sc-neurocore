@@ -10,16 +10,23 @@
 
 from __future__ import annotations
 
-from tests.qat_observers_support import *  # noqa: F403
+from tests.qat_observers_support import (
+    fake_quantize,
+    torch,
+)
 
 
 class TestFakeQuantize:
+    """Fake quantisation with scalar or per-channel scales."""
+
     def test_broadcasts_scalar(self) -> None:
+        """A scalar scale broadcasts over the input and keeps grid values."""
         x = torch.tensor([0.0, 1.0, 2.0])
         out = fake_quantize(x, torch.tensor(1.0), torch.tensor(0.0), n_bits=8, unsigned=False)
         assert torch.allclose(out, x)
 
     def test_clamps_to_grid(self) -> None:
+        """Values beyond the range clamp to the top of the integer grid."""
         x = torch.tensor([1000.0])
         out = fake_quantize(x, torch.tensor(1.0), torch.tensor(0.0), n_bits=4, unsigned=False)
         # 4-bit signed max code = 7.

@@ -10,28 +10,37 @@
 
 from __future__ import annotations
 
-from tests.qat_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.qat.quantize import (
+    _ste_quantize,
+)
 
 
 class TestSteQuantize:
-    def test_symmetric_roundtrip(self):
+    """NumPy straight-through quantisation, symmetric and asymmetric."""
+
+    def test_symmetric_roundtrip(self) -> None:
+        """Symmetric roundtrip."""
         x = np.array([0.0, 0.5, -0.5, 1.0, -1.0])
         q = _ste_quantize(x, bits=8, symmetric=True)
         assert q.shape == x.shape
         np.testing.assert_allclose(q, x, atol=0.01)
 
-    def test_asymmetric(self):
+    def test_asymmetric(self) -> None:
+        """Asymmetric quantisation keeps the shape and stays inside the input range."""
         x = np.array([0.1, 0.5, 0.9, 1.3])
         q = _ste_quantize(x, bits=4, symmetric=False)
         assert q.shape == x.shape
         assert q.min() >= x.min() - 1e-6
         assert q.max() <= x.max() + 1e-6
 
-    def test_quantize_reduces_unique_values(self):
+    def test_quantize_reduces_unique_values(self) -> None:
+        """Quantize reduces unique values."""
         x = np.random.randn(100)
         q = _ste_quantize(x, bits=4, symmetric=True)
         assert len(np.unique(q)) <= 2**4
 
-    def test_zero_preserved(self):
+    def test_zero_preserved(self) -> None:
+        """Zero quantises to exactly zero."""
         x = np.array([0.0])
         assert _ste_quantize(x, bits=8)[0] == 0.0

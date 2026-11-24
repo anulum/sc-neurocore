@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from tests.qat_lsq_support import *  # noqa: F403
+from tests.qat_lsq_support import (
+    LSQQuantizer,
+    torch,
+)
 
 
 class TestLSQPerChannel:
+    """Per-channel and per-tensor LSQ step sizes."""
+
     def test_per_channel_step_shape(self) -> None:
+        """Per channel step shape."""
         q = LSQQuantizer(4, per_channel=True, num_channels=5)
         assert q.step.shape == torch.Size([5])
 
     def test_per_channel_steps_are_independent(self) -> None:
+        """Per channel steps are independent."""
         q = LSQQuantizer(4, per_channel=True, ch_axis=0, num_channels=3)
         # Row magnitudes differ by 100x -> per-channel steps must differ.
         w = torch.stack([torch.ones(8) * 0.01, torch.ones(8), torch.ones(8) * 100.0])
@@ -27,6 +34,7 @@ class TestLSQPerChannel:
         assert steps[2] > steps[1] > steps[0]
 
     def test_per_tensor_step_is_scalar(self) -> None:
+        """Per tensor step is scalar."""
         q = LSQQuantizer(4)
         q(torch.randn(10))
         assert q.step.shape == torch.Size([])

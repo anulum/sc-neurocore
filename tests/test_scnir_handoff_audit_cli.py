@@ -6,14 +6,30 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (cli) from former test_scnir_handoff_audit.py
 
+"""The SC-NIR HDL hand-off audit command-line interface."""
+
 from __future__ import annotations
 
-from tests.scnir_handoff_audit_support import *  # noqa: F403
+import json
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.cli import (
+    main,
+)
+from tests.scnir_handoff_audit_support import (
+    _write_valid_handoff,
+)
+from unittest import (
+    mock,
+)
 
 
 def test_scnir_audit_hdl_cli_writes_report(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """SC-NIR audit HDL CLI writes report."""
     handoff = tmp_path / "handoff"
     report_path = tmp_path / "audit.json"
     _write_valid_handoff(handoff)
@@ -39,6 +55,7 @@ def test_scnir_audit_hdl_cli_writes_report(
 def test_scnir_audit_hdl_cli_reports_invalid_handoff(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """SC-NIR audit HDL CLI reports invalid handoff."""
     handoff = tmp_path / "handoff"
     _write_valid_handoff(handoff)
     (handoff / "scnir_source_manifest.json").unlink()

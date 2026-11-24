@@ -10,27 +10,36 @@
 
 from __future__ import annotations
 
-from tests.qat_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.qat import (
+    TernaryWeights,
+)
 
 
 class TestTernaryWeights:
-    def test_ternary_values(self):
+    """Ternary weight quantisation and its sparsity."""
+
+    def test_ternary_values(self) -> None:
+        """Ternary weights take only the values -1, 0 and 1."""
         tw = TernaryWeights()
         t = tw.quantize(np.random.randn(10, 10))
         assert set(np.unique(t)).issubset({-1.0, 0.0, 1.0})
 
-    def test_sparsity(self):
+    def test_sparsity(self) -> None:
+        """Ternary weights are partly but not wholly zero."""
         tw = TernaryWeights(threshold_ratio=0.5)
         s = tw.sparsity(np.random.randn(100, 100))
         assert 0 < s < 1
 
-    def test_higher_threshold_more_sparse(self):
+    def test_higher_threshold_more_sparse(self) -> None:
+        """Higher threshold more sparse."""
         w = np.random.randn(100, 100)
         low = TernaryWeights(threshold_ratio=0.3).sparsity(w)
         high = TernaryWeights(threshold_ratio=0.9).sparsity(w)
         assert high > low
 
-    def test_all_zero_input(self):
+    def test_all_zero_input(self) -> None:
+        """All-zero weights stay all zero."""
         tw = TernaryWeights()
         t = tw.quantize(np.zeros((5, 5)))
         np.testing.assert_array_equal(t, 0.0)

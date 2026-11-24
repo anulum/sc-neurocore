@@ -6,12 +6,31 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (handoff_accept) from former test_scnir_handoff_audit.py
 
+"""SC-NIR HDL hand-offs the audit accepts."""
+
 from __future__ import annotations
 
-from tests.scnir_handoff_audit_support import *  # noqa: F403
+import numpy as np
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.cli import (
+    main,
+)
+from sc_neurocore.ir.scnir_handoff_audit import (
+    audit_scnir_hdl_handoff,
+)
+from tests.scnir_handoff_audit_support import (
+    _write_valid_handoff,
+)
+from unittest import (
+    mock,
+)
 
 
 def test_audit_scnir_hdl_handoff_accepts_complete_compile_output(tmp_path: Path) -> None:
+    """Audit SC-NIR HDL handoff accepts complete compile output."""
     handoff = tmp_path / "handoff"
     _write_valid_handoff(handoff)
 
@@ -67,6 +86,7 @@ def test_audit_scnir_hdl_handoff_accepts_complete_compile_output(tmp_path: Path)
 
 
 def test_audit_scnir_hdl_handoff_accepts_real_compile_nir_output(tmp_path: Path) -> None:
+    """Audit SC-NIR HDL handoff accepts real compile NIR output."""
     nir = pytest.importorskip("nir")
     model_path = tmp_path / "model.nir"
     out_dir = tmp_path / "compiled"

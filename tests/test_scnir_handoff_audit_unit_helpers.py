@@ -6,9 +6,31 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (unit_helpers) from former test_scnir_handoff_audit.py
 
+"""Unit-level helpers of the SC-NIR HDL hand-off audit."""
+
 from __future__ import annotations
 
-from tests.scnir_handoff_audit_support import *  # noqa: F403
+import json
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.ir.scnir_handoff_audit import (
+    _delay_steps_for_row,
+    _expect_int,
+    _expect_mapping_sequence,
+    _expect_non_empty_string,
+    _expect_non_negative_int,
+    _expect_positive_int,
+    _verify_source_row_matches_stream,
+    SCNIRHDLHandoffAuditError,
+    write_scnir_hdl_handoff_audit,
+)
+from tests.scnir_handoff_audit_support import (
+    _lfsr_row,
+    _lfsr_stream,
+    _write_valid_handoff,
+)
 
 
 def test_source_row_match_accepts_lfsr_fields() -> None:

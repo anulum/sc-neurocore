@@ -10,13 +10,21 @@
 
 from __future__ import annotations
 
-from tests.security_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.security.watermark import (
+    WatermarkInjector,
+)
+from tests.security_support import (
+    MockLayer,
+    MockLayerNoWeights,
+)
 
 
 class TestWatermarkInjector:
     """Test suite for model watermarking/fingerprinting."""
 
-    def test_inject_backdoor_success(self):
+    def test_inject_backdoor_success(self) -> None:
         """Successfully inject watermark into layer weights."""
         layer = MockLayer(n_neurons=10, n_inputs=5)
         trigger = np.array([1.0, 0.0, 1.0, 0.0, 1.0])
@@ -27,7 +35,7 @@ class TestWatermarkInjector:
         assert np.array_equal(layer.weights[target_idx], trigger)
         assert layer._refresh_called is True
 
-    def test_inject_backdoor_no_weights_raises(self):
+    def test_inject_backdoor_no_weights_raises(self) -> None:
         """Injection should fail if layer has no weights."""
         layer = MockLayerNoWeights()
         trigger = np.array([1.0, 0.0, 1.0])
@@ -35,7 +43,7 @@ class TestWatermarkInjector:
         with pytest.raises(ValueError, match="no weights"):
             WatermarkInjector.inject_backdoor(layer, trigger, 0)
 
-    def test_inject_backdoor_shape_mismatch_raises(self):
+    def test_inject_backdoor_shape_mismatch_raises(self) -> None:
         """Injection should fail if trigger shape doesn't match inputs."""
         layer = MockLayer(n_neurons=10, n_inputs=5)
         trigger = np.array([1.0, 0.0, 1.0])  # Wrong shape (3 != 5)
@@ -43,7 +51,7 @@ class TestWatermarkInjector:
         with pytest.raises(ValueError, match="shape mismatch"):
             WatermarkInjector.inject_backdoor(layer, trigger, 0)
 
-    def test_verify_watermark_high_activation(self):
+    def test_verify_watermark_high_activation(self) -> None:
         """Watermarked neuron should have high activation for trigger."""
         layer = MockLayer(n_neurons=10, n_inputs=5)
         trigger = np.array([1.0, 0.0, 1.0, 0.0, 1.0])
@@ -55,7 +63,7 @@ class TestWatermarkInjector:
         # Perfect alignment should give 0.6 (mean of [1,0,1,0,1])
         assert activation == pytest.approx(0.6, abs=0.01)
 
-    def test_verify_watermark_low_activation_no_watermark(self):
+    def test_verify_watermark_low_activation_no_watermark(self) -> None:
         """Non-watermarked neuron should have lower activation for trigger."""
         layer = MockLayer(n_neurons=10, n_inputs=5)
         trigger = np.array([1.0, 1.0, 1.0, 1.0, 1.0])
@@ -67,7 +75,7 @@ class TestWatermarkInjector:
         # Random weights should give ~0.5 activation on average
         assert 0.0 <= activation <= 1.0
 
-    def test_watermark_preserves_other_neurons(self):
+    def test_watermark_preserves_other_neurons(self) -> None:
         """Watermarking one neuron should not affect others."""
         layer = MockLayer(n_neurons=10, n_inputs=5)
         original_weights = layer.weights.copy()

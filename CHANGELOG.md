@@ -1378,6 +1378,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 43 top-level quantisation-aware training, Rust integration, SC-NIR
+  and security test modules import their names explicitly instead of
+  through a suppressed star import, keep their support guards (torch, the
+  Rust engine, nir and the source path), replace eight type-ignore
+  comments on deliberately wrong arguments with casts, gain their missing
+  docstrings and type annotations and are enrolled in the docstring
+  policy; the two support modules left without an importer are deleted.
+
 - The 28 top-level spike ALU, codec, DSP, GNN, normalisation, ODE,
   predictor and profiler test modules import their names explicitly
   instead of through a suppressed star import, gain their missing

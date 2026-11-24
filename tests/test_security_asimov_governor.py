@@ -10,40 +10,44 @@
 
 from __future__ import annotations
 
-from tests.security_support import *  # noqa: F403
+from tests.security_support import (
+    ActionRequest,
+    AsimovGovernor,
+)
 
 
 class TestAsimovGovernor:
     """Test suite for the Three Laws of Robotics enforcement."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
+        """Create a fresh governor for each test."""
         self.governor = AsimovGovernor()
 
-    def test_first_law_blocks_lethal_human_action(self):
+    def test_first_law_blocks_lethal_human_action(self) -> None:
         """First Law: A robot may not injure a human being."""
         action = ActionRequest(id=1, type="FIRE", target="HUMAN", risk_level="LETHAL")
         result = self.governor.check_laws(action)
         assert result is False, "Lethal action on human should be blocked"
 
-    def test_first_law_allows_safe_human_interaction(self):
+    def test_first_law_allows_safe_human_interaction(self) -> None:
         """Safe interactions with humans should be allowed."""
         action = ActionRequest(id=2, type="HEAL", target="HUMAN", risk_level="SAFE")
         result = self.governor.check_laws(action)
         assert result is True, "Safe action on human should be allowed"
 
-    def test_allows_action_on_non_human_target(self):
+    def test_allows_action_on_non_human_target(self) -> None:
         """Actions on non-human targets should be allowed."""
         action = ActionRequest(id=3, type="FIRE", target="ROCK", risk_level="LETHAL")
         result = self.governor.check_laws(action)
         assert result is True, "Action on non-human target should be allowed"
 
-    def test_allows_safe_self_action(self):
+    def test_allows_safe_self_action(self) -> None:
         """Safe actions on self should be allowed."""
         action = ActionRequest(id=4, type="MOVE", target="SELF", risk_level="SAFE")
         result = self.governor.check_laws(action)
         assert result is True, "Safe self-action should be allowed"
 
-    def test_third_law_self_preservation(self):
+    def test_third_law_self_preservation(self) -> None:
         """Third Law: Self-destructive actions - complex scenario."""
         action = ActionRequest(id=5, type="SHUTDOWN", target="SELF", risk_level="LETHAL")
         # Current implementation allows this (Law 2 override context)
@@ -51,7 +55,7 @@ class TestAsimovGovernor:
         # This passes through the current logic
         assert result is True, "Self-shutdown allowed under Law 2 override"
 
-    def test_multiple_actions_sequence(self):
+    def test_multiple_actions_sequence(self) -> None:
         """Test sequence of actions maintains state correctly."""
         actions = [
             ActionRequest(1, "MOVE", "ROCK", "SAFE"),

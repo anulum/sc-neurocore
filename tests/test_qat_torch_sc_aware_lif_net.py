@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.qat_torch_support import *  # noqa: F403
+from tests.qat_torch_support import (
+    SCAwareLIFNet,
+    torch,
+)
 
 
 class TestSCAwareLIFNet:
-    def test_forward_shape(self):
+    """The stochastic-computing-aware LIF network: shapes, training and bipolar export."""
+
+    def test_forward_shape(self) -> None:
+        """The network returns spikes of the expected shape."""
         net = SCAwareLIFNet(784, 128, 10, bitstream_length=256)
         x = torch.randn(25, 32, 784)
         spikes, mem = net(x)
         assert spikes.shape == (32, 10)
 
-    def test_trainable(self):
+    def test_trainable(self) -> None:
+        """Every parameter receives a gradient after a backward pass."""
         net = SCAwareLIFNet(784, 64, 10, n_layers=1, bitstream_length=128)
         x = torch.randn(10, 8, 784)
         target = torch.randint(0, 10, (8,))
@@ -31,7 +38,8 @@ class TestSCAwareLIFNet:
             if p.requires_grad:
                 assert p.grad is not None
 
-    def test_export_bipolar(self):
+    def test_export_bipolar(self) -> None:
+        """The export gives bipolar weights inside [-1, 1] for both layers."""
         net = SCAwareLIFNet(10, 5, 3, n_layers=1, bitstream_length=256)
         exported = net.export_bipolar_weights()
         assert len(exported) == 2

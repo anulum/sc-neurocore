@@ -6,12 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (audit_report) from former test_scnir_compatibility.py
 
+"""The SC-NIR compatibility audit report."""
+
 from __future__ import annotations
 
-from tests.scnir_compatibility_support import *  # noqa: F403
+import hashlib
+import json
+from tests.scnir_compatibility_support import (
+    REPO_ROOT,
+    scnir_compatibility_matrix,
+    scnir_compatibility_matrix_dicts,
+)
+from typing import (
+    cast,
+)
 
 
 def test_scnir_compatibility_audit_report_summarises_evidence() -> None:
+    """SC-NIR compatibility audit report summarises evidence."""
     from sc_neurocore.ir import build_scnir_compatibility_audit
 
     report = build_scnir_compatibility_audit(evidence_root=REPO_ROOT)

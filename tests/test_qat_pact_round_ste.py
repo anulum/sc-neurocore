@@ -10,16 +10,24 @@
 
 from __future__ import annotations
 
-from tests.qat_pact_support import *  # noqa: F403
+from typing import Any, cast
+from tests.qat_pact_support import (
+    _round_ste,
+    torch,
+)
 
 
 class TestRoundSTE:
+    """Rounding with a straight-through identity gradient."""
+
     def test_forward_rounds(self) -> None:
+        """The forward pass rounds to the nearest integer."""
         x = torch.tensor([0.2, 0.8, -0.4])
         assert torch.allclose(_round_ste(x), torch.tensor([0.0, 1.0, -0.0]))
 
     def test_backward_is_identity(self) -> None:
+        """Backward is identity."""
         x = torch.tensor([0.3, 1.7], requires_grad=True)
-        _round_ste(x).sum().backward()
+        cast(Any, _round_ste(x).sum()).backward()
         assert x.grad is not None
         assert torch.allclose(x.grad, torch.ones_like(x.grad))

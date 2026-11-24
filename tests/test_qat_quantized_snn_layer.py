@@ -10,40 +10,52 @@
 
 from __future__ import annotations
 
-from tests.qat_support import *  # noqa: F403
+from typing import cast
+import numpy as np
+from sc_neurocore.qat import (
+    quantize_aware_train_step,
+    QuantizedSNNLayer,
+)
 
 
 class TestQuantizedSNNLayer:
-    def test_forward_shape(self):
+    """The quantised SNN layer: forward pass, weight export and training steps."""
+
+    def test_forward_shape(self) -> None:
+        """The forward pass returns one binary spike per neuron."""
         layer = QuantizedSNNLayer(n_inputs=4, n_neurons=3, weight_bits=8)
         out = layer.forward(np.random.rand(4))
         assert out.shape == (3,)
         assert set(np.unique(out)).issubset({0.0, 1.0})
 
-    def test_export_weights_quantized(self):
+    def test_export_weights_quantized(self) -> None:
+        """Export weights quantized."""
         layer = QuantizedSNNLayer(n_inputs=4, n_neurons=3, weight_bits=4)
         q = layer.export_weights()
         assert q.shape == (3, 4)
         assert len(np.unique(q)) <= 2**4
 
-    def test_train_step(self):
+    def test_train_step(self) -> None:
+        """One training step reports a non-negative loss and changes the weights."""
         layer = QuantizedSNNLayer(n_inputs=4, n_neurons=2, weight_bits=8)
         w_before = layer.W.copy()
         result = quantize_aware_train_step(layer, np.random.rand(4), np.array([1.0, 0.0]))
-        assert result["loss"] >= 0
+        assert cast(float, result["loss"]) >= 0
         assert not np.array_equal(layer.W, w_before)
 
-    def test_multiple_steps_reduce_loss(self):
+    def test_multiple_steps_reduce_loss(self) -> None:
+        """Multiple steps reduce loss."""
         layer = QuantizedSNNLayer(n_inputs=4, n_neurons=2, weight_bits=8)
         x = np.array([1.0, 0.0, 1.0, 0.0])
         target = np.array([1.0, 0.0])
-        losses = []
+        losses: list[float] = []
         for _ in range(20):
             result = quantize_aware_train_step(layer, x, target, lr=0.05)
-            losses.append(result["loss"])
+            losses.append(cast(float, result["loss"]))
         assert losses[-1] <= losses[0]
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         a = QuantizedSNNLayer(n_inputs=4, n_neurons=3, weight_bits=8)
         b = QuantizedSNNLayer(n_inputs=4, n_neurons=3, weight_bits=8)
         np.testing.assert_array_equal(a.W, b.W)
