@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.advanced_plasticity_support import *  # noqa: F403
+from sc_neurocore.network.projection import Projection
+from sc_neurocore.network.population import Population
+from sc_neurocore.network.network import Network
+import numpy as np
+from sc_neurocore.learning.advanced import (
+    RewardModulatedLearner,
+)
 
 
 class TestRewardModulatedLearner:
-    def test_step_runs(self, simple_net):
+    """Reward-modulated STDP learning on a projection."""
+
+    def test_step_runs(
+        self, simple_net: tuple[Network, Population, Population, Projection]
+    ) -> None:
+        """A learning step keeps the weight shape."""
         net, _, _, proj = simple_net
         learner = RewardModulatedLearner(net, tau_reward=50.0)
         w_before = proj.data.copy()
@@ -22,7 +33,10 @@ class TestRewardModulatedLearner:
         assert proj.data is not None
         assert proj.data.shape == w_before.shape
 
-    def test_weights_non_negative(self, simple_net):
+    def test_weights_non_negative(
+        self, simple_net: tuple[Network, Population, Population, Projection]
+    ) -> None:
+        """Learning keeps the weights non-negative."""
         net, _, _, proj = simple_net
         learner = RewardModulatedLearner(net, tau_reward=10.0)
         for _ in range(20):

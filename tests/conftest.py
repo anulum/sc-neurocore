@@ -23,6 +23,10 @@ from filelock import FileLock
 from tests.native_lane_requirement import require_native_lane
 from tests.reload_guard import restore_first_party_reloads
 
+# Session-wide fixtures moved out of former star-imported support modules (F403 programme, C1-C6).
+pytest_plugins = ("tests.fixtures.advanced_plasticity",)
+
+
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _CARGO_LIB_LOCK = _REPO_ROOT / "target" / ".cargo-lib-test.lock"
 _CARGO_LIB_TEST_PREFIX = ("cargo", "test", "--no-default-features", "--jobs", "1")

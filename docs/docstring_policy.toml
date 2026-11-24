@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3582
+expected_file_count = 3592
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -14372,3 +14372,43 @@ rationale = "Exercise SC-NeuroCore: world model spike predictor."
 [[file]]
 path = "tests/test_world_model_world_model_module_exports.py"
 rationale = "Exercise SC-NeuroCore: world model world model module exports."
+
+[[file]]
+path = "tests/fixtures/advanced_plasticity.py"
+rationale = "Provide the session-wide two-population network fixture of the advanced plasticity suites."
+
+[[file]]
+path = "tests/test_advanced_plasticity_bptt_learner.py"
+rationale = "Exercise SC-NeuroCore: advanced plasticity bptt learner."
+
+[[file]]
+path = "tests/test_advanced_plasticity_eligibility_trace.py"
+rationale = "Exercise SC-NeuroCore: advanced plasticity eligibility trace."
+
+[[file]]
+path = "tests/test_advanced_plasticity_homeostatic_plasticity.py"
+rationale = "Exercise SC-NeuroCore: advanced plasticity homeostatic plasticity."
+
+[[file]]
+path = "tests/test_advanced_plasticity_meta_learner.py"
+rationale = "Exercise SC-NeuroCore: advanced plasticity meta learner."
+
+[[file]]
+path = "tests/test_advanced_plasticity_reward_modulated_learner.py"
+rationale = "Exercise SC-NeuroCore: advanced plasticity reward modulated learner."
+
+[[file]]
+path = "tests/test_advanced_plasticity_short_term_plasticity.py"
+rationale = "Exercise SC-NeuroCore: advanced plasticity short term plasticity."
+
+[[file]]
+path = "tests/test_advanced_plasticity_structural_plasticity.py"
+rationale = "Exercise SC-NeuroCore: advanced plasticity structural plasticity."
+
+[[file]]
+path = "tests/test_advanced_plasticity_surrogate_gradient.py"
+rationale = "Exercise SC-NeuroCore: advanced plasticity surrogate gradient."
+
+[[file]]
+path = "tests/test_advanced_plasticity_tbptt_learner.py"
+rationale = "Exercise SC-NeuroCore: advanced plasticity tbptt learner."

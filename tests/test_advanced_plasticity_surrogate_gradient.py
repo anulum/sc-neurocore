@@ -10,16 +10,24 @@
 
 from __future__ import annotations
 
-from tests.advanced_plasticity_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.learning.advanced import (
+    _fast_sigmoid_surrogate,
+)
 
 
 class TestSurrogateGradient:
-    def test_peak_at_threshold(self):
+    """The fast-sigmoid surrogate gradient."""
+
+    def test_peak_at_threshold(self) -> None:
+        """The surrogate peaks at the threshold."""
         grad = _fast_sigmoid_surrogate(np.array([1.0]))
         assert grad[0] > 0
         assert grad[0] == pytest.approx(25.0, rel=0.01)
 
-    def test_decays_away(self):
+    def test_decays_away(self) -> None:
+        """The surrogate falls away from the threshold."""
         at_thresh = _fast_sigmoid_surrogate(np.array([1.0]))[0]
         away = _fast_sigmoid_surrogate(np.array([2.0]))[0]
         assert away < at_thresh

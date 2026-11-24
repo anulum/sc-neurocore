@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.advanced_plasticity_support import *  # noqa: F403
+from sc_neurocore.network.projection import Projection
+from sc_neurocore.network.population import Population
+from sc_neurocore.network.network import Network
+import numpy as np
+from sc_neurocore.learning.advanced import (
+    MetaLearner,
+)
 
 
 class TestMetaLearner:
-    def test_inner_loop(self, simple_net):
+    """The two-loop meta learner."""
+
+    def test_inner_loop(
+        self, simple_net: tuple[Network, Population, Population, Projection]
+    ) -> None:
+        """The inner loop changes the weights."""
         net, pop_a, _, proj = simple_net
         w_before = proj.data.copy()
         inputs = np.ones((20, pop_a.n)) * 50.0
@@ -23,7 +34,10 @@ class TestMetaLearner:
         ml.inner_loop((inputs, targets), n_steps=5)
         assert not np.allclose(proj.data, w_before)
 
-    def test_outer_step(self, simple_net):
+    def test_outer_step(
+        self, simple_net: tuple[Network, Population, Population, Projection]
+    ) -> None:
+        """The outer step keeps the weight shape."""
         net, pop_a, _, proj = simple_net
         tasks = [(np.random.randn(5, pop_a.n) * 5, np.zeros((5, pop_a.n))) for _ in range(3)]
         ml = MetaLearner(net, inner_lr=0.01, outer_lr=0.001)

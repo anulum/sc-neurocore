@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.advanced_plasticity_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.learning.advanced import (
+    ShortTermPlasticity,
+)
 
 
 class TestShortTermPlasticity:
-    def test_returns_scaling(self):
+    """Short-term synaptic depression and facilitation."""
+
+    def test_returns_scaling(self) -> None:
+        """The scaling has one factor in [0, 1] per synapse."""
         stp = ShortTermPlasticity(tau_d=200.0, tau_f=600.0, u_se=0.2)
         pre = np.array([1, 0, 1, 0, 0], dtype=np.float64)
         scale = stp.update(pre)
@@ -22,7 +28,8 @@ class TestShortTermPlasticity:
         assert np.all(scale >= 0)
         assert np.all(scale <= 1.0)
 
-    def test_depression_on_repeated_spikes(self):
+    def test_depression_on_repeated_spikes(self) -> None:
+        """Repeated spikes depress the scaling."""
         stp = ShortTermPlasticity(tau_d=50.0, tau_f=600.0, u_se=0.5)
         pre = np.array([1.0])
         s1 = stp.update(pre)[0]

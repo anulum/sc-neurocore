@@ -1320,6 +1320,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The nine top-level advanced plasticity test modules import their
+  names explicitly instead of through a suppressed star import, gain
+  their missing docstrings and type annotations and are enrolled in
+  the docstring policy. Their shared simple_net fixture moves
+  unchanged to tests/fixtures/advanced_plasticity.py, registered for
+  the session by pytest_plugins in tests/conftest.py, and the support
+  module left without an importer is deleted.
+
 - The 41 top-level test modules of the transcriptomic, transfer,
   universal DSL, utilities, Verilog compiler and integration, waveform
   codec, white-box tap and world-model suites import their names

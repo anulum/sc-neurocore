@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.advanced_plasticity_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.learning.advanced import (
+    EligibilityTrace,
+)
 
 
 class TestEligibilityTrace:
-    def test_output_shape(self):
+    """The synaptic eligibility trace."""
+
+    def test_output_shape(self) -> None:
+        """The weight update has the projection shape."""
         et = EligibilityTrace(tau_e=20.0)
         pre = np.array([1, 0, 1, 0, 0], dtype=np.float64)
         post = np.array([0, 1, 1], dtype=np.float64)
@@ -22,7 +28,8 @@ class TestEligibilityTrace:
         delta = et.update(pre, post, err)
         assert delta.shape == (5, 3)
 
-    def test_trace_decays(self):
+    def test_trace_decays(self) -> None:
+        """Without new spikes the update does not grow."""
         et = EligibilityTrace(tau_e=5.0)
         pre = np.array([1.0, 0.0])
         post = np.array([1.0])

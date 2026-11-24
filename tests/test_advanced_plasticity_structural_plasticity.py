@@ -10,18 +10,28 @@
 
 from __future__ import annotations
 
-from tests.advanced_plasticity_support import *  # noqa: F403
+from sc_neurocore.network.projection import Projection
+from sc_neurocore.network.population import Population
+from sc_neurocore.network.network import Network
+import numpy as np
+from sc_neurocore.learning.advanced import (
+    StructuralPlasticity,
+)
 
 
 class TestStructuralPlasticity:
-    def test_prune(self, simple_net):
+    """Pruning and growing synapses."""
+
+    def test_prune(self, simple_net: tuple[Network, Population, Population, Projection]) -> None:
+        """Pruning zeroes some weights."""
         _, _, _, proj = simple_net
         proj.data[:] = 0.001
         sp = StructuralPlasticity(prune_threshold=0.05)
         sp.update(proj)
         assert np.sum(proj.data == 0.0) > 0
 
-    def test_grow(self, simple_net):
+    def test_grow(self, simple_net: tuple[Network, Population, Population, Projection]) -> None:
+        """Growing adds positive weights."""
         _, _, _, proj = simple_net
         proj.data[:] = 0.0
         sp = StructuralPlasticity(growth_rate=1.0, prune_threshold=0.001)

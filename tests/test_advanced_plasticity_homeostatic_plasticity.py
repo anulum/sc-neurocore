@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.advanced_plasticity_support import *  # noqa: F403
+from sc_neurocore.network.projection import Projection
+from sc_neurocore.network.population import Population
+from sc_neurocore.network.network import Network
+from sc_neurocore.learning.advanced import (
+    HomeostaticPlasticity,
+)
 
 
 class TestHomeostaticPlasticity:
-    def test_update_runs(self, simple_net):
+    """Homeostatic scaling of the projection weights."""
+
+    def test_update_runs(
+        self, simple_net: tuple[Network, Population, Population, Projection]
+    ) -> None:
+        """An update records a firing-rate estimate."""
         _, pop_a, _, _ = simple_net
         hp = HomeostaticPlasticity(target_rate=10.0, tau=100.0)
         hp.update(pop_a)
