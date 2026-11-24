@@ -1320,6 +1320,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 31 top-level Brunel benchmark and ANN-to-SNN conversion test
+  modules import their names explicitly instead of through a suppressed
+  star import, gain their missing docstrings and are enrolled in the
+  docstring policy. Every name their supports bind at or after the
+  benchmarks path insertion or the torch import guard is still taken
+  from the support, so each guard runs before the import it protects.
+
 - The nine top-level advanced plasticity test modules import their
   names explicitly instead of through a suppressed star import, gain
   their missing docstrings and type annotations and are enrolled in

@@ -10,13 +10,20 @@
 
 from __future__ import annotations
 
-from tests.brunel_regression_support import *  # noqa: F403
+import numpy as np
+from tests.brunel_regression_support import (
+    BrunelParams,
+    FixedPointLIFNeuron,
+    translate_v11_q16,
+    translate_v3_fixed_point,
+)
 
 
 class TestPrecisionOrdering:
     """Higher fixed-point precision → more accurate leak → fewer rounding-induced spikes."""
 
-    def test_q16_fewer_spikes_than_q88_short_sim(self):
+    def test_q16_fewer_spikes_than_q88_short_sim(self) -> None:
+        """Q16.12 fires no more than Q8.8 in a short run."""
         bp = BrunelParams(v_threshold=20.0, v_reset=10.0, weight_exc=5.0)
         p3 = translate_v3_fixed_point(bp)
         p11 = translate_v11_q16(bp)

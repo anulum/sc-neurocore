@@ -10,18 +10,26 @@
 
 from __future__ import annotations
 
-from tests.brunel_regression_support import *  # noqa: F403
+import pytest
+from tests.brunel_regression_support import (
+    BrunelParams,
+)
 
 
 class TestBrunelParamsAlgebra:
-    def test_n_total(self):
+    """Derived quantities of the Brunel parameters."""
+
+    def test_n_total(self) -> None:
+        """The population totals 1000 neurons."""
         bp = BrunelParams(n_exc=800, n_inh=200)
         assert bp.n_total == 1000
 
-    def test_weight_inh(self):
+    def test_weight_inh(self) -> None:
+        """The inhibitory weight is 2.0 for the defaults."""
         bp = BrunelParams(weight_exc=0.5, g_inh=4.0)
         assert bp.weight_inh == pytest.approx(2.0)
 
-    def test_weight_inh_identity(self):
+    def test_weight_inh_identity(self) -> None:
+        """The inhibitory weight is g times the excitatory weight."""
         bp = BrunelParams()
         assert bp.weight_inh == bp.g_inh * bp.weight_exc

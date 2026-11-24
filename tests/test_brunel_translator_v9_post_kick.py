@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.brunel_translator_support import *  # noqa: F403
+from tests.brunel_translator_support import (
+    BrunelParams,
+    translate_v9_post_kick,
+)
 
 
 class TestV9PostKick:
     """V9: Post-kick timing differs from V1."""
 
-    def test_kick_after_step_flag(self):
+    def test_kick_after_step_flag(self) -> None:
+        """The post-kick variant sets the kick flag."""
         bp = BrunelParams()
         params = translate_v9_post_kick(bp)
         assert params.get("kick_after_step") is True

@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.conversion_ann_snn_support import *  # noqa: F403
+from tests.conversion_ann_snn_support import (
+    nn,
+    torch,
+)
 
 
 class TestQCFSActivation:
+    """The quantisation-clip-floor-shift activation."""
+
     def test_forward(self) -> None:
+        """The forward pass clamps negative inputs at zero."""
         from sc_neurocore.conversion.qcfs import QCFSActivation
 
         act = QCFSActivation(T=8, theta=1.0)
@@ -24,6 +30,7 @@ class TestQCFSActivation:
         assert out[-1].item() >= 0  # clamp at 0
 
     def test_output_range(self) -> None:
+        """The output lies in the unit interval."""
         from sc_neurocore.conversion.qcfs import QCFSActivation
 
         act = QCFSActivation(T=4, theta=1.0)
@@ -33,6 +40,7 @@ class TestQCFSActivation:
         assert out.max().item() <= 1.0 + 1e-6
 
     def test_gradient_flows(self) -> None:
+        """A gradient reaches the input."""
         from sc_neurocore.conversion.qcfs import QCFSActivation
 
         act = QCFSActivation(T=8, theta=1.0)
@@ -42,12 +50,14 @@ class TestQCFSActivation:
         assert x.grad is not None
 
     def test_learnable_theta(self) -> None:
+        """Theta is a learnable parameter."""
         from sc_neurocore.conversion.qcfs import QCFSActivation
 
         act = QCFSActivation(T=8, theta=1.0, learn_theta=True)
         assert isinstance(act.theta, nn.Parameter)
 
     def test_extra_repr(self) -> None:
+        """The representation shows T and theta."""
         from sc_neurocore.conversion.qcfs import QCFSActivation
 
         act = QCFSActivation(T=8, theta=2.0)

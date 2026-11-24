@@ -10,20 +10,25 @@
 
 from __future__ import annotations
 
-from tests.brunel_translator_support import *  # noqa: F403
+from tests.brunel_translator_support import (
+    BrunelParams,
+    translate_v11_q16,
+)
 
 
 class TestV11Q16:
     """V11: Q4.12 fixed-point — no overflow."""
 
-    def test_no_overflow_standard_params(self):
+    def test_no_overflow_standard_params(self) -> None:
+        """Standard parameters fit the Q16.12 format."""
         bp = BrunelParams(v_threshold=20.0, v_reset=10.0, weight_exc=5.0)
         params = translate_v11_q16(bp)
         assert params["data_width"] == 32
         assert params["fraction"] == 12
         assert params["v_threshold_q"] == 20 * 4096
 
-    def test_overflow_raises(self):
+    def test_overflow_raises(self) -> None:
+        """Parameters that overflow Q16.12 are rejected."""
         bp = BrunelParams(v_threshold=600000.0)  # exceeds 32-bit Q16.12
         import pytest
 

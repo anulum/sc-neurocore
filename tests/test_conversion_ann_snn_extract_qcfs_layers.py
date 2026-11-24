@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.conversion_ann_snn_support import *  # noqa: F403
+from tests.conversion_ann_snn_support import (
+    QCFSActivation,
+    _extract_qcfs_layers,
+    nn,
+)
 
 
 class TestExtractQcfsLayers:
+    """Reading QCFS thresholds and steps from a model."""
+
     def test_returns_theta_and_t_in_order(self) -> None:
+        """The QCFS layers are read in order with their theta and T."""
         model = nn.Sequential(
             nn.Linear(4, 8),
             QCFSActivation(T=4, theta=2.0),
@@ -25,5 +32,6 @@ class TestExtractQcfsLayers:
         assert layers == [(2.0, 4), (3.0, 4)]
 
     def test_empty_for_relu_model(self) -> None:
+        """A ReLU model has no QCFS layers."""
         model = nn.Sequential(nn.Linear(4, 8), nn.ReLU(), nn.Linear(8, 3))
         assert _extract_qcfs_layers(model) == []

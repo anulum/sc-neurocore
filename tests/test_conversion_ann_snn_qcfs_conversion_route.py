@@ -10,10 +10,19 @@
 
 from __future__ import annotations
 
-from tests.conversion_ann_snn_support import *  # noqa: F403
+import numpy as np
+from tests.conversion_ann_snn_support import (
+    ConvertedSNN,
+    QCFSActivation,
+    convert,
+    nn,
+    torch,
+)
 
 
 class TestQcfsConversionRoute:
+    """The conversion route for QCFS-trained models."""
+
     def _qcfs_model(self, theta: float = 1.0, qcfs_t: int = 4) -> nn.Sequential:
         torch.manual_seed(7)
         return nn.Sequential(
@@ -23,32 +32,39 @@ class TestQcfsConversionRoute:
         )
 
     def test_qcfs_route_sets_membrane_shift(self) -> None:
+        """A QCFS model starts the membrane at half threshold."""
         snn = convert(self._qcfs_model())
         assert snn.initial_membrane_fraction == 0.5
 
     def test_relu_route_has_no_membrane_shift(self) -> None:
+        """A ReLU model starts the membrane at zero."""
         model = nn.Sequential(nn.Linear(4, 8), nn.ReLU(), nn.Linear(8, 3))
         snn = convert(model)
         assert snn.initial_membrane_fraction == 0.0
 
     def test_qcfs_route_infers_timesteps_from_layers(self) -> None:
+        """A QCFS model takes its time steps from its layers."""
         snn = convert(self._qcfs_model(qcfs_t=5))
         assert snn.T == 5
 
     def test_relu_route_defaults_timesteps_to_sixteen(self) -> None:
+        """A ReLU model defaults to 16 time steps."""
         model = nn.Sequential(nn.Linear(4, 8), nn.ReLU(), nn.Linear(8, 3))
         snn = convert(model)
         assert snn.T == 16
 
     def test_explicit_timesteps_override_qcfs_inference(self) -> None:
+        """Explicit time steps override the QCFS value."""
         snn = convert(self._qcfs_model(qcfs_t=4), T=32)
         assert snn.T == 32
 
     def test_qcfs_route_normalises_thresholds_to_unity(self) -> None:
+        """QCFS thresholds are normalised to one."""
         snn = convert(self._qcfs_model(theta=2.5))
         assert snn.thresholds == [1.0, 1.0]
 
     def test_qcfs_theta_scales_first_layer_weights(self) -> None:
+        """Theta scales the first layer's weights."""
         model = self._qcfs_model(theta=4.0)
         first_layer = model[0]
         assert isinstance(first_layer, nn.Linear)
@@ -58,6 +74,7 @@ class TestQcfsConversionRoute:
         np.testing.assert_allclose(snn.weights[0], raw / 4.0, rtol=1e-6)
 
     def test_qcfs_route_ignores_calibration_data(self) -> None:
+        """The QCFS route ignores calibration data."""
         model = self._qcfs_model(theta=2.0)
         first_layer = model[0]
         assert isinstance(first_layer, nn.Linear)
@@ -67,6 +84,7 @@ class TestQcfsConversionRoute:
         np.testing.assert_allclose(snn.weights[0], raw / 2.0, rtol=1e-6)
 
     def test_qcfs_route_pads_missing_output_activation(self) -> None:
+        """A missing output activation is padded."""
         # Two Linear layers but a single QCFS layer -> the trailing weight
         # layer falls back to a unit threshold.
         model = self._qcfs_model()
@@ -75,11 +93,13 @@ class TestQcfsConversionRoute:
         assert len(snn.thresholds) == 2
 
     def test_qcfs_converted_snn_runs(self) -> None:
+        """A QCFS-converted network runs on a batch."""
         snn = convert(self._qcfs_model())
         out = snn.run(np.random.default_rng(3).random((5, 4)))
         assert out.shape == (5, 3)
 
     def test_membrane_shift_raises_early_firing(self) -> None:
+        """The membrane shift does not lower early firing."""
         rng = np.random.default_rng(21)
         weights = [rng.random((6, 4)) * 0.2]
         biases: list[np.ndarray | None] = [None]

@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.conversion_support import *  # noqa: F403
+from tests.conversion_support import (
+    QCFSActivation,
+    nn,
+    torch,
+)
 
 
 class TestQCFS:
+    """The QCFS activation."""
+
     def test_output_range(self) -> None:
+        """The output lies in the unit interval."""
         qcfs = QCFSActivation(T=8, theta=1.0)
         x = torch.linspace(-1, 2, 100)
         out = qcfs(x)
@@ -22,6 +29,7 @@ class TestQCFS:
         assert out.max() <= 1.0
 
     def test_monotonic(self) -> None:
+        """The output does not decrease with the input."""
         qcfs = QCFSActivation(T=4, theta=1.0)
         x = torch.linspace(0, 1, 100)
         out = qcfs(x)
@@ -29,6 +37,7 @@ class TestQCFS:
         assert (diffs >= -1e-6).all(), "QCFS output should be monotonically non-decreasing"
 
     def test_gradient_flows(self) -> None:
+        """A gradient reaches the input."""
         qcfs = QCFSActivation(T=8, theta=1.0)
         x = torch.tensor([0.5], requires_grad=True)
         out = qcfs(x)
@@ -36,5 +45,6 @@ class TestQCFS:
         assert x.grad is not None
 
     def test_learnable_theta(self) -> None:
+        """Theta is a learnable parameter."""
         qcfs = QCFSActivation(T=8, theta=1.0, learn_theta=True)
         assert isinstance(qcfs.theta, nn.Parameter)

@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.brunel_translator_support import *  # noqa: F403
+from tests.brunel_translator_support import (
+    BrunelParams,
+    FixedPointLIFNeuron,
+    translate_v3_fixed_point,
+)
 
 
 class TestV3FixedPoint:
     """V3: FixedPointLIFNeuron Q8.8."""
 
-    def test_no_overflow_brunel_weights(self):
+    def test_no_overflow_brunel_weights(self) -> None:
         """Max Brunel weight must not overflow Q8.8 signed range."""
         bp = BrunelParams(weight_exc=5.0, g_inh=5.0)
         params = translate_v3_fixed_point(bp)
@@ -25,7 +29,7 @@ class TestV3FixedPoint:
         assert -32768 <= params["j_inh_q"] <= 32767
         assert -32768 <= params["v_threshold_q"] <= 32767
 
-    def test_single_neuron_fires(self):
+    def test_single_neuron_fires(self) -> None:
         """Q8.8 neuron should fire with sustained suprathreshold input."""
         bp = BrunelParams(v_threshold=20.0, v_reset=10.0, weight_exc=5.0)
         params = translate_v3_fixed_point(bp)

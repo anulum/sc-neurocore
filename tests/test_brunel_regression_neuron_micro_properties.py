@@ -10,13 +10,19 @@
 
 from __future__ import annotations
 
-from tests.brunel_regression_support import *  # noqa: F403
+from tests.brunel_regression_support import (
+    BrunelParams,
+    StochasticLIFNeuron,
+    translate_v10_exact_leak,
+    translate_v1_stochastic_lif,
+    translate_v20_vectorized_numpy,
+)
 
 
 class TestNeuronMicroProperties:
     """Fast single-neuron tests verifying biophysical properties."""
 
-    def test_lif_subthreshold_decay(self):
+    def test_lif_subthreshold_decay(self) -> None:
         """Below threshold, membrane voltage decays toward v_rest."""
         bp = BrunelParams(v_threshold=20.0, v_reset=0.0, v_rest=0.0)
         params = translate_v1_stochastic_lif(bp)
@@ -27,7 +33,7 @@ class TestNeuronMicroProperties:
         assert n.v < 15.0, "Membrane must decay without input"
         assert n.v >= 0.0, "Membrane must not go below v_rest"
 
-    def test_lif_reset_value(self):
+    def test_lif_reset_value(self) -> None:
         """After spiking, membrane resets to v_reset."""
         bp = BrunelParams(v_threshold=20.0, v_reset=10.0)
         params = translate_v1_stochastic_lif(bp)
@@ -37,7 +43,7 @@ class TestNeuronMicroProperties:
         assert spike == 1
         assert n.v == bp.v_reset
 
-    def test_exact_vs_euler_leak_difference(self):
+    def test_exact_vs_euler_leak_difference(self) -> None:
         """Exact exponential leak and Euler leak produce slightly different voltages."""
         bp = BrunelParams(v_threshold=20.0, v_rest=0.0, dt=0.1, tau_mem=20.0)
         p1 = translate_v1_stochastic_lif(bp)
@@ -58,7 +64,7 @@ class TestNeuronMicroProperties:
         assert abs(n_euler.v - n_exact.v) < 0.01
         assert n_euler.v != n_exact.v  # Euler has truncation error
 
-    def test_vectorized_params_completeness(self):
+    def test_vectorized_params_completeness(self) -> None:
         """V20 translator must provide all fields needed for batch numpy update."""
         bp = BrunelParams()
         p = translate_v20_vectorized_numpy(bp)

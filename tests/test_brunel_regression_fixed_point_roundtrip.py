@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.brunel_regression_support import *  # noqa: F403
+import pytest
+from tests.brunel_regression_support import (
+    BrunelParams,
+    translate_v11_q16,
+    translate_v3_fixed_point,
+)
 
 
 class TestFixedPointRoundtrip:
-    def test_q88_encode_decode(self):
+    """Fixed-point translations round-trip the Brunel parameters."""
+
+    def test_q88_encode_decode(self) -> None:
         """Q8.8: encode then decode recovers floor quantisation."""
         bp = BrunelParams(v_threshold=20.0, v_reset=10.0)
         params = translate_v3_fixed_point(bp)
@@ -25,7 +32,7 @@ class TestFixedPointRoundtrip:
         v_decoded = v_q / scale
         assert v_decoded == pytest.approx(v_orig, abs=1.0 / scale)
 
-    def test_q16_encode_decode(self):
+    def test_q16_encode_decode(self) -> None:
         """Q16.12: 12 fractional bits give 1/4096 precision."""
         bp = BrunelParams(v_threshold=20.0)
         params = translate_v11_q16(bp)

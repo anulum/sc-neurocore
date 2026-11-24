@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.brunel_translator_support import *  # noqa: F403
+import numpy as np
+from tests.brunel_translator_support import (
+    BrunelParams,
+    translate_v20_vectorized_numpy,
+)
 
 
 class TestV20VectorizedNumpy:
     """V20: Vectorized matches basic dynamics."""
 
-    def test_vectorized_fires(self):
+    def test_vectorized_fires(self) -> None:
+        """The vectorised NumPy layer fires with strong input."""
         bp = BrunelParams(v_threshold=20.0, v_reset=10.0, weight_exc=5.0, external_rate_hz=200.0)
         params = translate_v20_vectorized_numpy(bp)
         n = params["n_total"]

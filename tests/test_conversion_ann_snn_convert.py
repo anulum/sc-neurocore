@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.conversion_ann_snn_support import *  # noqa: F403
+import numpy as np
+import pytest
+from tests.conversion_ann_snn_support import (
+    nn,
+    torch,
+)
 
 
 class TestConvert:
+    """Converting a trained ANN into a rate-coded SNN."""
+
     def test_convert_simple_model(self) -> None:
+        """A small ReLU network converts with the requested time steps."""
         from sc_neurocore.conversion.ann_to_snn import convert
 
         model = nn.Sequential(nn.Linear(4, 8), nn.ReLU(), nn.Linear(8, 3))
@@ -23,6 +31,7 @@ class TestConvert:
         assert snn.T == 8
 
     def test_convert_with_calibration(self) -> None:
+        """Conversion with calibration data keeps the layer count."""
         from sc_neurocore.conversion.ann_to_snn import convert
 
         model = nn.Sequential(nn.Linear(4, 8), nn.ReLU(), nn.Linear(8, 3))
@@ -31,6 +40,7 @@ class TestConvert:
         assert snn.n_layers == 2
 
     def test_convert_no_linear_raises(self) -> None:
+        """A model without Linear layers is rejected."""
         from sc_neurocore.conversion.ann_to_snn import convert
 
         model = nn.Sequential(nn.ReLU())
@@ -40,6 +50,7 @@ class TestConvert:
     def test_convert_requires_torch_when_backend_missing(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Without the torch backend the call asks for PyTorch."""
         from sc_neurocore.conversion import ann_to_snn
 
         monkeypatch.setattr(ann_to_snn, "HAS_TORCH", False)
@@ -47,6 +58,7 @@ class TestConvert:
             ann_to_snn.convert(object())
 
     def test_round_trip_accuracy(self) -> None:
+        """The converted network classifies every sample."""
         from sc_neurocore.conversion.ann_to_snn import convert
 
         model = nn.Sequential(nn.Linear(4, 16), nn.ReLU(), nn.Linear(16, 3))

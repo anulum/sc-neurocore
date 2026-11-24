@@ -10,13 +10,19 @@
 
 from __future__ import annotations
 
-from tests.brunel_translator_support import *  # noqa: F403
+import numpy as np
+from tests.brunel_translator_support import (
+    BitstreamSynapse,
+    BrunelParams,
+    StochasticLIFNeuron,
+    translate_v4_hybrid,
+)
 
 
 class TestV4Hybrid:
     """V4: BitstreamSynapse AND + StochasticLIFNeuron."""
 
-    def test_spike_from_high_prob_bitstream(self):
+    def test_spike_from_high_prob_bitstream(self) -> None:
         """Sustained high-probability input bitstream should produce spikes."""
         bp = BrunelParams(v_threshold=20.0, v_reset=10.0, weight_exc=5.0)
         params = translate_v4_hybrid(bp)

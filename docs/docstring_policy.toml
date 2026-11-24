@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3592
+expected_file_count = 3623
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -14412,3 +14412,127 @@ rationale = "Exercise SC-NeuroCore: advanced plasticity surrogate gradient."
 [[file]]
 path = "tests/test_advanced_plasticity_tbptt_learner.py"
 rationale = "Exercise SC-NeuroCore: advanced plasticity tbptt learner."
+
+[[file]]
+path = "tests/test_brunel_regression_benchmark_regression.py"
+rationale = "Exercise SC-NeuroCore: brunel regression benchmark regression."
+
+[[file]]
+path = "tests/test_brunel_regression_brunel_params_algebra.py"
+rationale = "Exercise SC-NeuroCore: brunel regression brunel params algebra."
+
+[[file]]
+path = "tests/test_brunel_regression_fixed_point_roundtrip.py"
+rationale = "Exercise SC-NeuroCore: brunel regression fixed point roundtrip."
+
+[[file]]
+path = "tests/test_brunel_regression_neuron_micro_properties.py"
+rationale = "Exercise SC-NeuroCore: brunel regression neuron micro properties."
+
+[[file]]
+path = "tests/test_brunel_regression_precision_ordering.py"
+rationale = "Exercise SC-NeuroCore: brunel regression precision ordering."
+
+[[file]]
+path = "tests/test_brunel_regression_refractory_rate_ceiling.py"
+rationale = "Exercise SC-NeuroCore: brunel regression refractory rate ceiling."
+
+[[file]]
+path = "tests/test_brunel_regression_translator_consistency.py"
+rationale = "Exercise SC-NeuroCore: brunel regression translator consistency."
+
+[[file]]
+path = "tests/test_brunel_translator_round_trip.py"
+rationale = "Exercise SC-NeuroCore: brunel translator round trip."
+
+[[file]]
+path = "tests/test_brunel_translator_v10_exact_leak.py"
+rationale = "Exercise SC-NeuroCore: brunel translator v10 exact leak."
+
+[[file]]
+path = "tests/test_brunel_translator_v11_q16.py"
+rationale = "Exercise SC-NeuroCore: brunel translator v11 q16."
+
+[[file]]
+path = "tests/test_brunel_translator_v15_jax.py"
+rationale = "Exercise SC-NeuroCore: brunel translator v15 jax."
+
+[[file]]
+path = "tests/test_brunel_translator_v19_pytorch_cuda.py"
+rationale = "Exercise SC-NeuroCore: brunel translator v19 pytorch cuda."
+
+[[file]]
+path = "tests/test_brunel_translator_v1_delta_psc.py"
+rationale = "Exercise SC-NeuroCore: brunel translator v1 delta psc."
+
+[[file]]
+path = "tests/test_brunel_translator_v20_vectorized_numpy.py"
+rationale = "Exercise SC-NeuroCore: brunel translator v20 vectorized numpy."
+
+[[file]]
+path = "tests/test_brunel_translator_v2_rate_matched.py"
+rationale = "Exercise SC-NeuroCore: brunel translator v2 rate matched."
+
+[[file]]
+path = "tests/test_brunel_translator_v3_fixed_point.py"
+rationale = "Exercise SC-NeuroCore: brunel translator v3 fixed point."
+
+[[file]]
+path = "tests/test_brunel_translator_v4_hybrid.py"
+rationale = "Exercise SC-NeuroCore: brunel translator v4 hybrid."
+
+[[file]]
+path = "tests/test_brunel_translator_v5_izhikevich.py"
+rationale = "Exercise SC-NeuroCore: brunel translator v5 izhikevich."
+
+[[file]]
+path = "tests/test_brunel_translator_v6_homeostatic.py"
+rationale = "Exercise SC-NeuroCore: brunel translator v6 homeostatic."
+
+[[file]]
+path = "tests/test_brunel_translator_v7_noisy.py"
+rationale = "Exercise SC-NeuroCore: brunel translator v7 noisy."
+
+[[file]]
+path = "tests/test_brunel_translator_v9_post_kick.py"
+rationale = "Exercise SC-NeuroCore: brunel translator v9 post kick."
+
+[[file]]
+path = "tests/test_conversion_ann_snn_conversion_package_facade.py"
+rationale = "Exercise SC-NeuroCore: conversion ann snn conversion package facade."
+
+[[file]]
+path = "tests/test_conversion_ann_snn_convert.py"
+rationale = "Exercise SC-NeuroCore: conversion ann snn convert."
+
+[[file]]
+path = "tests/test_conversion_ann_snn_converted_snn.py"
+rationale = "Exercise SC-NeuroCore: conversion ann snn converted snn."
+
+[[file]]
+path = "tests/test_conversion_ann_snn_extract_qcfs_layers.py"
+rationale = "Exercise SC-NeuroCore: conversion ann snn extract qcfs layers."
+
+[[file]]
+path = "tests/test_conversion_ann_snn_qcfs_activation.py"
+rationale = "Exercise SC-NeuroCore: conversion ann snn qcfs activation."
+
+[[file]]
+path = "tests/test_conversion_ann_snn_qcfs_conversion_route.py"
+rationale = "Exercise SC-NeuroCore: conversion ann snn qcfs conversion route."
+
+[[file]]
+path = "tests/test_conversion_ann_snn_replace_relu_with_qcfs.py"
+rationale = "Exercise SC-NeuroCore: conversion ann snn replace relu with qcfs."
+
+[[file]]
+path = "tests/test_conversion_convert.py"
+rationale = "Exercise SC-NeuroCore: conversion convert."
+
+[[file]]
+path = "tests/test_conversion_extract_layers.py"
+rationale = "Exercise SC-NeuroCore: conversion extract layers."
+
+[[file]]
+path = "tests/test_conversion_qcfs.py"
+rationale = "Exercise SC-NeuroCore: conversion qcfs."

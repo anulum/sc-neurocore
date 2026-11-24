@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.brunel_translator_support import *  # noqa: F403
+from tests.brunel_translator_support import (
+    BrunelParams,
+    StochasticLIFNeuron,
+    translate_v7_noisy,
+)
 
 
 class TestV7Noisy:
     """V7: Noisy LIF fires stochastically."""
 
-    def test_noise_produces_spikes(self):
+    def test_noise_produces_spikes(self) -> None:
+        """A noisy neuron near threshold fires."""
         bp = BrunelParams(v_threshold=20.0, v_reset=10.0)
         params = translate_v7_noisy(bp)
         assert params["neuron_kwargs"]["noise_std"] == 1.0

@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.conversion_ann_snn_support import *  # noqa: F403
+import pytest
+from tests.conversion_ann_snn_support import (
+    QCFSActivation,
+    nn,
+    replace_relu_with_qcfs,
+    torch,
+)
 
 
 class TestReplaceReluWithQcfs:
+    """Replacing ReLU activations with QCFS in place."""
+
     def test_replaces_relu_in_sequential(self) -> None:
+        """Every ReLU in a sequential model is replaced in place."""
         model = nn.Sequential(nn.Linear(4, 8), nn.ReLU(), nn.Linear(8, 3), nn.ReLU())
         out = replace_relu_with_qcfs(model, T=6, theta=1.5)
         assert out is model
@@ -24,11 +33,14 @@ class TestReplaceReluWithQcfs:
         assert all(a.T == 6 for a in activations)
 
     def test_replaces_relu6(self) -> None:
+        """ReLU6 is replaced too."""
         model = nn.Sequential(nn.Linear(4, 8), nn.ReLU6(), nn.Linear(8, 3))
         replace_relu_with_qcfs(model, T=8)
         assert isinstance(model[1], QCFSActivation)
 
     def test_recurses_into_nested_modules(self) -> None:
+        """Nested modules are searched as well."""
+
         class Net(nn.Module):
             def __init__(self) -> None:
                 super().__init__()
@@ -44,21 +56,25 @@ class TestReplaceReluWithQcfs:
         assert isinstance(model.act, QCFSActivation)
 
     def test_learn_theta_propagates(self) -> None:
+        """The learn-theta flag reaches each activation."""
         model = nn.Sequential(nn.ReLU())
         replace_relu_with_qcfs(model, learn_theta=True)
         assert isinstance(model[0].theta, nn.Parameter)
 
     def test_default_learn_theta_makes_threshold_trainable(self) -> None:
+        """By default the threshold is trainable."""
         model = nn.Sequential(nn.ReLU())
         replace_relu_with_qcfs(model)
         assert isinstance(model[0].theta, nn.Parameter)
 
     def test_no_relu_leaves_model_unchanged(self) -> None:
+        """A model without ReLU is unchanged."""
         model = nn.Sequential(nn.Linear(4, 3))
         replace_relu_with_qcfs(model)
         assert not any(isinstance(m, QCFSActivation) for m in model.modules())
 
     def test_requires_torch_when_backend_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Without the torch backend the call asks for PyTorch."""
         from sc_neurocore.conversion import ann_to_snn
 
         monkeypatch.setattr(ann_to_snn, "HAS_TORCH", False)

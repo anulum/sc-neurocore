@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.brunel_translator_support import *  # noqa: F403
+from tests.brunel_translator_support import (
+    BrunelParams,
+    translate_v15_jax,
+)
 
 
 class TestV15Jax:
     """V15: JAX layer produces output."""
 
-    def test_jax_layer_runs(self):
+    def test_jax_layer_runs(self) -> None:
+        """The JAX layer gives one spike per neuron."""
         try:
             from sc_neurocore import JaxSCDenseLayer
             from sc_neurocore.accel.jax_backend import jnp, HAS_JAX

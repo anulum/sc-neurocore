@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.brunel_regression_support import *  # noqa: F403
+from tests.brunel_regression_support import (
+    BrunelParams,
+    StochasticLIFNeuron,
+    translate_v8_refractory,
+)
 
 
 class TestRefractoryRateCeiling:
-    def test_refractory_limits_rate(self):
+    """The refractory period caps the firing rate."""
+
+    def test_refractory_limits_rate(self) -> None:
         """With 5-step refractory at dt=0.1ms, max rate = 1/(5*0.1ms) = 2000 Hz."""
         bp = BrunelParams(v_threshold=20.0, v_reset=10.0, weight_exc=5.0)
         params = translate_v8_refractory(bp)

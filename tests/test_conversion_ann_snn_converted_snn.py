@@ -10,10 +10,16 @@
 
 from __future__ import annotations
 
-from tests.conversion_ann_snn_support import *  # noqa: F403
+import numpy as np
+import numpy.typing as npt
+from tests.conversion_ann_snn_support import (
+    ConvertedSNN,
+)
 
 
 class TestConvertedSNN:
+    """Running a converted SNN."""
+
     def _make_snn(self) -> ConvertedSNN:
         rng = np.random.default_rng(11)
         weights: list[npt.NDArray[np.float64]] = [
@@ -29,10 +35,12 @@ class TestConvertedSNN:
         )
 
     def test_n_layers(self) -> None:
+        """The converted network reports its layer count."""
         snn = self._make_snn()
         assert snn.n_layers == 2
 
     def test_run_single(self) -> None:
+        """One sample gives one float64 count per output."""
         snn = self._make_snn()
         x = np.random.default_rng(12).random(5)
         out = snn.run(x)
@@ -40,12 +48,14 @@ class TestConvertedSNN:
         assert out.dtype == np.float64
 
     def test_run_batch(self) -> None:
+        """A batch gives one row of counts per sample."""
         snn = self._make_snn()
         x = np.random.default_rng(13).random((4, 5))
         out = snn.run(x)
         assert out.shape == (4, 3)
 
     def test_classify(self) -> None:
+        """A batch classifies into valid class indices."""
         snn = self._make_snn()
         x = np.random.default_rng(14).random((4, 5))
         preds = snn.classify(x)
@@ -53,12 +63,14 @@ class TestConvertedSNN:
         assert all(0 <= p < 3 for p in preds)
 
     def test_classify_single(self) -> None:
+        """One sample classifies to an integer class."""
         snn = self._make_snn()
         x = np.random.default_rng(15).random(5)
         pred = snn.classify(x)
         assert isinstance(int(pred), int)
 
     def test_no_bias(self) -> None:
+        """Layers without bias still run."""
         weights: list[npt.NDArray[np.float64]] = [np.random.default_rng(16).normal(size=(3, 2))]
         biases: list[npt.NDArray[np.float64] | None] = [None]
         snn = ConvertedSNN(weights=weights, biases=biases, thresholds=[1.0], T=8)

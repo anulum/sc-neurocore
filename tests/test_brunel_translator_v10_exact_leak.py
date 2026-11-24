@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.brunel_translator_support import *  # noqa: F403
+import numpy as np
+from tests.brunel_translator_support import (
+    BrunelParams,
+    translate_v10_exact_leak,
+)
 
 
 class TestV10ExactLeak:
     """V10: Exact exponential leak."""
 
-    def test_leak_factor_matches_exp(self):
+    def test_leak_factor_matches_exp(self) -> None:
+        """The leak factor equals exp(-dt/tau)."""
         bp = BrunelParams(dt=0.1, tau_mem=20.0)
         params = translate_v10_exact_leak(bp)
         expected = np.exp(-0.1 / 20.0)

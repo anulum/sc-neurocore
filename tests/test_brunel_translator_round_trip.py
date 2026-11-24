@@ -10,13 +10,37 @@
 
 from __future__ import annotations
 
-from tests.brunel_translator_support import *  # noqa: F403
+import numpy as np
+from tests.brunel_translator_support import (
+    BrunelParams,
+    StochasticLIFNeuron,
+    translate_v10_exact_leak,
+    translate_v11_q16,
+    translate_v12_stdp,
+    translate_v13_dot_product,
+    translate_v14_sobol,
+    translate_v15_jax,
+    translate_v16_recurrent,
+    translate_v17_memristive,
+    translate_v18_numba,
+    translate_v19_pytorch_cuda,
+    translate_v1_stochastic_lif,
+    translate_v20_vectorized_numpy,
+    translate_v2_rate_matched,
+    translate_v3_fixed_point,
+    translate_v4_hybrid,
+    translate_v5_izhikevich,
+    translate_v6_homeostatic,
+    translate_v7_noisy,
+    translate_v8_refractory,
+    translate_v9_post_kick,
+)
 
 
 class TestRoundTrip:
     """Cross-variant consistency."""
 
-    def test_v1_round_trip_nonzero_spikes(self):
+    def test_v1_round_trip_nonzero_spikes(self) -> None:
         """Translate → simulate 1 neuron with Poisson drive → spike count > 0."""
         bp = BrunelParams(
             v_threshold=20.0,
@@ -37,7 +61,7 @@ class TestRoundTrip:
             spikes += spike
         assert spikes > 0
 
-    def test_all_variants_produce_params(self):
+    def test_all_variants_produce_params(self) -> None:
         """All 20 translators return non-empty dicts without errors."""
         bp = BrunelParams()
         translators = [

@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.brunel_translator_support import *  # noqa: F403
+from tests.brunel_translator_support import (
+    BrunelParams,
+    HomeostaticLIFNeuron,
+    translate_v6_homeostatic,
+)
 
 
 class TestV6Homeostatic:
     """V6: HomeostaticLIFNeuron threshold adaptation."""
 
-    def test_threshold_adapts(self):
+    def test_threshold_adapts(self) -> None:
+        """The homeostatic threshold adapts while the neuron runs."""
         bp = BrunelParams(v_threshold=20.0, v_reset=10.0, weight_exc=5.0)
         params = translate_v6_homeostatic(bp)
         n = HomeostaticLIFNeuron(**params["neuron_kwargs"])

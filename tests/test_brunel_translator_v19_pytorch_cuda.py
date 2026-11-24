@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.brunel_translator_support import *  # noqa: F403
+from tests.brunel_translator_support import (
+    BrunelParams,
+    translate_v19_pytorch_cuda,
+)
 
 
 class TestV19PytorchCuda:
     """V19: CUDA tensor computation."""
 
-    def test_cuda_params(self):
+    def test_cuda_params(self) -> None:
+        """The CUDA variant keeps the population size and threshold."""
         bp = BrunelParams()
         params = translate_v19_pytorch_cuda(bp)
         assert params["n_total"] == 1000

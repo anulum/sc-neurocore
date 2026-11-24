@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.brunel_translator_support import *  # noqa: F403
+from tests.brunel_translator_support import (
+    BrunelParams,
+    StochasticLIFNeuron,
+    translate_v1_stochastic_lif,
+)
 
 
 class TestV1DeltaPSC:
     """V1: StochasticLIF with delta-PSC wiring."""
 
-    def test_suprathreshold_epsp_fires(self):
+    def test_suprathreshold_epsp_fires(self) -> None:
         """Single voltage kick >= v_threshold must produce a spike."""
         bp = BrunelParams(v_threshold=20.0, v_reset=10.0)
         params = translate_v1_stochastic_lif(bp)
@@ -27,7 +31,7 @@ class TestV1DeltaPSC:
         assert spike == 1
         assert n.v == bp.v_reset
 
-    def test_subthreshold_no_spike(self):
+    def test_subthreshold_no_spike(self) -> None:
         """Input below threshold must not fire."""
         bp = BrunelParams(v_threshold=20.0, v_reset=10.0)
         params = translate_v1_stochastic_lif(bp)

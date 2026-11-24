@@ -10,13 +10,17 @@
 
 from __future__ import annotations
 
-from tests.brunel_translator_support import *  # noqa: F403
+from tests.brunel_translator_support import (
+    BrunelParams,
+    VectorizedSCLayer,
+    translate_v2_rate_matched,
+)
 
 
 class TestV2RateMatched:
     """V2: VectorizedSCLayer probability domain."""
 
-    def test_output_proportional_to_input(self):
+    def test_output_proportional_to_input(self) -> None:
         """Mean output probability should increase with input probability."""
         bp = BrunelParams()
         params = translate_v2_rate_matched(bp)

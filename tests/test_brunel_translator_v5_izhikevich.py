@@ -10,20 +10,26 @@
 
 from __future__ import annotations
 
-from tests.brunel_translator_support import *  # noqa: F403
+from tests.brunel_translator_support import (
+    BrunelParams,
+    SCIzhikevichNeuron,
+    translate_v5_izhikevich,
+)
 
 
 class TestV5Izhikevich:
     """V5: Izhikevich regular-spiking neuron."""
 
-    def test_fires_with_sustained_input(self):
+    def test_fires_with_sustained_input(self) -> None:
+        """The Izhikevich neuron fires with sustained input."""
         bp = BrunelParams(weight_exc=5.0, external_rate_hz=200.0)
         params = translate_v5_izhikevich(bp)
         n = SCIzhikevichNeuron(**params["neuron_kwargs"])
         spikes = sum(n.step(15.0) for _ in range(1000))
         assert spikes > 0, "Izhikevich must fire with sustained current"
 
-    def test_threshold_is_30mv(self):
+    def test_threshold_is_30mv(self) -> None:
+        """The Izhikevich variant uses the regular-spiking c and d."""
         bp = BrunelParams()
         params = translate_v5_izhikevich(bp)
         assert params["neuron_kwargs"]["c"] == -65.0

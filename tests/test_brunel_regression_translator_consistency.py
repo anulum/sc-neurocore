@@ -10,14 +10,23 @@
 
 from __future__ import annotations
 
-from tests.brunel_regression_support import *  # noqa: F403
+import numpy as np
+import pytest
+from tests.brunel_regression_support import (
+    BrunelParams,
+    translate_v10_exact_leak,
+    translate_v1_stochastic_lif,
+    translate_v7_noisy,
+    translate_v8_refractory,
+    translate_v9_post_kick,
+)
 
 
 class TestTranslatorConsistency:
-    """Variants that share StochasticLIFNeuron base must produce identical neuron_kwargs
-    except for the specific parameter they modify."""
+    """Variants that share StochasticLIFNeuron base must produce identical neuron_kwargs except for the specific parameter they modify."""
 
-    def test_v7_only_changes_noise(self):
+    def test_v7_only_changes_noise(self) -> None:
+        """The noisy variant changes only the noise level."""
         bp = BrunelParams()
         v1 = translate_v1_stochastic_lif(bp)
         v7 = translate_v7_noisy(bp)
@@ -27,7 +36,8 @@ class TestTranslatorConsistency:
             else:
                 assert v7["neuron_kwargs"][k] == v1["neuron_kwargs"][k]
 
-    def test_v8_only_changes_refractory(self):
+    def test_v8_only_changes_refractory(self) -> None:
+        """The refractory variant changes only the refractory period."""
         bp = BrunelParams()
         v1 = translate_v1_stochastic_lif(bp)
         v8 = translate_v8_refractory(bp)
@@ -37,14 +47,16 @@ class TestTranslatorConsistency:
             assert v8_val == v1_val
         assert v8["neuron_kwargs"]["refractory_period"] == 5
 
-    def test_v9_only_adds_kick_flag(self):
+    def test_v9_only_adds_kick_flag(self) -> None:
+        """The post-kick variant only adds the kick flag."""
         bp = BrunelParams()
         v1 = translate_v1_stochastic_lif(bp)
         v9 = translate_v9_post_kick(bp)
         assert v9["kick_after_step"] is True
         assert v9["neuron_kwargs"] == v1["neuron_kwargs"]
 
-    def test_v10_exact_leak_factor(self):
+    def test_v10_exact_leak_factor(self) -> None:
+        """The exact-leak variant uses the exponential leak factor."""
         bp = BrunelParams(dt=0.1, tau_mem=20.0)
         v10 = translate_v10_exact_leak(bp)
         assert v10["exact_leak"] is True

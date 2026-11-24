@@ -10,23 +10,27 @@
 
 from __future__ import annotations
 
-from tests.brunel_regression_support import *  # noqa: F403
+from tests.brunel_regression_support import (
+    _load_results,
+)
 
 
 class TestBenchmarkRegression:
     """Validate invariants from the 20-variant benchmark run."""
 
-    def test_brian2_reference_exists(self):
+    def test_brian2_reference_exists(self) -> None:
+        """The saved results include a spiking Brian2 reference."""
         results = _load_results()
         assert "brian2_reference" in results
         assert results["brian2_reference"]["total_spikes"] > 0
 
-    def test_at_least_16_variants_have_output(self):
+    def test_at_least_16_variants_have_output(self) -> None:
+        """At least 16 variants produced spikes."""
         results = _load_results()
         active = [k for k, v in results.items() if v["mean_rate_hz"] > 0 or v["total_spikes"] > 0]
         assert len(active) >= 16, f"Only {len(active)} variants produced output"
 
-    def test_v14_sobol_closest_to_brian2(self):
+    def test_v14_sobol_closest_to_brian2(self) -> None:
         """Sobol low-discrepancy encoding should be closest to Brian2 among spiking variants."""
         results = _load_results()
         spiking = {
@@ -37,10 +41,10 @@ class TestBenchmarkRegression:
             k: abs(v["rate_ratio"] - 1.0) for k, v in spiking.items() if v["rate_ratio"] > 0
         }
         assert distances, "spiking variants omit positive Brian2 rate ratios"
-        closest = min(distances, key=distances.get)
+        closest = min(distances, key=lambda name: distances[name])
         assert closest == "v14_sobol_bitstream", f"Expected Sobol closest, got {closest}"
 
-    def test_acceleration_ordering(self):
+    def test_acceleration_ordering(self) -> None:
         """V18 (Numba) and V19 (CUDA) must be faster than V1 (pure Python)."""
         results = _load_results()
         v1_time = results.get("v1_stochastic_lif", {}).get("wall_time_s", 0)
@@ -50,13 +54,14 @@ class TestBenchmarkRegression:
             if vt > 0:
                 assert vt < v1_time, f"{vname} ({vt:.1f}s) not faster than V1 ({v1_time:.1f}s)"
 
-    def test_refractory_rate_below_ceiling(self):
+    def test_refractory_rate_below_ceiling(self) -> None:
+        """The refractory variant fires below the refractory ceiling."""
         results = _load_results()
         v8 = results.get("v8_refractory_lif", {})
         assert v8 and v8["mean_rate_hz"] > 0, "committed benchmark omits an active V8 result"
         assert v8["mean_rate_hz"] < 2000.0
 
-    def test_v1_v20_spike_count_match(self):
+    def test_v1_v20_spike_count_match(self) -> None:
         """V1 and V20 implement identical LIF dynamics, spike counts must match."""
         results = _load_results()
         v1 = results.get("v1_stochastic_lif", {})
@@ -64,7 +69,7 @@ class TestBenchmarkRegression:
         assert v1 and v20, "committed benchmark omits required V1/V20 parity results"
         assert v1["total_spikes"] == v20["total_spikes"]
 
-    def test_homeostatic_close_to_baseline(self):
+    def test_homeostatic_close_to_baseline(self) -> None:
         """V6 homeostatic should fire within 5% of V1 (adaptation hasn't converged in 1s)."""
         results = _load_results()
         v1 = results.get("v1_stochastic_lif", {})
@@ -73,7 +78,7 @@ class TestBenchmarkRegression:
         ratio = v6["mean_rate_hz"] / v1["mean_rate_hz"]
         assert 0.95 <= ratio <= 1.05, f"V6/V1 ratio {ratio:.3f} outside 5% band"
 
-    def test_noisy_close_to_baseline(self):
+    def test_noisy_close_to_baseline(self) -> None:
         """V7 noisy should fire within 5% of V1 (noise is small relative to drive)."""
         results = _load_results()
         v1 = results.get("v1_stochastic_lif", {})
@@ -82,7 +87,8 @@ class TestBenchmarkRegression:
         ratio = v7["mean_rate_hz"] / v1["mean_rate_hz"]
         assert 0.90 <= ratio <= 1.10, f"V7/V1 ratio {ratio:.3f} outside 10% band"
 
-    def test_all_wall_times_positive(self):
+    def test_all_wall_times_positive(self) -> None:
+        """Every variant records a positive wall time."""
         results = _load_results()
         for name, r in results.items():
             if r.get("status") == "skipped" or r.get("metric_note", "").startswith("SKIPPED"):

@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.conversion_ann_snn_support import *  # noqa: F403
+from collections.abc import Callable
+import builtins
+import pytest
+from tests.conversion_ann_snn_support import (
+    ConvertedSNN,
+    QCFSActivation,
+    replace_relu_with_qcfs,
+)
 
 
 class TestConversionPackageFacade:
+    """The lazy public facade of the conversion package."""
+
     def test_lazy_facade_resolves_public_exports(self) -> None:
+        """The facade resolves each public export lazily."""
         import sc_neurocore.conversion as conversion
         from sc_neurocore.conversion.ann_to_snn import convert
 
@@ -24,12 +34,14 @@ class TestConversionPackageFacade:
         assert conversion.__getattr__("replace_relu_with_qcfs") is replace_relu_with_qcfs
 
     def test_lazy_facade_rejects_unknown_export(self) -> None:
+        """The facade rejects an unknown export."""
         import sc_neurocore.conversion as conversion
 
         with pytest.raises(AttributeError, match="not_exported"):
             conversion.__getattr__("not_exported")
 
     def test_lazy_facade_reports_qcfs_import_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A failed QCFS import is reported with its requirement."""
         import sc_neurocore.conversion as conversion
 
         original_import: Callable[..., object] = builtins.__import__
