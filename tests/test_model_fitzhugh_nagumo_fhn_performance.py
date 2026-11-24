@@ -10,11 +10,34 @@
 
 from __future__ import annotations
 
-from tests.model_fitzhugh_nagumo_support import *  # noqa: F403
+import numpy as np
+import os
+import time
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.fitzhugh_nagumo import (
+    FitzHughNagumoNeuron,
+)
+from tests.performance_guard import (
+    assert_throughput_guard,
+)
 
 
 class TestFHNPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the FitzHughNagumoNeuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = FitzHughNagumoNeuron()
         N = 100000
         t0 = time.perf_counter()
@@ -31,7 +54,8 @@ class TestFHNPerformance:
             smoke_minimum_per_second=100.0,
         )
 
-    def test_network_throughput(self):
+    def test_network_throughput(self) -> None:
+        """The network meets its throughput floor."""
         pop = Population(FitzHughNagumoNeuron, n=50, label="bench")
         drive = PoissonInput(n=50, rate_hz=500.0, weight=0.8, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

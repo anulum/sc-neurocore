@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.model_e_prop_alif_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.e_prop_alif import (
+    EPropALIFNeuron,
+)
+from tests.model_e_prop_alif_support import (
+    _run,
+)
 
 
 class TestEPropALIFParameters:
-    def test_tau_a_controls_adaptation_speed(self):
+    """Parameter behaviour of the EPropALIFNeuron."""
+
+    def test_tau_a_controls_adaptation_speed(self) -> None:
+        """Tau_a controls adaptation speed."""
         n_fast = EPropALIFNeuron(tau_a=50.0)
         n_slow = EPropALIFNeuron(tau_a=500.0)
         s_fast = len(_run(n_fast, current=0.2, steps=5000))
@@ -23,13 +33,15 @@ class TestEPropALIFParameters:
         assert s_fast > s_slow
 
     @pytest.mark.parametrize("dt", [0.5, 1.0, 2.0])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = EPropALIFNeuron(dt=dt)
         for _ in range(5000):
             n.step(0.2)
         assert np.isfinite(n.v)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = EPropALIFNeuron()

@@ -10,32 +10,42 @@
 
 from __future__ import annotations
 
-from tests.model_escape_rate_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.escape_rate import (
+    EscapeRateNeuron,
+)
 
 
 class TestEscapeRateIsolation:
-    def test_construction_all_defaults(self):
+    """The EscapeRateNeuron in isolation."""
+
+    def test_construction_all_defaults(self) -> None:
+        """The constructor sets every documented default."""
         n = EscapeRateNeuron()
         assert n.v == -70.0 and n.v_rest == -70.0 and n.v_reset == -70.0
         assert n.v_threshold == -50.0 and n.tau_m == 10.0
         assert n.rho_0 == 0.001 and n.delta_u == 3.0 and n.resistance == 1.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert EscapeRateNeuron().step(0.0) in (0, 1)
 
-    def test_state_evolves(self):
+    def test_state_evolves(self) -> None:
+        """The state evolves under drive."""
         n = EscapeRateNeuron()
         v0 = n.v
         n.step(30.0)
         assert n.v != v0
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = EscapeRateNeuron()
         for _ in range(100000):
             n.step(40.0)
         assert np.isfinite(n.v)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = EscapeRateNeuron()
         for _ in range(100):
             n.step(50.0)

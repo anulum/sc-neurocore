@@ -10,14 +10,35 @@
 
 from __future__ import annotations
 
-from tests.model_energy_lif_support import *  # noqa: F403
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.sc_normalized_energy_lif import (
+    SCNormalizedEnergyLIFNeuron as EnergyLIFNeuron,
+)
 
 
 class TestEnergyLIFNetwork:
-    def test_population(self):
+    """The EnergyLIFNeuron in a network."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         assert Population(EnergyLIFNeuron, n=10, label="elif").n == 10
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(EnergyLIFNeuron, n=20, label="elif")
         drive = PoissonInput(n=20, rate_hz=500.0, weight=30.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -25,7 +46,8 @@ class TestEnergyLIFNetwork:
         net.run(duration=0.5, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_with_projection(self):
+    def test_with_projection(self) -> None:
+        """A projected network yields readable spike trains."""
         pop = Population(EnergyLIFNeuron, n=10, label="elif")
         proj = Projection(pop, pop, weight=5.0, probability=0.3, seed=42)
         drive = PoissonInput(n=10, rate_hz=500.0, weight=30.0, dt=0.001, seed=42)

@@ -10,13 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_dendrify_support import *  # noqa: F403
+from sc_neurocore.neurons.models.dendrify import (
+    DendrifyNeuron,
+)
 
 
 class TestDendrify:
-    def test_dynamics(self):
-        from sc_neurocore.neurons.models.dendrify import DendrifyNeuron
+    """The Dendrify dendritic-compartment neuron."""
 
+    def test_dynamics(self) -> None:
+        """The state evolves under drive."""
         n = DendrifyNeuron()
         for _ in range(200):
             n.step(10.0)

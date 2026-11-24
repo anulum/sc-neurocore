@@ -10,22 +10,34 @@
 
 from __future__ import annotations
 
-from tests.model_expif_support import *  # noqa: F403
+import math
+import pytest
+from sc_neurocore.neurons.models.expif import (
+    ExpIFNeuron,
+)
+from tests.model_expif_support import (
+    _run,
+)
 
 
 class TestExpIFParameters:
+    """Parameter behaviour of the ExpIFNeuron."""
+
     def test_tau_affects_rate(self) -> None:
+        """The membrane time constant changes the rate."""
         fast = len(_run(ExpIFNeuron(tau=5.0), current=20.0, steps=10_000))
         slow = len(_run(ExpIFNeuron(tau=40.0), current=20.0, steps=10_000))
         assert fast > slow
 
     def test_lower_soft_threshold_fires_more_readily(self) -> None:
+        """Lower soft threshold fires more readily."""
         lower = len(_run(ExpIFNeuron(v_rh=-62.0), current=15.0, steps=10_000))
         higher = len(_run(ExpIFNeuron(v_rh=-55.0), current=15.0, steps=10_000))
         assert lower > higher
 
     @pytest.mark.parametrize("dt", [0.01, 0.02, 0.05])
     def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         neuron = ExpIFNeuron(dt=dt)
         for _ in range(10_000):
             neuron.step(20.0)
@@ -33,6 +45,7 @@ class TestExpIFParameters:
         assert neuron.v < neuron.v_threshold
 
     def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             neuron = ExpIFNeuron()

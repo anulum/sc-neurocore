@@ -6,9 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (rust_and_reset) from former test_model_dpi_neuron.py
 
+"""The Rust backend and reset of the DPI neuron."""
+
 from __future__ import annotations
 
-from tests.model_dpi_neuron_support import *  # noqa: F403
+import numpy as np
+from tests.model_dpi_neuron_support import (
+    _configured,
+)
 
 
 def test_rust_complete_batch_accepts_configured_contract() -> None:

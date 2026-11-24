@@ -10,19 +10,21 @@
 
 from __future__ import annotations
 
-from tests.model_e_prop_alif_support import *  # noqa: F403
+from sc_neurocore.neurons.models.e_prop_alif import (
+    EPropALIFNeuron,
+)
 
 
 class TestEPropALIF:
-    def test_fires(self):
-        from sc_neurocore.neurons.models.e_prop_alif import EPropALIFNeuron
+    """The e-prop adaptive LIF neuron."""
 
+    def test_fires(self) -> None:
+        """Sustained drive makes the neuron fire."""
         n = EPropALIFNeuron()
         assert sum(n.step(30.0) for _ in range(200)) > 0
 
-    def test_adaptation(self):
-        from sc_neurocore.neurons.models.e_prop_alif import EPropALIFNeuron
-
+    def test_adaptation(self) -> None:
+        """Adaptation builds up while the neuron fires."""
         n = EPropALIFNeuron()
         for _ in range(100):
             n.step(30.0)

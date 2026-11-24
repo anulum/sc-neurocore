@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_fitzhugh_nagumo_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.models.fitzhugh_nagumo import (
+    FitzHughNagumoNeuron,
+)
+from tests.model_fitzhugh_nagumo_support import (
+    _rhs,
+    _rk4_reference,
+)
 
 
 class TestFHNDynamicsEquations:
-    def test_rhs_formula(self):
+    """The update equations of the FitzHugh-Nagumo neuron."""
+
+    def test_rhs_formula(self) -> None:
         """The derivative matches the FitzHugh-Nagumo two-state ODE."""
         n = FitzHughNagumoNeuron()
         dv, dw = n._rhs_tuple(n.v, n.w, 0.5)
@@ -22,7 +31,7 @@ class TestFHNDynamicsEquations:
         assert dv == pytest.approx(expected_dv)
         assert dw == pytest.approx(expected_dw)
 
-    def test_default_step_matches_independent_rk4_reference(self):
+    def test_default_step_matches_independent_rk4_reference(self) -> None:
         """Production default RK4 matches an independent four-stage reference."""
         n = FitzHughNagumoNeuron()
         expected_v, expected_w = _rk4_reference(n.v, n.w, 0.5, n.dt)
@@ -30,7 +39,7 @@ class TestFHNDynamicsEquations:
         assert n.v == pytest.approx(expected_v, abs=1.0e-15)
         assert n.w == pytest.approx(expected_w, abs=1.0e-15)
 
-    def test_explicit_baseline_euler_matches_historical_formula(self):
+    def test_explicit_baseline_euler_matches_historical_formula(self) -> None:
         """Legacy Euler remains available only through explicit opt-in."""
         n = FitzHughNagumoNeuron(integrator="baseline_euler")
         v0, w0 = n.v, n.w
@@ -39,12 +48,12 @@ class TestFHNDynamicsEquations:
         assert n.v == pytest.approx(v0 + dv * n.dt)
         assert n.w == pytest.approx(w0 + dw * n.dt)
 
-    def test_cubic_nullcline(self):
+    def test_cubic_nullcline(self) -> None:
         """V-nullcline: w = v - v³/3 + I. At v=0, I=0: w = 0."""
         w_null = 0.0 - 0.0**3 / 3 + 0.0
         assert abs(w_null) < 1e-10
 
-    def test_w_nullcline(self):
+    def test_w_nullcline(self) -> None:
         """w-nullcline: w = (v + a) / b. At v=-0.7: w = 0."""
         n = FitzHughNagumoNeuron()
         w_null = (-0.7 + n.a) / n.b

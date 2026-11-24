@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3797
+expected_file_count = 3856
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -15232,3 +15232,239 @@ rationale = "Exercise SC-NeuroCore: model de schutter purkinje de schutter purki
 [[file]]
 path = "tests/test_model_de_schutter_purkinje_de_schutter_rk4_hardening.py"
 rationale = "Exercise SC-NeuroCore: model de schutter purkinje de schutter rk4 hardening."
+
+[[file]]
+path = "tests/test_model_dendrify_dendrify.py"
+rationale = "Exercise SC-NeuroCore: model dendrify dendrify."
+
+[[file]]
+path = "tests/test_model_dendrify_dendrify_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model dendrify dendrify dynamics."
+
+[[file]]
+path = "tests/test_model_dendrify_dendrify_isolation.py"
+rationale = "Exercise SC-NeuroCore: model dendrify dendrify isolation."
+
+[[file]]
+path = "tests/test_model_dendrify_dendrify_performance.py"
+rationale = "Exercise SC-NeuroCore: model dendrify dendrify performance."
+
+[[file]]
+path = "tests/test_model_dendrify_dendrify_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model dendrify dendrify pipeline."
+
+[[file]]
+path = "tests/test_model_descriptor_completeness_and_validation.py"
+rationale = "Exercise SC-NeuroCore: model descriptor completeness and validation."
+
+[[file]]
+path = "tests/test_model_descriptor_every_model.py"
+rationale = "Exercise SC-NeuroCore: model descriptor every model."
+
+[[file]]
+path = "tests/test_model_descriptor_generator.py"
+rationale = "Exercise SC-NeuroCore: model descriptor generator."
+
+[[file]]
+path = "tests/test_model_descriptor_merge.py"
+rationale = "Exercise SC-NeuroCore: model descriptor merge."
+
+[[file]]
+path = "tests/test_model_descriptor_silicon.py"
+rationale = "Exercise SC-NeuroCore: model descriptor silicon."
+
+[[file]]
+path = "tests/test_model_destexhe_thalamic_dest_analytical.py"
+rationale = "Exercise SC-NeuroCore: model destexhe thalamic dest analytical."
+
+[[file]]
+path = "tests/test_model_destexhe_thalamic_dest_isolation.py"
+rationale = "Exercise SC-NeuroCore: model destexhe thalamic dest isolation."
+
+[[file]]
+path = "tests/test_model_destexhe_thalamic_dest_parameters.py"
+rationale = "Exercise SC-NeuroCore: model destexhe thalamic dest parameters."
+
+[[file]]
+path = "tests/test_model_destexhe_thalamic_dest_performance.py"
+rationale = "Exercise SC-NeuroCore: model destexhe thalamic dest performance."
+
+[[file]]
+path = "tests/test_model_destexhe_thalamic_dest_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model destexhe thalamic dest pipeline."
+
+[[file]]
+path = "tests/test_model_destexhe_thalamic_dest_thalamic.py"
+rationale = "Exercise SC-NeuroCore: model destexhe thalamic dest thalamic."
+
+[[file]]
+path = "tests/test_model_dpi_neuron_contract_rejects.py"
+rationale = "Exercise SC-NeuroCore: model dpi neuron contract rejects."
+
+[[file]]
+path = "tests/test_model_dpi_neuron_dynamics_and_golden.py"
+rationale = "Exercise SC-NeuroCore: model dpi neuron dynamics and golden."
+
+[[file]]
+path = "tests/test_model_dpi_neuron_rust_and_reset.py"
+rationale = "Exercise SC-NeuroCore: model dpi neuron rust and reset."
+
+[[file]]
+path = "tests/test_model_durstewitz_dopamine_durstewitz_dopamine.py"
+rationale = "Exercise SC-NeuroCore: model durstewitz dopamine durstewitz dopamine."
+
+[[file]]
+path = "tests/test_model_durstewitz_dopamine_durstewitz_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model durstewitz dopamine durstewitz dynamics."
+
+[[file]]
+path = "tests/test_model_durstewitz_dopamine_durstewitz_isolation.py"
+rationale = "Exercise SC-NeuroCore: model durstewitz dopamine durstewitz isolation."
+
+[[file]]
+path = "tests/test_model_durstewitz_dopamine_durstewitz_performance.py"
+rationale = "Exercise SC-NeuroCore: model durstewitz dopamine durstewitz performance."
+
+[[file]]
+path = "tests/test_model_durstewitz_dopamine_durstewitz_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model durstewitz dopamine durstewitz pipeline."
+
+[[file]]
+path = "tests/test_model_durstewitz_dopamine_durstewitz_rk4.py"
+rationale = "Exercise SC-NeuroCore: model durstewitz dopamine durstewitz rk4."
+
+[[file]]
+path = "tests/test_model_e_prop_alif_e_prop_alif.py"
+rationale = "Exercise SC-NeuroCore: model e prop alif e prop alif."
+
+[[file]]
+path = "tests/test_model_e_prop_alif_e_prop_alif_adaptive_threshold.py"
+rationale = "Exercise SC-NeuroCore: model e prop alif e prop alif adaptive threshold."
+
+[[file]]
+path = "tests/test_model_e_prop_alif_e_prop_alif_eligibility_trace.py"
+rationale = "Exercise SC-NeuroCore: model e prop alif e prop alif eligibility trace."
+
+[[file]]
+path = "tests/test_model_e_prop_alif_e_prop_alif_isolation.py"
+rationale = "Exercise SC-NeuroCore: model e prop alif e prop alif isolation."
+
+[[file]]
+path = "tests/test_model_e_prop_alif_e_prop_alif_parameters.py"
+rationale = "Exercise SC-NeuroCore: model e prop alif e prop alif parameters."
+
+[[file]]
+path = "tests/test_model_e_prop_alif_e_prop_alif_performance.py"
+rationale = "Exercise SC-NeuroCore: model e prop alif e prop alif performance."
+
+[[file]]
+path = "tests/test_model_e_prop_alif_e_prop_alif_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model e prop alif e prop alif pipeline."
+
+[[file]]
+path = "tests/test_model_e_prop_alif_e_prop_aliffi.py"
+rationale = "Exercise SC-NeuroCore: model e prop alif e prop aliffi."
+
+[[file]]
+path = "tests/test_model_energy_lif_energy_lif_analysis.py"
+rationale = "Exercise SC-NeuroCore: model energy lif energy lif analysis."
+
+[[file]]
+path = "tests/test_model_energy_lif_energy_lif_isolation.py"
+rationale = "Exercise SC-NeuroCore: model energy lif energy lif isolation."
+
+[[file]]
+path = "tests/test_model_energy_lif_energy_lif_network.py"
+rationale = "Exercise SC-NeuroCore: model energy lif energy lif network."
+
+[[file]]
+path = "tests/test_model_energy_lif_energy_lif_validation.py"
+rationale = "Exercise SC-NeuroCore: model energy lif energy lif validation."
+
+[[file]]
+path = "tests/test_model_escape_rate_escape_rate_analytical.py"
+rationale = "Exercise SC-NeuroCore: model escape rate escape rate analytical."
+
+[[file]]
+path = "tests/test_model_escape_rate_escape_rate_isi.py"
+rationale = "Exercise SC-NeuroCore: model escape rate escape rate isi."
+
+[[file]]
+path = "tests/test_model_escape_rate_escape_rate_isolation.py"
+rationale = "Exercise SC-NeuroCore: model escape rate escape rate isolation."
+
+[[file]]
+path = "tests/test_model_escape_rate_escape_rate_parameters.py"
+rationale = "Exercise SC-NeuroCore: model escape rate escape rate parameters."
+
+[[file]]
+path = "tests/test_model_escape_rate_escape_rate_performance.py"
+rationale = "Exercise SC-NeuroCore: model escape rate escape rate performance."
+
+[[file]]
+path = "tests/test_model_escape_rate_escape_rate_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model escape rate escape rate pipeline."
+
+[[file]]
+path = "tests/test_model_escape_rate_escape_rate_stochastic_mechanism.py"
+rationale = "Exercise SC-NeuroCore: model escape rate escape rate stochastic mechanism."
+
+[[file]]
+path = "tests/test_model_escape_rate_escape_rate_validation.py"
+rationale = "Exercise SC-NeuroCore: model escape rate escape rate validation."
+
+[[file]]
+path = "tests/test_model_expif_exp_if_analytical.py"
+rationale = "Exercise SC-NeuroCore: model expif exp if analytical."
+
+[[file]]
+path = "tests/test_model_expif_exp_if_exponential_escape.py"
+rationale = "Exercise SC-NeuroCore: model expif exp if exponential escape."
+
+[[file]]
+path = "tests/test_model_expif_exp_if_isolation.py"
+rationale = "Exercise SC-NeuroCore: model expif exp if isolation."
+
+[[file]]
+path = "tests/test_model_expif_exp_if_parameters.py"
+rationale = "Exercise SC-NeuroCore: model expif exp if parameters."
+
+[[file]]
+path = "tests/test_model_expif_exp_if_performance.py"
+rationale = "Exercise SC-NeuroCore: model expif exp if performance."
+
+[[file]]
+path = "tests/test_model_expif_exp_if_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model expif exp if pipeline."
+
+[[file]]
+path = "tests/test_model_expif_exp_if_validation.py"
+rationale = "Exercise SC-NeuroCore: model expif exp if validation."
+
+[[file]]
+path = "tests/test_model_expif_exp_iffi.py"
+rationale = "Exercise SC-NeuroCore: model expif exp iffi."
+
+[[file]]
+path = "tests/test_model_fitzhugh_nagumo_fhn_dynamics_equations.py"
+rationale = "Exercise SC-NeuroCore: model fitzhugh nagumo fhn dynamics equations."
+
+[[file]]
+path = "tests/test_model_fitzhugh_nagumo_fhn_isolation.py"
+rationale = "Exercise SC-NeuroCore: model fitzhugh nagumo fhn isolation."
+
+[[file]]
+path = "tests/test_model_fitzhugh_nagumo_fhn_oscillatory_band.py"
+rationale = "Exercise SC-NeuroCore: model fitzhugh nagumo fhn oscillatory band."
+
+[[file]]
+path = "tests/test_model_fitzhugh_nagumo_fhn_parameters.py"
+rationale = "Exercise SC-NeuroCore: model fitzhugh nagumo fhn parameters."
+
+[[file]]
+path = "tests/test_model_fitzhugh_nagumo_fhn_performance.py"
+rationale = "Exercise SC-NeuroCore: model fitzhugh nagumo fhn performance."
+
+[[file]]
+path = "tests/test_model_fitzhugh_nagumo_fhn_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model fitzhugh nagumo fhn pipeline."

@@ -10,12 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_durstewitz_dopamine_support import *  # noqa: F403
+import time
+from sc_neurocore.neurons.models.durstewitz_dopamine import (
+    DurstewitzDopamineNeuron,
+)
 from tests.performance_guard import assert_throughput_guard
 
 
 class TestDurstewitzPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the DurstewitzDopamineNeuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = DurstewitzDopamineNeuron()
         N = 10000
         t0 = time.perf_counter()

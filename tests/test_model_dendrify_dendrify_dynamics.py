@@ -10,26 +10,37 @@
 
 from __future__ import annotations
 
-from tests.model_dendrify_support import *  # noqa: F403
+from sc_neurocore.neurons.models.dendrify import (
+    DendrifyNeuron,
+)
+from tests.model_dendrify_support import (
+    _run,
+)
 
 
 class TestDendrifyDynamics:
-    def test_subthreshold_silent(self):
+    """Dynamics of the DendrifyNeuron."""
+
+    def test_subthreshold_silent(self) -> None:
+        """A subthreshold current gives no spikes."""
         n = DendrifyNeuron()
         assert len(_run(n, current=10.0, steps=10000)) == 0
 
-    def test_suprathreshold_fires(self):
+    def test_suprathreshold_fires(self) -> None:
+        """A suprathreshold current fires repeatedly."""
         n = DendrifyNeuron()
         assert len(_run(n, current=50.0, steps=10000)) >= 50
 
-    def test_rate_increases(self):
+    def test_rate_increases(self) -> None:
+        """The firing rate rises with the current."""
         n50 = DendrifyNeuron()
         n100 = DendrifyNeuron()
         s50 = len(_run(n50, current=50.0, steps=10000))
         s100 = len(_run(n100, current=100.0, steps=10000))
         assert s100 > s50
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = DendrifyNeuron()

@@ -6,17 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (every_model) from former test_model_descriptor.py
 
+"""Descriptor generation for every registered model."""
+
 from __future__ import annotations
 
-from tests.model_descriptor_support import *  # noqa: F403
+from sc_neurocore.neurons.descriptor_generator import generate_descriptor
+from sc_neurocore.neurons.models import _CLASS_TO_MODULE
+import dataclasses
+import importlib
+import inspect
+import pytest
 
 
 @pytest.mark.parametrize("class_name", sorted(_CLASS_TO_MODULE))
 def test_every_model_generates_a_valid_descriptor(class_name: str) -> None:
-    """Gate: every registered model yields a schema-valid descriptor whose
-    parameter and state names are all real fields of the model (no invented
-    names)."""
+    """Gate: every registered model yields a schema-valid descriptor.
 
+    Its parameter and state names are all real fields of the model (no invented names).
+    """
     descriptor = generate_descriptor(class_name)
     assert descriptor.class_name == class_name
     declared = {p.name for p in descriptor.parameters} | {s.name for s in descriptor.state}

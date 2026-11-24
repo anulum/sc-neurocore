@@ -10,11 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_expif_support import *  # noqa: F403
+import math
+import pytest
+from sc_neurocore.neurons.models.expif import (
+    ExpIFNeuron,
+)
 
 
 class TestExpIFIsolation:
+    """The ExpIFNeuron in isolation."""
+
     def test_construction_uses_source_fitted_defaults(self) -> None:
+        """Construction uses source fitted defaults."""
         neuron = ExpIFNeuron()
         assert neuron.v == -65.0
         assert neuron.v_rest == -65.0
@@ -28,15 +35,18 @@ class TestExpIFIsolation:
         assert neuron.refractory_remaining == 0.0
 
     def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert ExpIFNeuron().step(0.0) in (0, 1)
 
     def test_state_evolves(self) -> None:
+        """The state evolves under drive."""
         neuron = ExpIFNeuron()
         initial = neuron.v
         neuron.step(20.0)
         assert neuron.v != initial
 
     def test_state_remains_finite_and_below_cutoff(self) -> None:
+        """State remains finite and below cutoff."""
         neuron = ExpIFNeuron()
         for _ in range(50_000):
             neuron.step(20.0)
@@ -44,6 +54,7 @@ class TestExpIFIsolation:
         assert neuron.v < neuron.v_threshold
 
     def test_reset_restores_rest_and_clears_refractory_state(self) -> None:
+        """Reset restores rest and clears refractory state."""
         neuron = ExpIFNeuron(refractory_period=0.06)
         neuron.v = 29.0
         assert neuron.step(0.0) == 1

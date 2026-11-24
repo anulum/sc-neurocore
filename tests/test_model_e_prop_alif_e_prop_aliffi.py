@@ -10,15 +10,24 @@
 
 from __future__ import annotations
 
-from tests.model_e_prop_alif_support import *  # noqa: F403
+from sc_neurocore.neurons.models.e_prop_alif import (
+    EPropALIFNeuron,
+)
+from tests.model_e_prop_alif_support import (
+    _run,
+)
 
 
 class TestEPropALIFFI:
-    def test_zero_silent(self):
+    """The frequency-current curve of the e-prop ALIF neuron."""
+
+    def test_zero_silent(self) -> None:
+        """Zero current gives no spikes."""
         n = EPropALIFNeuron()
         assert len(_run(n, current=0.0, steps=5000)) == 0
 
-    def test_monotonic_fi(self):
+    def test_monotonic_fi(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [0.1, 0.2, 0.5, 1.0]:
             n = EPropALIFNeuron()

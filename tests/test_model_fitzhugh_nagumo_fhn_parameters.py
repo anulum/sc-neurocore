@@ -10,18 +10,29 @@
 
 from __future__ import annotations
 
-from tests.model_fitzhugh_nagumo_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.fitzhugh_nagumo import (
+    FitzHughNagumoNeuron,
+)
+from tests.model_fitzhugh_nagumo_support import (
+    _run,
+)
 
 
 class TestFHNParameters:
-    def test_epsilon_controls_timescale(self):
+    """Parameter behaviour of the FitzHughNagumoNeuron."""
+
+    def test_epsilon_controls_timescale(self) -> None:
+        """Epsilon controls timescale."""
         n_fast = FitzHughNagumoNeuron(epsilon=0.2)
         n_slow = FitzHughNagumoNeuron(epsilon=0.02)
         s_fast = len(_run(n_fast, current=0.8, steps=10000))
         s_slow = len(_run(n_slow, current=0.8, steps=10000))
         assert s_fast != s_slow
 
-    def test_a_shifts_w_nullcline(self):
+    def test_a_shifts_w_nullcline(self) -> None:
+        """The parameter a shifts the w nullcline."""
         n1 = FitzHughNagumoNeuron(a=0.5)
         n2 = FitzHughNagumoNeuron(a=1.0)
         s1 = len(_run(n1, current=0.5, steps=10000))
@@ -29,13 +40,15 @@ class TestFHNParameters:
         assert s1 != s2
 
     @pytest.mark.parametrize("dt", [0.05, 0.1, 0.2])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = FitzHughNagumoNeuron(dt=dt)
         for _ in range(10000):
             n.step(0.8)
         assert np.isfinite(n.v)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = FitzHughNagumoNeuron()

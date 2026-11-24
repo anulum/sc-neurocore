@@ -10,19 +10,21 @@
 
 from __future__ import annotations
 
-from tests.model_durstewitz_dopamine_support import *  # noqa: F403
+from sc_neurocore.neurons.models.durstewitz_dopamine import (
+    DurstewitzDopamineNeuron,
+)
 
 
 class TestDurstewitzDopamine:
-    def test_fires(self):
-        from sc_neurocore.neurons.models.durstewitz_dopamine import DurstewitzDopamineNeuron
+    """The Durstewitz dopamine-modulated prefrontal neuron."""
 
+    def test_fires(self) -> None:
+        """Sustained drive makes the neuron fire."""
         n = DurstewitzDopamineNeuron()
         assert sum(n.step(10.0) for _ in range(300)) > 0
 
-    def test_d1_modulation(self):
-        from sc_neurocore.neurons.models.durstewitz_dopamine import DurstewitzDopamineNeuron
-
+    def test_d1_modulation(self) -> None:
+        """D1 dopamine modulation changes the response."""
         n = DurstewitzDopamineNeuron(d1_level=0.8)
         for _ in range(100):
             n.step(8.0)

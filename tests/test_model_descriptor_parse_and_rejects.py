@@ -16,7 +16,20 @@ table holding only that text.
 
 from __future__ import annotations
 
-from tests.model_descriptor_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.model_descriptor import (
+    descriptor_completeness_tier,
+    MODEL_DESCRIPTOR_SCHEMA_VERSION,
+    ModelDescriptorError,
+    parse_model_descriptor,
+)
+from tests.model_descriptor_support import (
+    _minimal_payload,
+)
+from typing import (
+    Any,
+    Callable,
+)
 
 
 def test_parse_minimal_descriptor() -> None:

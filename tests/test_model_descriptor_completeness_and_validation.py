@@ -6,14 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (completeness_and_validation) from former test_model_descriptor.py
 
+"""Completeness and validation of the declarative model descriptor."""
+
 from __future__ import annotations
 
-from tests.model_descriptor_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.model_descriptor import (
+    descriptor_completeness_tier,
+    ModelDescriptorError,
+    parse_model_descriptor,
+    Validation,
+)
+from tests.model_descriptor_support import (
+    _minimal_payload,
+)
 
 
 def test_completeness_tier_zero_for_descriptor_without_structure() -> None:
     """Descriptors with no parameters and no state remain at tier zero."""
-
     payload = _minimal_payload()
     payload["state"] = {}
     payload["parameters"] = {}
@@ -27,7 +37,6 @@ def test_completeness_tier_zero_for_descriptor_without_structure() -> None:
 
 def test_completeness_tiers_rise_with_curation() -> None:
     """Each curation column lifts the descriptor to the next tier."""
-
     payload = _minimal_payload()
     payload["metadata"].update({"family": "Integrate-and-Fire", "category": "adaptive"})
     assert descriptor_completeness_tier(parse_model_descriptor(payload)) == 1
@@ -87,6 +96,7 @@ def test_parse_validation_section_reads_every_field() -> None:
 
 
 def test_parse_rejects_unknown_validation_metric() -> None:
+    """The parser rejects unknown validation metric."""
     payload = _minimal_payload()
     payload["validation"] = {"metric": "vibes"}
     with pytest.raises(ModelDescriptorError, match="validation metric"):
@@ -94,6 +104,7 @@ def test_parse_rejects_unknown_validation_metric() -> None:
 
 
 def test_parse_rejects_non_boolean_evidence_flag() -> None:
+    """The parser rejects non-boolean evidence flag."""
     payload = _minimal_payload()
     payload["validation"] = {"dynamics_faithful": "yes"}
     with pytest.raises(ModelDescriptorError, match="dynamics_faithful"):

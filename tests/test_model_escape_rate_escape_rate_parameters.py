@@ -10,18 +10,24 @@
 
 from __future__ import annotations
 
-from tests.model_escape_rate_support import *  # noqa: F403
+from sc_neurocore.neurons.models.escape_rate import (
+    EscapeRateNeuron,
+)
 
 
 class TestEscapeRateParameters:
-    def test_tau_m_controls_v_dynamics(self):
+    """Parameter behaviour of the EscapeRateNeuron."""
+
+    def test_tau_m_controls_v_dynamics(self) -> None:
+        """Tau_m controls v dynamics."""
         n_fast = EscapeRateNeuron(tau_m=2.0)
         n_slow = EscapeRateNeuron(tau_m=50.0)
         n_fast.step(20.0)
         n_slow.step(20.0)
         assert abs(n_fast.v - (-70.0)) > abs(n_slow.v - (-70.0))
 
-    def test_resistance_scales_input(self):
+    def test_resistance_scales_input(self) -> None:
+        """Resistance scales input."""
         n_low = EscapeRateNeuron(resistance=0.5)
         n_high = EscapeRateNeuron(resistance=2.0)
         n_low.step(20.0)

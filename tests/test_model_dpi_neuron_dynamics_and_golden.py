@@ -6,9 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (dynamics_and_golden) from former test_model_dpi_neuron.py
 
+"""Dynamics and golden traces of the DPI neuron."""
+
 from __future__ import annotations
 
-from tests.model_dpi_neuron_support import *  # noqa: F403
+import math
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.dpi_neuron import (
+    DPINeuron,
+)
+from tests.model_dpi_neuron_support import (
+    _configured,
+    _events,
+)
 
 
 def test_defaults_and_one_step_match_published_coupled_equations() -> None:

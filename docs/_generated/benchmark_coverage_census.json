@@ -462,6 +462,9 @@
             "hdl/formal/catalogue/sc_dpineuron.v",
             "src/sc_neurocore/accel/dpi_neuron.py",
             "tests/test_model_descriptor_reproducibility.py",
+            "tests/test_model_dpi_neuron_contract_rejects.py",
+            "tests/test_model_dpi_neuron_dynamics_and_golden.py",
+            "tests/test_model_dpi_neuron_rust_and_reset.py",
             "tools/emit_catalogue_formal.py"
           ],
           "currency": "outdated",

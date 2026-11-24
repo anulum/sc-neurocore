@@ -10,31 +10,41 @@
 
 from __future__ import annotations
 
-from tests.model_durstewitz_dopamine_support import *  # noqa: F403
+from sc_neurocore.neurons.models.durstewitz_dopamine import (
+    DurstewitzDopamineNeuron,
+)
+from tests.model_durstewitz_dopamine_support import (
+    _run,
+)
 
 
 class TestDurstewitzDynamics:
-    def test_spontaneous_firing(self):
+    """Dynamics of the DurstewitzDopamineNeuron."""
+
+    def test_spontaneous_firing(self) -> None:
         """Fires at I=0 (dopaminergic tonic activity)."""
         n = DurstewitzDopamineNeuron()
         spikes = _run(n, current=0.0, steps=10000)
         assert len(spikes) >= 5
 
-    def test_rate_increases_with_current(self):
+    def test_rate_increases_with_current(self) -> None:
+        """The firing rate rises with the current."""
         n0 = DurstewitzDopamineNeuron()
         n50 = DurstewitzDopamineNeuron()
         s0 = len(_run(n0, current=0.0, steps=10000))
         s50 = len(_run(n50, current=50.0, steps=10000))
         assert s50 > s0
 
-    def test_monotonic_fi(self):
+    def test_monotonic_fi(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [0.0, 10.0, 30.0, 50.0]:
             n = DurstewitzDopamineNeuron()
             rates.append(len(_run(n, current=I, steps=10000)))
         assert all(rates[i] <= rates[i + 1] for i in range(len(rates) - 1))
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = DurstewitzDopamineNeuron()

@@ -6,14 +6,24 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (merge) from former test_model_descriptor.py
 
+"""Merging of declarative model descriptors."""
+
 from __future__ import annotations
 
-from tests.model_descriptor_support import *  # noqa: F403
+from sc_neurocore.neurons.descriptor_generator import (
+    generate_descriptor_payload,
+    merge_descriptor_payloads,
+)
+from sc_neurocore.neurons.model_descriptor import (
+    MODEL_DESCRIPTOR_SCHEMA_VERSION,
+)
+from typing import (
+    Any,
+)
 
 
 def test_merge_descriptor_payloads_preserves_curation_without_structural_drift() -> None:
     """The corpus merge keeps human curation without accepting stale structure."""
-
     regenerated = generate_descriptor_payload("AdExNeuron")
     curated: dict[str, Any] = {
         "metadata": {
@@ -101,7 +111,6 @@ def test_merge_drops_a_curated_state_entry_the_code_now_calls_a_parameter() -> N
     descriptor declared the same name twice — a change the corpus could never
     then complete.
     """
-
     regenerated = generate_descriptor_payload("AmariNeuralField")
     assert "n" in regenerated["parameters"]
     curated: dict[str, Any] = {"state": {"n": {"init": 64.0}, "u": {"unit": "1"}}}
@@ -115,7 +124,6 @@ def test_merge_drops_a_curated_state_entry_the_code_now_calls_a_parameter() -> N
 
 def test_merge_still_preserves_runtime_state_the_regeneration_cannot_see() -> None:
     """The rule above must not take the curated-only state entries with it."""
-
     regenerated = generate_descriptor_payload("AmariNeuralField")
     curated: dict[str, Any] = {
         "state": {"drive_history": {"init": 0.0, "meaning": "assigned by the step"}}

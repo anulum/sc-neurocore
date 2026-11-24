@@ -10,14 +10,40 @@
 
 from __future__ import annotations
 
-from tests.model_e_prop_alif_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    firing_rate,
+    spike_count,
+)
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.e_prop_alif import (
+    EPropALIFNeuron,
+)
 
 
 class TestEPropALIFPipeline:
-    def test_population(self):
+    """The EPropALIFNeuron in the network pipeline."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         assert Population(EPropALIFNeuron, n=10, label="eprop").n == 10
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(EPropALIFNeuron, n=10, label="eprop")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=0.5, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -25,7 +51,8 @@ class TestEPropALIFPipeline:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_projection_wiring(self):
+    def test_projection_wiring(self) -> None:
+        """A projection wires the source to the target."""
         src = Population(EPropALIFNeuron, n=10, label="src")
         tgt = Population(EPropALIFNeuron, n=10, label="tgt")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=0.5, dt=0.001, seed=42)
@@ -35,7 +62,8 @@ class TestEPropALIFPipeline:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_analysis(self):
+    def test_analysis(self) -> None:
+        """The analysis reports spikes and a rate for a driven run."""
         n = EPropALIFNeuron()
         train = np.array([float(n.step(0.2)) for _ in range(5000)])
         sc = spike_count(train)

@@ -10,14 +10,41 @@
 
 from __future__ import annotations
 
-from tests.model_escape_rate_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    firing_rate,
+    isi,
+    spike_count,
+)
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.escape_rate import (
+    EscapeRateNeuron,
+)
 
 
 class TestEscapeRatePipeline:
-    def test_population(self):
+    """The EscapeRateNeuron in the network pipeline."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         assert Population(EscapeRateNeuron, n=10, label="esc").n == 10
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(EscapeRateNeuron, n=20, label="esc")
         drive = PoissonInput(n=20, rate_hz=500.0, weight=50.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -25,7 +52,7 @@ class TestEscapeRatePipeline:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon.count > 0
 
-    def test_projection_wiring(self):
+    def test_projection_wiring(self) -> None:
         """Projection accepted by Network — source fires, graph valid."""
         src = Population(EscapeRateNeuron, n=10, label="src")
         tgt = Population(EscapeRateNeuron, n=10, label="tgt")
@@ -36,7 +63,8 @@ class TestEscapeRatePipeline:
         net.run(duration=1.0, dt=0.001, backend="python")
         assert mon_src.count > 0
 
-    def test_analysis_pipeline(self):
+    def test_analysis_pipeline(self) -> None:
+        """The analysis pipeline reports a driven run."""
         n = EscapeRateNeuron()
         train = np.array([float(n.step(40.0)) for _ in range(50000)])
         sc = spike_count(train)

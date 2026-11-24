@@ -1320,6 +1320,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 60 top-level model-zoo test modules of the Dendrify, model
+  descriptor, Destexhe, DPI, Durstewitz, e-prop ALIF, energy LIF,
+  escape-rate, ExpIF and FitzHugh-Nagumo neurons import their names
+  explicitly instead of through a suppressed star import, gain their
+  missing docstrings and type annotations and are enrolled in the
+  docstring policy, and the support module left without an importer
+  is deleted.
+
 - The 61 top-level model-zoo test modules of the balanced resonate-and-
   fire, Bertram, Booth-Rinzel, BrainScaleS AdEx, Brunel-Wang, Butera,
   Cazelles, closed-form continuous, Chialvo, Connor-Stevens, Courage-

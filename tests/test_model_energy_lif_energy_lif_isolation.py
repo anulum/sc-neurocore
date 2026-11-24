@@ -10,33 +10,41 @@
 
 from __future__ import annotations
 
-from tests.model_energy_lif_support import *  # noqa: F403
+from sc_neurocore.neurons.models.sc_normalized_energy_lif import (
+    SCNormalizedEnergyLIFNeuron as EnergyLIFNeuron,
+)
 
 
 class TestEnergyLIFIsolation:
-    def test_construction(self):
+    """The EnergyLIFNeuron in isolation."""
+
+    def test_construction(self) -> None:
+        """The constructor sets the documented initial state."""
         n = EnergyLIFNeuron()
         assert n.epsilon == 1.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert EnergyLIFNeuron().step(0.0) in (0, 1)
 
-    def test_subthreshold(self):
+    def test_subthreshold(self) -> None:
+        """Weak drive gives no spikes."""
         n = EnergyLIFNeuron()
         assert sum(n.step(10.0) for _ in range(5000)) == 0
 
-    def test_spikes(self):
+    def test_spikes(self) -> None:
+        """Sustained drive makes the neuron fire."""
         n = EnergyLIFNeuron()
         assert sum(n.step(30.0) for _ in range(5000)) > 10
 
-    def test_energy_depletes(self):
+    def test_energy_depletes(self) -> None:
         """ε should decrease after spiking."""
         n = EnergyLIFNeuron()
         for _ in range(5000):
             n.step(50.0)
         assert n.epsilon < 1.0, "energy did not deplete"
 
-    def test_energy_recovers(self):
+    def test_energy_recovers(self) -> None:
         """ε should recover toward ε₀ without spiking."""
         n = EnergyLIFNeuron()
         n.epsilon = 0.1
@@ -44,20 +52,22 @@ class TestEnergyLIFIsolation:
             n.step(0.0)
         assert n.epsilon > 0.1, "energy did not recover"
 
-    def test_energy_gates_spiking(self):
+    def test_energy_gates_spiking(self) -> None:
         """When ε < 0.1, neuron cannot spike (energy gate)."""
         n = EnergyLIFNeuron()
         n.epsilon = 0.05
         spikes = sum(n.step(50.0) for _ in range(100))
         assert spikes == 0, "spiked with depleted energy"
 
-    def test_energy_nonnegative(self):
+    def test_energy_nonnegative(self) -> None:
+        """The energy store stays non-negative."""
         n = EnergyLIFNeuron()
         for _ in range(10000):
             n.step(50.0)
         assert n.epsilon >= 0.0
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = EnergyLIFNeuron()
         for _ in range(100):
             n.step(50.0)

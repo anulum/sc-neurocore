@@ -10,13 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_e_prop_alif_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.e_prop_alif import (
+    EPropALIFNeuron,
+)
+from tests.model_e_prop_alif_support import (
+    _run,
+)
 
 
 class TestEPropALIFAdaptiveThreshold:
     """Core: θ(t) = θ_base + β·a(t). a increments on spike, decays with tau_a."""
 
-    def test_a_increments_on_spike(self):
+    def test_a_increments_on_spike(self) -> None:
+        """The adaptation variable a increments on each spike."""
         n = EPropALIFNeuron()
         a_before = n.a
         for _ in range(10000):
@@ -26,13 +33,14 @@ class TestEPropALIFAdaptiveThreshold:
         else:
             raise AssertionError("No spike")
 
-    def test_a_decays_between_spikes(self):
+    def test_a_decays_between_spikes(self) -> None:
+        """The adaptation variable a decays between spikes."""
         n = EPropALIFNeuron()
         n.a = 5.0
         n.step(0.0)  # subthreshold, a decays
         assert n.a < 5.0
 
-    def test_threshold_increases_with_a(self):
+    def test_threshold_increases_with_a(self) -> None:
         """Effective threshold = θ_base + β·a. Higher a → harder to spike."""
         n = EPropALIFNeuron()
         # After many spikes, a is large → threshold high → ISI long
@@ -41,7 +49,7 @@ class TestEPropALIFAdaptiveThreshold:
             isis = np.diff(spikes)
             assert isis[-1] > isis[0], "ISI should lengthen (adaptation)"
 
-    def test_isi_lengthens(self):
+    def test_isi_lengthens(self) -> None:
         """Early ISI < late ISI (adaptation effect)."""
         n = EPropALIFNeuron()
         spikes = _run(n, current=0.2, steps=5000)
@@ -50,7 +58,7 @@ class TestEPropALIFAdaptiveThreshold:
             late = np.mean(np.diff(spikes[-5:]))
             assert late > early
 
-    def test_no_adaptation_when_beta_zero(self):
+    def test_no_adaptation_when_beta_zero(self) -> None:
         """β=0: threshold is constant → no ISI lengthening."""
         n = EPropALIFNeuron(beta=0.0)
         spikes = _run(n, current=0.2, steps=5000)

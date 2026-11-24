@@ -10,12 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_destexhe_thalamic_support import *  # noqa: F403
+import time
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.destexhe_thalamic import (
+    DestexheThalamicNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestDestPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the DestexheThalamicNeuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = DestexheThalamicNeuron()
         N = 5000
         t0 = time.perf_counter()
@@ -29,7 +47,8 @@ class TestDestPerformance:
             strict_minimum_per_second=1_000.0,
         )
 
-    def test_network_throughput(self):
+    def test_network_throughput(self) -> None:
+        """The network meets its throughput floor."""
         pop = Population(DestexheThalamicNeuron, n=10, label="bench")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

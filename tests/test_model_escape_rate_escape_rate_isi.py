@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_escape_rate_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.escape_rate import (
+    EscapeRateNeuron,
+)
+from tests.model_escape_rate_support import (
+    _run,
+)
 
 
 class TestEscapeRateISI:
-    def test_isi_variability(self):
+    """Inter-spike intervals of the escape-rate neuron."""
+
+    def test_isi_variability(self) -> None:
         """Stochastic → CV(ISI) > 0."""
         n = EscapeRateNeuron()
         spikes = _run(n, current=40.0, steps=100000)
@@ -23,7 +31,8 @@ class TestEscapeRateISI:
             cv = np.std(isis) / np.mean(isis)
             assert cv > 0.1
 
-    def test_higher_current_shorter_isi(self):
+    def test_higher_current_shorter_isi(self) -> None:
+        """Higher current gives shorter inter-spike intervals."""
         n30 = EscapeRateNeuron()
         n40 = EscapeRateNeuron()
         s30 = _run(n30, current=30.0, steps=50000)

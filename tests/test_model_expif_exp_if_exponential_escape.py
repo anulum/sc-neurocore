@@ -10,35 +10,49 @@
 
 from __future__ import annotations
 
-from tests.model_expif_support import *  # noqa: F403
+import math
+from sc_neurocore.neurons.models.expif import (
+    ExpIFNeuron,
+)
+from tests.model_expif_support import (
+    _run,
+)
 
 
 class TestExpIFExponentialEscape:
+    """The exponential spike escape of the ExpIF neuron."""
+
     def test_exponential_term_at_soft_threshold_equals_delta_t(self) -> None:
+        """Exponential term at soft threshold equals delta_t."""
         neuron = ExpIFNeuron()
         exponential = neuron.delta_t * math.exp((neuron.v_rh - neuron.v_rh) / neuron.delta_t)
         assert exponential == neuron.delta_t
 
     def test_hard_cutoff_is_distinct_from_soft_threshold(self) -> None:
+        """Hard cutoff is distinct from soft threshold."""
         neuron = ExpIFNeuron()
         assert neuron.v_threshold > neuron.v_rh + 20.0 * neuron.delta_t
 
     def test_rk4_stages_are_bounded_only_at_the_event_surface(self) -> None:
+        """RK4 stages are bounded only at the event surface."""
         neuron = ExpIFNeuron()
         assert neuron._rhs(1.0e9, 7.0) == neuron._rhs(neuron.v_threshold, 7.0)
         assert neuron._rhs(neuron.v_threshold - 1.0, 7.0) != neuron._rhs(neuron.v_threshold, 7.0)
 
     def test_candidate_crossing_cutoff_emits_and_resets(self) -> None:
+        """Candidate crossing cutoff emits and resets."""
         neuron = ExpIFNeuron(v=29.0)
         assert neuron.step(0.0) == 1
         assert neuron.v == neuron.v_reset
 
     def test_delta_t_controls_spike_initiation(self) -> None:
+        """Delta_t controls spike initiation."""
         sharp = len(_run(ExpIFNeuron(delta_t=0.5), current=20.0, steps=10_000))
         broad = len(_run(ExpIFNeuron(delta_t=5.0), current=20.0, steps=10_000))
         assert sharp != broad
 
     def test_negative_extreme_remains_finite(self) -> None:
+        """Negative extreme remains finite."""
         neuron = ExpIFNeuron(v=-1000.0)
         for _ in range(100):
             neuron.step(0.0)

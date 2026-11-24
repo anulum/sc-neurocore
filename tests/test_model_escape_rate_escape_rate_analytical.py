@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_escape_rate_support import *  # noqa: F403
+import math
+import numpy as np
+from sc_neurocore.neurons.models.escape_rate import (
+    EscapeRateNeuron,
+)
 
 
 class TestEscapeRateAnalytical:
-    def test_v_steady_state(self):
+    """Analytical behaviour of the EscapeRateNeuron."""
+
+    def test_v_steady_state(self) -> None:
         """V_ss = V_rest + R·I. Mean V should be near V_ss."""
         n = EscapeRateNeuron()
         for _ in range(10000):
@@ -27,7 +33,7 @@ class TestEscapeRateAnalytical:
         v_ss = n.v_rest + n.resistance * 20.0
         assert abs(mean_v - v_ss) < 5.0
 
-    def test_membrane_equation_one_step(self):
+    def test_membrane_equation_one_step(self) -> None:
         """V_next = V_inf + (V - V_inf) * exp(-dt / tau_m)."""
         n = EscapeRateNeuron(seed=999)
         v0 = n.v
@@ -38,7 +44,8 @@ class TestEscapeRateAnalytical:
         if n.v != n.v_reset:
             assert abs(n.v - expected) < 1e-10
 
-    def test_membrane_exact_flow_separates_from_forward_euler(self):
+    def test_membrane_exact_flow_separates_from_forward_euler(self) -> None:
+        """Membrane exact flow separates from forward Euler."""
         n = EscapeRateNeuron(v=-65.0, dt=5.0, rho_0=1.0e-12, seed=999)
         v0 = n.v
         current = 10.0
@@ -50,14 +57,16 @@ class TestEscapeRateAnalytical:
         assert abs(n.v - expected) < 1e-10
         assert abs(n.v - euler) > 1e-3
 
-    def test_rho0_scales_rate(self):
+    def test_rho0_scales_rate(self) -> None:
+        """The base rate rho0 scales the firing rate."""
         n_low = EscapeRateNeuron(rho_0=0.0001)
         n_high = EscapeRateNeuron(rho_0=0.01)
         s_low = sum(n_low.step(30.0) for _ in range(50000))
         s_high = sum(n_high.step(30.0) for _ in range(50000))
         assert s_high > s_low
 
-    def test_delta_u_controls_sensitivity(self):
+    def test_delta_u_controls_sensitivity(self) -> None:
+        """Delta_u controls sensitivity."""
         n_narrow = EscapeRateNeuron(delta_u=1.5)
         n_wide = EscapeRateNeuron(delta_u=6.0)
         s_narrow = sum(n_narrow.step(30.0) for _ in range(50000))

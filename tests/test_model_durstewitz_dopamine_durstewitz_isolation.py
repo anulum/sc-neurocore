@@ -10,20 +10,28 @@
 
 from __future__ import annotations
 
-from tests.model_durstewitz_dopamine_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.durstewitz_dopamine import (
+    DurstewitzDopamineNeuron,
+)
 
 
 class TestDurstewitzIsolation:
-    def test_step_returns_binary(self):
+    """The DurstewitzDopamineNeuron in isolation."""
+
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert DurstewitzDopamineNeuron().step(0.0) in (0, 1)
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = DurstewitzDopamineNeuron()
         for _ in range(50000):
             n.step(10.0)
         assert np.isfinite(n.v)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = DurstewitzDopamineNeuron()
         for _ in range(100):
             n.step(10.0)

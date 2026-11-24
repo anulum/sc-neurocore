@@ -10,29 +10,38 @@
 
 from __future__ import annotations
 
-from tests.model_fitzhugh_nagumo_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.fitzhugh_nagumo import (
+    FitzHughNagumoNeuron,
+)
+from tests.model_fitzhugh_nagumo_support import (
+    _run,
+)
 
 
 class TestFHNOscillatoryBand:
     """Hopf bifurcation: oscillation in I ∈ [~0.3, ~1.2]."""
 
-    def test_silent_below_band(self):
+    def test_silent_below_band(self) -> None:
+        """Current below the oscillatory band gives no spikes."""
         n = FitzHughNagumoNeuron()
         assert len(_run(n, current=0.0, steps=10000)) <= 1
 
-    def test_oscillatory_in_band(self):
+    def test_oscillatory_in_band(self) -> None:
+        """Current inside the oscillatory band makes the neuron oscillate."""
         for I in [0.5, 0.8, 1.0]:
             n = FitzHughNagumoNeuron()
             spikes = _run(n, current=I, steps=10000)
             assert len(spikes) == {0.5: 26, 0.8: 28, 1.0: 28}[I]
 
-    def test_suppressed_above_band(self):
+    def test_suppressed_above_band(self) -> None:
         """High I pushes FP out of oscillatory region."""
         n = FitzHughNagumoNeuron()
         spikes = _run(n, current=2.0, steps=10000)
         assert spikes == [8]
 
-    def test_regular_isi_in_band(self):
+    def test_regular_isi_in_band(self) -> None:
+        """Inside the band the inter-spike intervals are regular."""
         n = FitzHughNagumoNeuron()
         spikes = _run(n, current=0.8, steps=10000)
         if len(spikes) >= 10:
@@ -40,7 +49,7 @@ class TestFHNOscillatoryBand:
             cv = np.std(isis) / np.mean(isis)
             assert cv < 0.1
 
-    def test_voltage_bounded(self):
+    def test_voltage_bounded(self) -> None:
         """FHN V stays bounded ≈ [-2, 2] (cubic nullcline)."""
         n = FitzHughNagumoNeuron()
         vs = []

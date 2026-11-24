@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5635
+    "test_files": 5634
   },
   "documentation": {
     "public_pages": [
@@ -3589,7 +3589,6 @@
       "tests/model_dpi_neuron_support.py",
       "tests/model_durstewitz_dopamine_support.py",
       "tests/model_e_prop_alif_support.py",
-      "tests/model_energy_lif_support.py",
       "tests/model_escape_rate_support.py",
       "tests/model_expif_support.py",
       "tests/model_fitzhugh_nagumo_support.py",

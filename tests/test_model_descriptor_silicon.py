@@ -6,9 +6,19 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (silicon) from former test_model_descriptor.py
 
+"""The silicon-target section of the declarative model descriptor."""
+
 from __future__ import annotations
 
-from tests.model_descriptor_support import *  # noqa: F403
+import pytest
+from sc_neurocore.neurons.model_descriptor import (
+    ModelDescriptorError,
+    parse_model_descriptor,
+    Silicon,
+)
+from tests.model_descriptor_support import (
+    _minimal_payload,
+)
 
 
 def test_silicon_defaults_are_empty() -> None:
@@ -51,6 +61,7 @@ def test_parse_silicon_section_reads_every_field() -> None:
 
 
 def test_parse_rejects_unknown_silicon_target_tier() -> None:
+    """The parser rejects unknown silicon target tier."""
     payload = _minimal_payload()
     payload["silicon"] = {"target_tier": "H9"}
     with pytest.raises(ModelDescriptorError, match="target_tier"):
@@ -58,6 +69,7 @@ def test_parse_rejects_unknown_silicon_target_tier() -> None:
 
 
 def test_parse_rejects_non_numeric_clock() -> None:
+    """The parser rejects non-numeric clock."""
     payload = _minimal_payload()
     payload["silicon"] = {"clock_mhz": "fast"}
     with pytest.raises(ModelDescriptorError, match="clock_mhz"):
@@ -65,6 +77,7 @@ def test_parse_rejects_non_numeric_clock() -> None:
 
 
 def test_parse_rejects_boolean_clock() -> None:
+    """The parser rejects boolean clock."""
     payload = _minimal_payload()
     payload["silicon"] = {"clock_mhz": True}
     with pytest.raises(ModelDescriptorError, match="clock_mhz"):

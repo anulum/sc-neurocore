@@ -6,14 +6,34 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (generator) from former test_model_descriptor.py
 
+"""The generator of declarative model descriptors."""
+
 from __future__ import annotations
 
-from tests.model_descriptor_support import *  # noqa: F403
+import inspect
+import pytest
+import sys
+import types
+from pathlib import (
+    Path,
+)
+from sc_neurocore.neurons import (
+    universal_dsl,
+)
+from sc_neurocore.neurons.descriptor_generator import (
+    generate_descriptor,
+    generate_descriptor_payload,
+)
+from sc_neurocore.neurons.models import (
+    _CLASS_TO_MODULE,
+)
+from typing import (
+    Any,
+)
 
 
 def test_generate_descriptor_reads_real_fields_and_provenance() -> None:
     """The generator reads code fields and carries over curated provenance."""
-
     payload = generate_descriptor_payload("AdExNeuron")
     assert payload["metadata"]["class_name"] == "AdExNeuron"
     # ``b`` is the adaptation increment parameter, not a state variable.
@@ -33,7 +53,6 @@ def test_generate_descriptor_reads_real_fields_and_provenance() -> None:
 
 def test_generate_descriptor_handles_non_dataclass_model() -> None:
     """The generator introspects plain (non-dataclass) model constructors."""
-
     descriptor = generate_descriptor("HybridFisherPosnerLIFNeuron")
     param_names = {p.name for p in descriptor.parameters}
     assert "tau_m" in param_names
@@ -48,14 +67,12 @@ def test_generator_rejects_non_public_class_names_before_registry_lookup(
     class_name: str,
 ) -> None:
     """Descriptor generation fails closed before accepting path-like class names."""
-
     with pytest.raises(ValueError, match="public Python identifier"):
         generate_descriptor_payload(class_name)
 
 
 def test_generator_reports_unknown_public_model_as_registry_miss() -> None:
     """Valid public identifiers that are absent from the registry remain registry misses."""
-
     with pytest.raises(KeyError, match="NotRegisteredNeuron"):
         generate_descriptor_payload("NotRegisteredNeuron")
 
@@ -94,7 +111,6 @@ def test_generator_filters_plain_constructor_fields_from_registry_module(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Plain constructors keep numeric public defaults and skip non-parameters."""
-
     module_name = "sc_neurocore.neurons.models.synthetic_plain_descriptor"
     module = types.ModuleType(module_name)
 
@@ -135,7 +151,6 @@ def test_generator_keeps_empty_structure_when_plain_signature_is_unavailable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Uninspectable plain classes do not receive invented descriptor fields."""
-
     module_name = "sc_neurocore.neurons.models.synthetic_bad_signature"
     module = types.ModuleType(module_name)
 
@@ -199,11 +214,13 @@ def test_generator_handles_source_without_class_definition(
 def test_schema_less_models_keep_declared_integration_contracts(
     class_name: str, method: str, dt: float
 ) -> None:
+    """Schema-less models keep declared integration contracts."""
     payload = generate_descriptor_payload(class_name)
     assert payload["integration"] == {"dt": dt, "method": method}
 
 
 def test_schema_less_compatibility_parameters_are_not_reclassified_as_state() -> None:
+    """Schema-less compatibility parameters are not reclassified as state."""
     exponential = generate_descriptor_payload("SCExponentialTwoCompartmentLIFNeuron")
     leaky = generate_descriptor_payload("SCLeakyTwoCompartmentLIFNeuron")
     resetting = generate_descriptor_payload("SCResettingParallelSpikingNeuron")
