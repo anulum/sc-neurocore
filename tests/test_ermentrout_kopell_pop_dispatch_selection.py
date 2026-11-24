@@ -8,10 +8,20 @@
 
 """Input validation, availability, and selection contracts for MPR dispatch."""
 
-from .ermentrout_kopell_pop_dispatch_support import *
+from typing import Any
+from types import SimpleNamespace
+from sc_neurocore.accel import ermentrout_kopell_pop as backends
+import importlib
+import numpy as np
+from tests.module_reload import preserve_module_identity
+import pytest
+from .ermentrout_kopell_pop_dispatch_support import (
+    _PARAMETERS,
+)
 
 
 def test_input_shape_and_finiteness_are_fail_closed() -> None:
+    """The dispatcher refuses a two-dimensional input and a non-finite drive."""
     with pytest.raises(ValueError, match="one-dimensional"):
         backends.simulate_ermentrout_kopell_pop(*_PARAMETERS, np.zeros((2, 2)), backend="python")
     with pytest.raises(ValueError, match="finite"):
@@ -21,9 +31,11 @@ def test_input_shape_and_finiteness_are_fail_closed() -> None:
 def test_signed_32_bit_step_bound_precedes_contiguous_copy(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Input checking rejects an over-long input before making a contiguous copy."""
     oversized = np.broadcast_to(np.asarray([1.0]), ((1 << 31),))
 
     def unexpected_copy(*_args: object, **_kwargs: object) -> None:
+        """Fail the test if a contiguous copy is attempted."""
         raise AssertionError("oversized logical input reached contiguous allocation")
 
     monkeypatch.setattr(np, "ascontiguousarray", unexpected_copy)
@@ -34,6 +46,7 @@ def test_signed_32_bit_step_bound_precedes_contiguous_copy(
 def test_unknown_and_explicitly_unavailable_backends_are_distinct(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """An unknown backend and an unavailable Rust backend fail with different errors."""
     with pytest.raises(ValueError, match="unknown MPR backend"):
         backends.simulate_ermentrout_kopell_pop(*_PARAMETERS, [1.5], backend="fortran")
     monkeypatch.setattr(backends, "backend_available", lambda _backend: False)
@@ -44,6 +57,7 @@ def test_unknown_and_explicitly_unavailable_backends_are_distinct(
 def test_auto_selection_uses_first_available_measured_lane(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Auto selection takes the first available backend of the measured order."""
     monkeypatch.setattr(
         backends,
         "select_backend_order",
@@ -58,6 +72,7 @@ def test_auto_selection_uses_first_available_measured_lane(
 
 
 def test_python_floor_is_always_available() -> None:
+    """The Python backend is always available and an unknown one never is."""
     assert backends.backend_available("python")
     assert not backends.backend_available("unknown")
 
@@ -65,10 +80,15 @@ def test_python_floor_is_always_available() -> None:
 def test_optional_backend_discovery_fails_closed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Julia and native backend probes report unavailable on expected failures and re-raise unrelated ones."""
+
     class ControlledJuliaError(Exception):
+        """The Julia startup failure the probe expects."""
+
         pass
 
     def unavailable_julia() -> None:
+        """Fail Julia startup with the expected error."""
         raise ControlledJuliaError("Julia startup failed")
 
     monkeypatch.setattr(
@@ -82,6 +102,7 @@ def test_optional_backend_discovery_fails_closed(
     assert not backends.backend_available("julia")
 
     def unrelated_failure() -> None:
+        """Fail Julia startup with an unrelated error."""
         raise RuntimeError("unrelated Python defect")
 
     monkeypatch.setattr(
@@ -96,6 +117,7 @@ def test_optional_backend_discovery_fails_closed(
         backends.backend_available("julia")
 
     def missing_native(_backend: str) -> Any:
+        """Report the native module as absent."""
         raise ImportError("native module absent")
 
     monkeypatch.setattr(backends, "_native_module", missing_native)
@@ -105,10 +127,12 @@ def test_optional_backend_discovery_fails_closed(
 def test_missing_engine_export_disables_rust_without_breaking_the_floor(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """An engine without the MPR export disables Rust, keeps Python, and the reload is undone."""
     original_simulate_python = backends.simulate_python
     real_import_module = importlib.import_module
 
     def import_without_mpr_export(name: str) -> Any:
+        """Import an engine without the MPR export, other modules normally."""
         if name == "sc_neurocore_engine":
             return SimpleNamespace()
         return real_import_module(name)

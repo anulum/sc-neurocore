@@ -8,12 +8,12 @@
 
 """Focused behavior-probe models contracts."""
 
-from .behavior_probe_support import *
+from sc_neurocore.neurons.behavior_taxonomy import BEHAVIOR_TAGS
+from sc_neurocore.studio.behavior_probe import probe_model_behavior
 
 
 def test_probe_undrivable_model_is_resilient() -> None:
     """A model needing synaptic input records errors and is not drivable."""
-
     profile = probe_model_behavior("DendriticNMDANeuron")
     assert profile.drivable is False
     assert profile.behavior_tags == ()
@@ -22,7 +22,6 @@ def test_probe_undrivable_model_is_resilient() -> None:
 
 def test_probe_deterministic_model_reproduces() -> None:
     """A deterministic model yields a stable, non-empty, valid tag set."""
-
     first = probe_model_behavior("ThetaNeuron")
     second = probe_model_behavior("ThetaNeuron")
     assert first.behavior_tags == second.behavior_tags
@@ -34,7 +33,6 @@ def test_probe_deterministic_model_reproduces() -> None:
 
 def test_probe_strong_drive_reveals_tonic_firing() -> None:
     """The wide sweep reaches the strong-drive tonic regime of AdEx."""
-
     profile = probe_model_behavior("AdExNeuron")
     assert "excitable" in profile.behavior_tags
     assert "tonic" in profile.behavior_tags
@@ -42,7 +40,6 @@ def test_probe_strong_drive_reveals_tonic_firing() -> None:
 
 def test_probe_records_seeded_poisson_default_as_reproducible() -> None:
     """The fixed replay seed keeps the measured default Poisson trace stable."""
-
     profile = probe_model_behavior("PoissonNeuron")
     assert profile.stochastic is False
     assert "stochastic" not in profile.behavior_tags

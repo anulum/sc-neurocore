@@ -8,7 +8,14 @@
 
 """Focused descriptor-backed model catalogue contracts."""
 
-from .studio_model_catalogue_support import *
+from sc_neurocore.studio.models import _introspected_summary
+from typing import cast
+from sc_neurocore.studio.models import get_model_detail
+from sc_neurocore.studio.models import list_models
+from sc_neurocore.studio.models import model_facets
+from .studio_model_catalogue_support import (
+    _adex_summary,
+)
 
 
 def test_list_models_serves_declared_family_and_provenance() -> None:

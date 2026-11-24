@@ -8,10 +8,13 @@
 
 """Focused descriptor-backed model catalogue contracts."""
 
-from .studio_model_catalogue_support import *
+from starlette.testclient import TestClient
+from sc_neurocore.studio.models import model_documentation
+from .studio_model_catalogue_support import client as client
 
 
 def test_model_documentation_serves_reference_markdown() -> None:
+    """A known model gets its reference markdown and an unknown one gets none."""
     doc = model_documentation("AdExNeuron")
     assert doc is not None
     assert doc["name"] == "AdExNeuron"
@@ -21,6 +24,7 @@ def test_model_documentation_serves_reference_markdown() -> None:
 
 
 def test_api_model_doc_endpoint(client: TestClient) -> None:
+    """The doc endpoint serves a known model and answers 404 for an unknown one."""
     ok = client.get("/api/models/HodgkinHuxleyNeuron/doc")
     assert ok.status_code == 200, ok.text
     assert ok.json()["markdown"].lstrip().startswith("# HodgkinHuxleyNeuron")

@@ -8,7 +8,11 @@
 
 """Signed Q32.0 hardware-input encoding contract."""
 
-from .model_mcculloch_pitts_support import *
+from sc_neurocore.neurons.models.mcculloch_pitts import encode_hardware_input
+import pytest
+from .model_mcculloch_pitts_support import (
+    _INT32_MAX,
+)
 
 
 @pytest.mark.parametrize(

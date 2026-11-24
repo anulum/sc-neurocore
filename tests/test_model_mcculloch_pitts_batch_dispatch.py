@@ -8,7 +8,13 @@
 
 """Python batch, request validation, and backend-dispatch contracts."""
 
-from .model_mcculloch_pitts_support import *
+from sc_neurocore.neurons.models.mcculloch_pitts import McCullochPittsNeuron
+from typing import cast
+import numpy as np
+import pytest
+from .model_mcculloch_pitts_support import (
+    _INT32_MAX,
+)
 
 
 def test_python_batch_matches_scalar_truth_rows() -> None:

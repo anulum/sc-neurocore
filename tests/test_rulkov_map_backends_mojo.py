@@ -8,12 +8,21 @@
 
 """Focused cross-backend Rulkov map contracts."""
 
-from .rulkov_map_backends_support import *
+from sc_neurocore.neurons.models.rulkov_map import RulkovMapNeuron
+import numpy as np
+import pytest
+from .rulkov_map_backends_support import (
+    _REGIMES,
+    _STEP_TOL,
+    _mojo,
+    _run,
+)
 
 
 @pytest.mark.skipif(not _mojo(), reason="Mojo Rulkov backend unavailable")
 @pytest.mark.parametrize("sigma", _REGIMES)
 def test_mojo_trace_ulp_bounded(sigma: float) -> None:
+    """The Mojo trace stays within 1e-9 of the Python trace over 2000 steps."""
     # The branch resets resynchronise the trajectory, so the whole-trace gap
     # stays at the per-step FMA level rather than diverging.
     ref, _ref_spikes, _rx, _ry = _run("python", sigma=sigma, n=2000)
@@ -23,6 +32,7 @@ def test_mojo_trace_ulp_bounded(sigma: float) -> None:
 
 @pytest.mark.skipif(not _mojo(), reason="Mojo Rulkov backend unavailable")
 def test_mojo_per_step_within_tolerance() -> None:
+    """Over 5000 random single steps the Mojo gap stays within the step tolerance."""
     rng = np.random.default_rng(11)
     worst = 0.0
     for _ in range(5000):
@@ -39,6 +49,7 @@ def test_mojo_per_step_within_tolerance() -> None:
 
 @pytest.mark.skipif(not _mojo(), reason="Mojo Rulkov backend unavailable")
 def test_mojo_spike_count_matches() -> None:
+    """The Mojo backend gives the Python spike count."""
     _ref, ref_spikes, _rx, _ry = _run("python", current=0.5, n=8000)
     _got, spikes, _xf, _yf = _run("mojo", current=0.5, n=8000)
     assert spikes == ref_spikes

@@ -8,12 +8,21 @@
 
 """Native-runner and Go/Mojo C-facade boundary contracts for MPR dispatch."""
 
-from .ermentrout_kopell_pop_dispatch_support import *
+from typing import Any
+from sc_neurocore.accel import ermentrout_kopell_pop as backends
+from sc_neurocore.accel.go import ermentrout_kopell_pop as go_backend
+from sc_neurocore.accel.mojo import ermentrout_kopell_pop as mojo_backend
+import numpy as np
+import pytest
+from .ermentrout_kopell_pop_dispatch_support import (
+    _PARAMETERS,
+)
 
 
 def test_native_runner_rechecks_rust_availability(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """The native runner refuses Rust when the engine entry point is gone."""
     monkeypatch.setattr(backends, "_engine_simulate", None)
     with pytest.raises(RuntimeError, match="Rust MPR backend is unavailable"):
         backends._native_runner("rust")
@@ -24,6 +33,7 @@ def test_c_facade_input_shape_and_missing_library_fail_closed(
     module: Any,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """The C facade refuses a two-dimensional input and a library that was not built."""
     with pytest.raises(ValueError, match="one-dimensional"):
         module.simulate_ermentrout_kopell_pop(*_PARAMETERS, np.zeros((2, 2)))
 
@@ -37,9 +47,11 @@ def test_c_facade_step_bound_precedes_contiguous_copy(
     module: Any,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """The C facade rejects an over-long input before making a contiguous copy."""
     oversized = np.broadcast_to(np.asarray([1.0]), ((1 << 31),))
 
     def unexpected_copy(*_args: object, **_kwargs: object) -> None:
+        """Fail the test if a contiguous copy is attempted."""
         raise AssertionError("oversized logical input reached contiguous allocation")
 
     monkeypatch.setattr(module.np, "ascontiguousarray", unexpected_copy)
@@ -52,7 +64,10 @@ def test_c_facade_library_probe_handles_loader_failure(
     module: Any,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """A loader failure makes the library probe report no library."""
+
     def fail_to_load(_path: str) -> None:
+        """Fail to load the shared library."""
         raise OSError("shared library unavailable")
 
     monkeypatch.setattr(module.ctypes, "CDLL", fail_to_load)

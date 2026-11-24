@@ -8,7 +8,12 @@
 
 """Source truth tables, inhibition, and statelessness contracts."""
 
-from .model_mcculloch_pitts_support import *
+from sc_neurocore.neurons.models.mcculloch_pitts import McCullochPittsNeuron
+import dataclasses
+import pytest
+from .model_mcculloch_pitts_support import (
+    _INT32_MAX,
+)
 
 
 def test_defaults_are_a_stateless_positive_count_contract() -> None:

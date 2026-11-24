@@ -8,11 +8,18 @@
 
 """Malformed native-result rejection contracts for MPR dispatch."""
 
-from .ermentrout_kopell_pop_dispatch_support import *
+from typing import Any
+from sc_neurocore.accel import ermentrout_kopell_pop as backends
+import numpy as np
+import pytest
+from .ermentrout_kopell_pop_dispatch_support import (
+    _PARAMETERS,
+)
 
 
 @pytest.mark.parametrize("key", ("r", "v"))
 def test_result_validator_rejects_wrong_trace_shape(key: str) -> None:
+    """The result validator rejects a trace of the wrong length."""
     result: dict[str, Any] = dict(backends.simulate_python(*_PARAMETERS, np.asarray([1.0, 2.0])))
     result[key] = np.zeros(1)
     with pytest.raises(FloatingPointError, match="malformed"):
@@ -20,6 +27,7 @@ def test_result_validator_rejects_wrong_trace_shape(key: str) -> None:
 
 
 def test_result_validator_rejects_nonfinite_or_negative_rate_trace() -> None:
+    """The result validator rejects a non-finite v trace and a negative rate trace."""
     nonfinite: dict[str, Any] = dict(backends.simulate_python(*_PARAMETERS, np.asarray([1.0, 2.0])))
     nonfinite["v"] = np.asarray([0.0, np.inf])
     with pytest.raises(FloatingPointError, match="non-finite v"):
@@ -32,6 +40,7 @@ def test_result_validator_rejects_nonfinite_or_negative_rate_trace() -> None:
 
 
 def test_result_validator_rejects_missing_trace() -> None:
+    """The result validator rejects a result without its r trace."""
     result: dict[str, Any] = dict(backends.simulate_python(*_PARAMETERS, np.asarray([1.0, 2.0])))
     del result["r"]
     with pytest.raises(FloatingPointError, match="invalid r trace"):
@@ -39,6 +48,7 @@ def test_result_validator_rejects_missing_trace() -> None:
 
 
 def test_result_validator_enforces_final_trace_consistency() -> None:
+    """The result validator rejects a final v that disagrees with the trace."""
     result: dict[str, Any] = dict(backends.simulate_python(*_PARAMETERS, np.asarray([1.0, 2.0])))
     result["v_final"] = float(result["v_final"]) + 1.0
     with pytest.raises(FloatingPointError, match="v_final disagrees"):
@@ -46,6 +56,7 @@ def test_result_validator_enforces_final_trace_consistency() -> None:
 
 
 def test_result_validator_rejects_missing_or_nonfinite_final_state() -> None:
+    """The result validator rejects a missing, non-finite or negative final state."""
     missing: dict[str, Any] = dict(backends.simulate_python(*_PARAMETERS, np.asarray([1.0, 2.0])))
     del missing["r_final"]
     with pytest.raises(FloatingPointError, match="invalid r_final"):

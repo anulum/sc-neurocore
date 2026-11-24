@@ -8,7 +8,15 @@
 
 """Network population, monitor, and spike-analysis integration contract."""
 
-from .model_mcculloch_pitts_support import *
+from sc_neurocore.neurons.models.mcculloch_pitts import McCullochPittsNeuron
+from sc_neurocore.network.network import Network
+from sc_neurocore.network.stimulus import PoissonInput
+from sc_neurocore.network.population import Population
+from sc_neurocore.network.monitor import SpikeMonitor
+from sc_neurocore.analysis.spike_stats.basic import firing_rate
+import numpy as np
+import pytest
+from sc_neurocore.analysis.spike_stats.basic import spike_count
 
 
 def test_population_network_and_analysis_accept_integer_valued_transport() -> None:

@@ -8,7 +8,13 @@
 
 """Constructor, step, transport, and mutation validation contracts."""
 
-from .model_mcculloch_pitts_support import *
+from sc_neurocore.neurons.models.mcculloch_pitts import McCullochPittsNeuron
+from typing import cast
+import numpy as np
+import pytest
+from .model_mcculloch_pitts_support import (
+    _INT32_MAX,
+)
 
 
 @pytest.mark.parametrize(

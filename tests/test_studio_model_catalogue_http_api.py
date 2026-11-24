@@ -15,7 +15,8 @@ import pytest
 
 from sc_neurocore.studio import model_introspection
 
-from .studio_model_catalogue_support import *
+from starlette.testclient import TestClient
+from .studio_model_catalogue_support import client as client
 
 
 def test_api_models_facets_endpoint(client: TestClient) -> None:

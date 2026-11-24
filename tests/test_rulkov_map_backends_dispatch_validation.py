@@ -8,12 +8,18 @@
 
 """Focused cross-backend Rulkov map contracts."""
 
-from .rulkov_map_backends_support import *
+from sc_neurocore.neurons.models.rulkov_map import RulkovMapNeuron
+import numpy as np
+import pytest
+from .rulkov_map_backends_support import (
+    _run,
+)
 
 from sc_neurocore.neurons.models import rulkov_map as implementation
 
 
 def test_auto_matches_python() -> None:
+    """The auto backend matches the Python trace to 1e-9 and its spike count exactly."""
     ref, ref_spikes, _rx, _ry = _run("python")
     got, spikes, _xf, _yf = _run("auto")
     np.testing.assert_allclose(got, ref, atol=1e-9, rtol=0.0)
@@ -21,22 +27,26 @@ def test_auto_matches_python() -> None:
 
 
 def test_invalid_backend_raises() -> None:
+    """An unknown backend name is rejected."""
     with pytest.raises(ValueError, match="backend must be"):
         RulkovMapNeuron().simulate(10, 0.0, backend="cuda")
 
 
 def test_negative_n_steps_raises() -> None:
+    """A negative step count is rejected."""
     with pytest.raises(ValueError, match="n_steps must be between"):
         RulkovMapNeuron().simulate(-1, 0.0)
 
 
 @pytest.mark.parametrize("n_steps", (True, 2**31))
 def test_invalid_step_count_contract_raises(n_steps: int) -> None:
+    """A step count outside the contract is rejected."""
     with pytest.raises(ValueError, match="n_steps must"):
         RulkovMapNeuron().simulate(n_steps, 0.0)
 
 
 def test_non_finite_current_raises() -> None:
+    """A non-finite current is rejected."""
     with pytest.raises(ValueError, match="current must be finite"):
         RulkovMapNeuron().simulate(10, np.nan)
 
@@ -56,6 +66,7 @@ def test_runtime_disappearance_fails_closed_without_state_mutation(
     """A runtime lost after selection must fail before public-state commit."""
 
     def report_available(_backend: str) -> bool:
+        """Report every backend as available."""
         return True
 
     monkeypatch.setattr(implementation, "_backend_available", report_available)

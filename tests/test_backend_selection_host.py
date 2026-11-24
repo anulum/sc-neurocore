@@ -8,10 +8,14 @@
 
 """Focused data-driven backend selection contracts."""
 
-from .backend_selection_support import *
+from pathlib import Path
+from sc_neurocore.accel import backend_selection as bs
+import platform
+import pytest
 
 
 def test_current_cpu_is_nonempty_string() -> None:
+    """Host detection returns a non-empty CPU name."""
     cpu = bs.current_cpu()
     assert isinstance(cpu, str) and cpu
 
@@ -26,6 +30,7 @@ def test_current_cpu_uses_platform_processor_without_proc_model(
         encoding: str | None = None,
         errors: str | None = None,
     ) -> str:
+        """Return CPU information without a model-name line."""
         assert encoding == "utf-8"
         assert errors is None
         return "processor\t: 0\nvendor_id\t: GenuineIntel\n"
@@ -46,6 +51,7 @@ def test_current_cpu_returns_unknown_when_proc_and_platform_empty(
         encoding: str | None = None,
         errors: str | None = None,
     ) -> str:
+        """Fail to read the CPU information file."""
         assert encoding == "utf-8"
         assert errors is None
         raise OSError("cpuinfo unavailable")

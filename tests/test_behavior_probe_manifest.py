@@ -8,24 +8,25 @@
 
 """Focused behavior-probe manifest contracts."""
 
-from .behavior_probe_support import *
+from typing import Any, cast
+from sc_neurocore.studio.behavior_probe import BEHAVIOR_SWEEP_CURRENTS
+from sc_neurocore.studio.behavior_probe import behavior_tags_for
+from sc_neurocore.studio.behavior_probe import probe_all_models
 
 
 def test_probe_all_models_manifest_shape() -> None:
     """The manifest carries the sweep config, digests and per-model entries."""
-
-    manifest = probe_all_models(names=["ThetaNeuron", "DendriticNMDANeuron"])
+    manifest = cast(dict[str, Any], probe_all_models(names=["ThetaNeuron", "DendriticNMDANeuron"]))
     assert manifest["schema_version"] == "studio.behavior-probe.v1"
-    assert tuple(manifest["sweep"]["currents"]) == BEHAVIOR_SWEEP_CURRENTS  # type: ignore[index,call-overload,arg-type] # Preserved JSON manifest AST
-    assert len(manifest["sweep_sha256"]) == 64  # type: ignore[arg-type] # Preserved JSON manifest AST
-    assert len(manifest["result_sha256"]) == 64  # type: ignore[arg-type] # Preserved JSON manifest AST
-    assert set(manifest["models"]) == {"ThetaNeuron", "DendriticNMDANeuron"}  # type: ignore[arg-type] # Preserved JSON manifest AST
-    assert manifest["models"]["DendriticNMDANeuron"]["drivable"] is False  # type: ignore[index,call-overload] # Preserved JSON manifest AST
+    assert tuple(manifest["sweep"]["currents"]) == BEHAVIOR_SWEEP_CURRENTS
+    assert len(manifest["sweep_sha256"]) == 64
+    assert len(manifest["result_sha256"]) == 64
+    assert set(manifest["models"]) == {"ThetaNeuron", "DendriticNMDANeuron"}
+    assert manifest["models"]["DendriticNMDANeuron"]["drivable"] is False
 
 
 def test_behavior_tags_for_reads_manifest_entry() -> None:
     """The helper extracts a model's recorded tags and is empty for unknowns."""
-
     manifest = probe_all_models(names=["ThetaNeuron"])
     assert behavior_tags_for("ThetaNeuron", manifest)
     assert behavior_tags_for("NoSuchModel", manifest) == ()

@@ -8,10 +8,12 @@
 
 """Focused cross-backend Rulkov map contracts."""
 
-from .rulkov_map_backends_support import *
+from sc_neurocore.neurons.models.rulkov_map import RulkovMapNeuron
+import numpy as np
 
 
 def test_simulate_matches_repeated_step() -> None:
+    """An N-step simulation equals N calls of step, in trace and spike count."""
     # The N-step path must equal calling step() N times (same state evolution
     # and the same upward-crossing spike count).
     trace_a, spikes_a = RulkovMapNeuron().simulate(300, 1.0, backend="python")
@@ -26,6 +28,7 @@ def test_simulate_matches_repeated_step() -> None:
 
 
 def test_final_state_advances_instance() -> None:
+    """A simulation leaves the neuron in the state N steps reach."""
     neuron = RulkovMapNeuron()
     _trace, _spikes = neuron.simulate(500, 1.0, backend="python")
     manual = RulkovMapNeuron()
@@ -35,16 +38,19 @@ def test_final_state_advances_instance() -> None:
 
 
 def test_spiking_produces_upward_crossings() -> None:
+    """A drive of 0.5 gives more than ten spikes over 50000 steps."""
     _trace, spikes = RulkovMapNeuron().simulate(50000, 0.5, backend="python")
     assert spikes > 10
 
 
 def test_silent_at_zero_current() -> None:
+    """Zero current gives no spikes over 50000 steps."""
     _trace, spikes = RulkovMapNeuron().simulate(50000, 0.0, backend="python")
     assert spikes == 0
 
 
 def test_long_run_is_finite_and_bounded() -> None:
+    """A long run stays finite and within [-3, 10)."""
     trace, _spikes = RulkovMapNeuron().simulate(100_000, 0.5, backend="python")
     assert np.all(np.isfinite(trace))
     assert trace.min() >= -3.0 and trace.max() < 10.0

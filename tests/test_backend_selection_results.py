@@ -10,7 +10,18 @@
 
 import json
 
-from .backend_selection_support import *
+from sc_neurocore.accel.backend_order import FASTEST_FIRST_BACKENDS
+from pathlib import Path
+from sc_neurocore.accel import backend_selection as bs
+import pytest
+from .backend_selection_support import (
+    _ADC,
+    _DCLS,
+    _HOST,
+    _MIXED,
+    _clear_measured_orders_cache,
+)
+from .backend_selection_support import fixture_table as fixture_table
 
 
 def test_the_packaged_table_is_read_through_the_package_resources() -> None:
@@ -41,6 +52,7 @@ def test_an_absent_or_malformed_table_gives_no_entries(monkeypatch: pytest.Monke
     """Dispatch keeps the static order when the table cannot be read; it never raises."""
 
     def absent() -> str:
+        """Report the measured table as missing."""
         raise FileNotFoundError("measured_backend_orders.json")
 
     for source in (absent, lambda: "{not-json", lambda: "[]", lambda: '{"entries": {}}'):

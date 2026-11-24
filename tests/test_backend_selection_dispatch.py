@@ -8,10 +8,11 @@
 
 """Focused data-driven backend selection contracts."""
 
-from .backend_selection_support import *
+import numpy.testing as npt
 
 
 def test_auto_dispatch_matches_python_floor_after_reorder() -> None:
+    """The auto backend gives the same DCLS outputs and accumulators as the Python floor."""
     # Reordering must not change results: the selector-driven "auto" path is
     # bit-identical to the always-available Python floor.
     from sc_neurocore.scpn.dcls_tent_kernel import dcls_max_forward_batch

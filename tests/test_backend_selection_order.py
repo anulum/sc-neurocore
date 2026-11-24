@@ -8,7 +8,16 @@
 
 """How a measured order reorders the static dispatch order, by host model and instruction-set level."""
 
-from .backend_selection_support import *
+from sc_neurocore.accel.backend_order import FASTEST_FIRST_BACKENDS
+from sc_neurocore.accel import backend_selection as bs
+import pytest
+from .backend_selection_support import (
+    _ADC,
+    _DCLS,
+    _HOST,
+    _MIXED,
+)
+from .backend_selection_support import fixture_table as fixture_table
 
 
 def test_select_uses_the_measured_order_for_the_measuring_host(fixture_table: None) -> None:

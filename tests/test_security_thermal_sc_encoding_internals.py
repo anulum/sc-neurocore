@@ -8,14 +8,20 @@
 
 """Internal activity-preserving rotation fallback contract."""
 
-from .security_thermal_sc_encoding_support import *
+from sc_neurocore.security.thermal_sc_encoding import ThermalSCEncodingConfig
+from sc_neurocore.security.thermal_sc_encoding import _activity_preserving_rotation_offset
+from sc_neurocore.security.thermal_sc_encoding import _distribute_ones
+import pytest
 
 
 def test_rotation_offset_falls_back_to_zero_without_candidates(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """When the candidate generator yields no offsets the activity-preserving
-    search finds nothing and falls back to the safe identity rotation."""
+    """No candidate offsets fall back to the identity rotation.
+
+    When the candidate generator yields no offsets the activity-preserving
+    search finds nothing and falls back to the safe identity rotation.
+    """
     config = ThermalSCEncodingConfig(bitstream_length=8)
     base = _distribute_ones(4, config.bitstream_length)
     monkeypatch.setattr(

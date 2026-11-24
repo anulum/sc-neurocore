@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5052
+expected_file_count = 5079
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20252,3 +20252,111 @@ rationale = "Exercise SC-NeuroCore: studio storage supervision."
 [[file]]
 path = "tests/test_studio_storage_supervision_faults.py"
 rationale = "Exercise SC-NeuroCore: studio storage supervision faults."
+
+[[file]]
+path = "tests/test_backend_selection_dispatch.py"
+rationale = "Exercise SC-NeuroCore: backend selection dispatch."
+
+[[file]]
+path = "tests/test_backend_selection_host.py"
+rationale = "Exercise SC-NeuroCore: backend selection host."
+
+[[file]]
+path = "tests/test_behavior_probe_derivation.py"
+rationale = "Exercise SC-NeuroCore: behavior probe derivation."
+
+[[file]]
+path = "tests/test_behavior_probe_manifest.py"
+rationale = "Exercise SC-NeuroCore: behavior probe manifest."
+
+[[file]]
+path = "tests/test_behavior_probe_models.py"
+rationale = "Exercise SC-NeuroCore: behavior probe models."
+
+[[file]]
+path = "tests/test_ermentrout_kopell_pop_dispatch_native_facades.py"
+rationale = "Exercise SC-NeuroCore: ermentrout kopell pop dispatch native facades."
+
+[[file]]
+path = "tests/test_ermentrout_kopell_pop_dispatch_result_validation.py"
+rationale = "Exercise SC-NeuroCore: ermentrout kopell pop dispatch result validation."
+
+[[file]]
+path = "tests/test_ermentrout_kopell_pop_dispatch_selection.py"
+rationale = "Exercise SC-NeuroCore: ermentrout kopell pop dispatch selection."
+
+[[file]]
+path = "tests/test_model_mcculloch_pitts_batch_dispatch.py"
+rationale = "Exercise SC-NeuroCore: model mcculloch pitts batch dispatch."
+
+[[file]]
+path = "tests/test_model_mcculloch_pitts_hardware_encoding.py"
+rationale = "Exercise SC-NeuroCore: model mcculloch pitts hardware encoding."
+
+[[file]]
+path = "tests/test_model_mcculloch_pitts_logic.py"
+rationale = "Exercise SC-NeuroCore: model mcculloch pitts logic."
+
+[[file]]
+path = "tests/test_model_mcculloch_pitts_network.py"
+rationale = "Exercise SC-NeuroCore: model mcculloch pitts network."
+
+[[file]]
+path = "tests/test_model_mcculloch_pitts_validation.py"
+rationale = "Exercise SC-NeuroCore: model mcculloch pitts validation."
+
+[[file]]
+path = "tests/test_rulkov_map_backends_bit_exact.py"
+rationale = "Exercise SC-NeuroCore: rulkov map backends bit exact."
+
+[[file]]
+path = "tests/test_rulkov_map_backends_dispatch_validation.py"
+rationale = "Exercise SC-NeuroCore: rulkov map backends dispatch validation."
+
+[[file]]
+path = "tests/test_rulkov_map_backends_dynamics.py"
+rationale = "Exercise SC-NeuroCore: rulkov map backends dynamics."
+
+[[file]]
+path = "tests/test_rulkov_map_backends_mojo.py"
+rationale = "Exercise SC-NeuroCore: rulkov map backends mojo."
+
+[[file]]
+path = "tests/test_security_thermal_sc_encoding_batch.py"
+rationale = "Exercise SC-NeuroCore: security thermal sc encoding batch."
+
+[[file]]
+path = "tests/test_security_thermal_sc_encoding_internals.py"
+rationale = "Exercise SC-NeuroCore: security thermal sc encoding internals."
+
+[[file]]
+path = "tests/test_security_thermal_sc_encoding_probability.py"
+rationale = "Exercise SC-NeuroCore: security thermal sc encoding probability."
+
+[[file]]
+path = "tests/test_studio_model_catalogue_documentation.py"
+rationale = "Exercise SC-NeuroCore: studio model catalogue documentation."
+
+[[file]]
+path = "tests/test_studio_model_catalogue_summary.py"
+rationale = "Exercise SC-NeuroCore: studio model catalogue summary."
+
+[[file]]
+path = "tests/test_verilog_expr_emitter_floor_division.py"
+rationale = "Exercise SC-NeuroCore: verilog expr emitter floor division."
+
+[[file]]
+path = "tests/test_verilog_expr_emitter_modulo.py"
+rationale = "Exercise SC-NeuroCore: verilog expr emitter modulo."
+
+[[file]]
+path = "tests/test_verilog_expr_emitter_root_luts.py"
+rationale = "Exercise SC-NeuroCore: verilog expr emitter root luts."
+
+[[file]]
+path = "tests/test_verilog_expr_emitter_rounding.py"
+rationale = "Exercise SC-NeuroCore: verilog expr emitter rounding."
+
+[[file]]
+path = "tests/test_verilog_expr_emitter_validation.py"
+rationale = "Exercise SC-NeuroCore: verilog expr emitter validation."

@@ -8,26 +8,27 @@
 
 """Focused behavior-probe derivation contracts."""
 
-from .behavior_probe_support import *
+from sc_neurocore.studio.behavior_probe import derive_behavior_tags
+import pytest
+from .behavior_probe_support import (
+    _obs,
+)
 
 
 def test_derive_empty_when_all_drives_error() -> None:
     """A model that cannot be driven at any current yields no tags."""
-
     observations = [_obs(c, "error", error="TypeError: needs glutamate") for c in (0.0, 1.0, 4.0)]
     assert derive_behavior_tags(observations, stochastic=False) == ()
 
 
 def test_derive_quiescent_when_all_silent() -> None:
     """A model that never spikes is quiescent and nothing else."""
-
     observations = [_obs(c, "silent") for c in (0.0, 1.0, 4.0, 16.0)]
     assert derive_behavior_tags(observations, stochastic=False) == ("quiescent",)
 
 
 def test_derive_excitable_and_tonic() -> None:
     """A silent-then-tonic sweep yields excitable + tonic (+ rate-coded)."""
-
     observations = [
         _obs(0.0, "silent"),
         _obs(16.0, "tonic", rate_hz=40.0, spike_count=8),
@@ -52,7 +53,6 @@ def test_derive_excitable_and_tonic() -> None:
 )
 def test_derive_maps_each_pattern_to_its_tag(pattern: str, expected: str) -> None:
     """Each reproducible firing pattern contributes its behaviour tag."""
-
     observations = [_obs(0.0, "silent"), _obs(16.0, pattern, rate_hz=30.0, spike_count=6)]
     tags = derive_behavior_tags(observations, stochastic=False)
     assert expected in tags
@@ -61,7 +61,6 @@ def test_derive_maps_each_pattern_to_its_tag(pattern: str, expected: str) -> Non
 
 def test_derive_rate_coded_requires_monotone_rise() -> None:
     """A rate that rises then falls is not rate-coded (depolarisation block)."""
-
     rising = [
         _obs(0.0, "silent"),
         _obs(16.0, "tonic", rate_hz=20.0, spike_count=4),
@@ -79,7 +78,6 @@ def test_derive_rate_coded_requires_monotone_rise() -> None:
 
 def test_derive_rate_coded_needs_a_real_rise() -> None:
     """A flat f-I curve (constant rate) is not rate-coded."""
-
     flat = [
         _obs(16.0, "tonic", rate_hz=40.0, spike_count=8),
         _obs(64.0, "tonic", rate_hz=40.0, spike_count=8),
@@ -89,7 +87,6 @@ def test_derive_rate_coded_needs_a_real_rise() -> None:
 
 def test_derive_stochastic_withholds_fine_tags() -> None:
     """A stochastic model keeps only excitability and the stochastic flag."""
-
     observations = [
         _obs(0.0, "silent", reproducible=False),
         _obs(16.0, "bursting", rate_hz=100.0, spike_count=20, reproducible=False),
@@ -103,7 +100,6 @@ def test_derive_stochastic_withholds_fine_tags() -> None:
 
 def test_derive_stochastic_quiescent() -> None:
     """A stochastic model that never spikes is quiescent + stochastic."""
-
     observations = [_obs(c, "silent", reproducible=False) for c in (0.0, 16.0, 64.0)]
     tags = derive_behavior_tags(observations, stochastic=True)
     assert tags == ("quiescent", "stochastic")
@@ -111,7 +107,6 @@ def test_derive_stochastic_quiescent() -> None:
 
 def test_derive_ignores_error_observations_for_excitability() -> None:
     """Error drives do not count as silent; a real spike still wins."""
-
     observations = [
         _obs(0.0, "error", error="ValueError: unstable"),
         _obs(16.0, "tonic", rate_hz=40.0, spike_count=8),

@@ -1378,6 +1378,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 30 test modules that star-imported a support module beside them
+  through a relative import (backend selection, behaviour probe,
+  Ermentrout-Kopell population dispatch, Rulkov map backends, thermal SC
+  encoding and the Studio model catalogue) import their names explicitly,
+  replace their eight type-ignore comments with typed code, gain their
+  missing docstrings and are enrolled in the docstring policy.
+
 - The 32 top-level MAT, Wilson-HR, extended-neuron and Studio storage test
   modules that star-imported their supports without a noqa import their
   names explicitly, keep the storage fixtures in their namespaces through

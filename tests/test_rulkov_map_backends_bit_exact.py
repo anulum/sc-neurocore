@@ -8,12 +8,20 @@
 
 """Focused cross-backend Rulkov map contracts."""
 
-from .rulkov_map_backends_support import *
+from collections.abc import Callable
+import numpy as np
+import pytest
+from .rulkov_map_backends_support import (
+    _BIT_EXACT,
+    _REGIMES,
+    _run,
+)
 
 
 @pytest.mark.parametrize("backend,available", _BIT_EXACT, ids=[b for b, _ in _BIT_EXACT])
 @pytest.mark.parametrize("sigma", _REGIMES)
 def test_bit_exact_trace(backend: str, available: Callable[[], bool], sigma: float) -> None:
+    """Each available backend reproduces the Python trace, spikes and final state exactly."""
     if not available():
         pytest.skip(f"{backend} Rulkov backend unavailable")
     ref_trace, ref_spikes, rx, ry = _run("python", sigma=sigma)
@@ -25,6 +33,7 @@ def test_bit_exact_trace(backend: str, available: Callable[[], bool], sigma: flo
 
 @pytest.mark.parametrize("backend,available", _BIT_EXACT, ids=[b for b, _ in _BIT_EXACT])
 def test_bit_exact_empty_and_single(backend: str, available: Callable[[], bool]) -> None:
+    """Runs of zero, one and two steps match the Python backend exactly."""
     if not available():
         pytest.skip(f"{backend} Rulkov backend unavailable")
     for n in (0, 1, 2):
@@ -36,6 +45,7 @@ def test_bit_exact_empty_and_single(backend: str, available: Callable[[], bool])
 
 @pytest.mark.parametrize("backend,available", _BIT_EXACT, ids=[b for b, _ in _BIT_EXACT])
 def test_bit_exact_high_current_spiking(backend: str, available: Callable[[], bool]) -> None:
+    """A high constant drive gives the same trace, spikes and state as the Python backend."""
     # High constant drive exercises branches 2 and 3 (plateau + hard reset).
     if not available():
         pytest.skip(f"{backend} Rulkov backend unavailable")

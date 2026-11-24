@@ -8,7 +8,12 @@
 
 """Focused fixed-point Verilog expression lowering contracts."""
 
-from .verilog_expr_emitter_support import *
+from sc_neurocore.compiler.verilog_compiler_config import Q88
+from sc_neurocore.compiler.verilog_expr_emitter import _emit_expr
+import pytest
+from .verilog_expr_emitter_support import (
+    _STATE_VARS,
+)
 
 
 def test_nearest_rounding_uses_a_sign_aware_half_lsb_bias() -> None:
