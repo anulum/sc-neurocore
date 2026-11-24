@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4975
+expected_file_count = 4988
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -19944,3 +19944,55 @@ rationale = "Exercise SC-NeuroCore: studio synthesis provenance run and endpoint
 [[file]]
 path = "tests/test_studio_synthesis_provenance_target_build.py"
 rationale = "Exercise SC-NeuroCore: studio synthesis provenance target build."
+
+[[file]]
+path = "tests/test_studio_app_policy_and_audit_audit_export.py"
+rationale = "Exercise SC-NeuroCore: studio app policy and audit audit export."
+
+[[file]]
+path = "tests/test_studio_runtime_settings_parsing_cors_and_websocket.py"
+rationale = "Exercise SC-NeuroCore: studio runtime settings parsing cors and websocket."
+
+[[file]]
+path = "tests/test_studio_runtime_settings_parsing_hosts_and_headers.py"
+rationale = "Exercise SC-NeuroCore: studio runtime settings parsing hosts and headers."
+
+[[file]]
+path = "tests/test_studio_runtime_settings_parsing_jobs_and_audit.py"
+rationale = "Exercise SC-NeuroCore: studio runtime settings parsing jobs and audit."
+
+[[file]]
+path = "tests/test_studio_runtime_settings_parsing_route_policy_and_body.py"
+rationale = "Exercise SC-NeuroCore: studio runtime settings parsing route policy and body."
+
+[[file]]
+path = "tests/test_studio_synthesis_device_capacity.py"
+rationale = "Exercise SC-NeuroCore: studio synthesis device capacity."
+
+[[file]]
+path = "tests/test_studio_synthesis_endpoint.py"
+rationale = "Exercise SC-NeuroCore: studio synthesis endpoint."
+
+[[file]]
+path = "tests/test_studio_synthesis_estimation.py"
+rationale = "Exercise SC-NeuroCore: studio synthesis estimation."
+
+[[file]]
+path = "tests/test_studio_synthesis_multi_target.py"
+rationale = "Exercise SC-NeuroCore: studio synthesis multi target."
+
+[[file]]
+path = "tests/test_studio_synthesis_pnr.py"
+rationale = "Exercise SC-NeuroCore: studio synthesis pnr."
+
+[[file]]
+path = "tests/test_studio_synthesis_run.py"
+rationale = "Exercise SC-NeuroCore: studio synthesis run."
+
+[[file]]
+path = "tests/test_studio_synthesis_tool_detection.py"
+rationale = "Exercise SC-NeuroCore: studio synthesis tool detection."
+
+[[file]]
+path = "tests/test_studio_synthesis_yosys_json.py"
+rationale = "Exercise SC-NeuroCore: studio synthesis yosys json."

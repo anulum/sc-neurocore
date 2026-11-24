@@ -6,12 +6,22 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (route_policy_and_body) from former test_studio_runtime_settings_parsing.py
 
+"""Parsing the Studio runtime settings: route policies and the request body limit."""
+
 from __future__ import annotations
 
-from tests.studio_settings_support import *  # noqa: F403
+from pathlib import Path
+from typing import Any
+import pytest
+from tests.studio_settings_support import (
+    StudioRuntimeSettings,
+    build_default_studio_runtime_settings,
+    create_app,
+)
 
 
 def test_studio_runtime_settings_parses_route_policy_enforcement_flag() -> None:
+    """The route-policy enforcement flag is parsed."""
     settings = build_default_studio_runtime_settings(
         env={"SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES": "true"}
     )
@@ -20,6 +30,7 @@ def test_studio_runtime_settings_parses_route_policy_enforcement_flag() -> None:
 
 
 def test_studio_runtime_settings_rejects_invalid_route_policy_enforcement_flag() -> None:
+    """An invalid route-policy enforcement flag is rejected with ValueError."""
     with pytest.raises(ValueError, match="route policy enforcement"):
         build_default_studio_runtime_settings(
             env={"SC_NEUROCORE_STUDIO_ENFORCE_ROUTE_POLICIES": "sometimes"}
@@ -27,12 +38,14 @@ def test_studio_runtime_settings_rejects_invalid_route_policy_enforcement_flag()
 
 
 def test_studio_runtime_settings_default_request_body_limit_is_bounded() -> None:
+    """The default request body limit is 1 MiB."""
     settings = build_default_studio_runtime_settings(env={})
 
     assert settings.max_request_body_bytes == 1_048_576
 
 
 def test_studio_runtime_settings_parses_request_body_limit() -> None:
+    """The request body limit is parsed."""
     settings = build_default_studio_runtime_settings(
         env={"SC_NEUROCORE_STUDIO_MAX_REQUEST_BODY_BYTES": "2048"}
     )
@@ -41,11 +54,13 @@ def test_studio_runtime_settings_parses_request_body_limit() -> None:
 
 
 def test_studio_runtime_settings_rejects_non_positive_request_body_limit() -> None:
+    """A non-positive request body limit is rejected with ValueError."""
     with pytest.raises(ValueError, match="request body limit"):
         StudioRuntimeSettings(max_request_body_bytes=0)
 
 
 def test_studio_runtime_settings_rejects_invalid_request_body_limit() -> None:
+    """An invalid request body limit is rejected with ValueError."""
     with pytest.raises(ValueError, match="request body limit"):
         build_default_studio_runtime_settings(
             env={"SC_NEUROCORE_STUDIO_MAX_REQUEST_BODY_BYTES": "not-a-number"}
@@ -64,7 +79,6 @@ def test_an_unconfigured_job_root_is_private_to_its_process() -> None:
     ledger and reported its jobs as its own, and on a multi-user machine the
     directory belonged to whichever user created it first.
     """
-
     first = _job_root(create_app())
     second = _job_root(create_app())
 
@@ -76,6 +90,7 @@ def test_an_unconfigured_job_root_is_private_to_its_process() -> None:
 
 
 def test_a_configured_job_root_is_used_as_given(tmp_path: Path) -> None:
+    """A configured job root is used as given."""
     configured = tmp_path / "jobs"
 
     app = create_app(StudioRuntimeSettings(job_root_path=str(configured)))

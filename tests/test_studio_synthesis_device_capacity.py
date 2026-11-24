@@ -10,18 +10,25 @@
 
 from __future__ import annotations
 
-from tests.studio_synthesis_support import *  # noqa: F403
+from tests.studio_synthesis_support import (
+    _DEVICE_CAPACITY,
+    _TARGETS,
+)
 
 
 class TestDeviceCapacity:
-    def test_all_targets_have_capacity(self):
+    """The device capacity table of the synthesis targets."""
+
+    def test_all_targets_have_capacity(self) -> None:
+        """Every target has positive LUT and flip-flop capacities."""
         for target in _TARGETS:
             assert target in _DEVICE_CAPACITY
             cap = _DEVICE_CAPACITY[target]
             assert cap["luts"] > 0
             assert cap["ffs"] > 0
 
-    def test_capacity_values_sane(self):
+    def test_capacity_values_sane(self) -> None:
+        """Every capacity stays within plausible bounds."""
         for target, cap in _DEVICE_CAPACITY.items():
             assert cap["luts"] <= 100_000
             assert cap["ffs"] <= 100_000

@@ -10,28 +10,45 @@
 
 from __future__ import annotations
 
-from tests.studio_synthesis_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+import pytest
+from tests.studio_synthesis_support import (
+    _TARGETS,
+)
+from tests.studio_synthesis_support import client as client
+from tests.studio_synthesis_support import large_body_client as large_body_client
 
 
 class TestSynthesisEndpoint:
-    def test_synth_requires_verilog(self, client):
+    """The Studio synthesis and terminal endpoints."""
+
+    def test_synth_requires_verilog(self, client: TestClient) -> None:
+        """A synthesis without Verilog is rejected with 422."""
         r = client.post("/api/synth/run", json={"target": "ice40"})
         assert r.status_code == 422
 
-    def test_synth_empty_verilog_rejected(self, client):
+    def test_synth_empty_verilog_rejected(self, client: TestClient) -> None:
+        """Empty Verilog is rejected with 422."""
         r = client.post("/api/synth/run", json={"verilog": "", "target": "ice40"})
         assert r.status_code == 422
 
-    def test_synth_non_string_verilog_rejected(self, client):
+    def test_synth_non_string_verilog_rejected(self, client: TestClient) -> None:
+        """Non-string Verilog is rejected with 422."""
         r = client.post("/api/synth/run", json={"verilog": {"module": "x"}, "target": "ice40"})
         assert r.status_code == 422
 
-    def test_synth_oversized_verilog_rejected(self, large_body_client):
+    def test_synth_oversized_verilog_rejected(self, large_body_client: TestClient) -> None:
+        """Oversized Verilog is rejected with 422."""
         huge = "module x;\n" + ("wire a;\n" * 400_000) + "endmodule\n"
         r = large_body_client.post("/api/synth/run", json={"verilog": huge, "target": "ice40"})
         assert r.status_code == 422
 
-    def test_synth_with_stub_verilog(self, client):
+    def test_synth_with_stub_verilog(self, client: TestClient) -> None:
+        """A stub module synthesises for iCE40 and reports its target."""
         verilog = "module test(); endmodule"
         r = client.post("/api/synth/run", json={"verilog": verilog, "target": "ice40"})
         assert r.status_code == 200
@@ -40,13 +57,17 @@ class TestSynthesisEndpoint:
         assert "target" in data
         assert data["target"] == "ice40"
 
-    def test_synth_invalid_target(self, client):
+    def test_synth_invalid_target(self, client: TestClient) -> None:
+        """An unknown target is rejected with 422."""
         verilog = "module test(); endmodule"
         r = client.post("/api/synth/run", json={"verilog": verilog, "target": "invalid"})
         assert r.status_code == 422
 
     @pytest.mark.parametrize("missing", ["compile_traceability", "cosim_parity"])
-    def test_terminal_requires_selected_rtl_evidence(self, client, missing):
+    def test_terminal_requires_selected_rtl_evidence(
+        self, client: TestClient, missing: str
+    ) -> None:
+        """A terminal request missing an RTL evidence field is rejected with 422."""
         payload = {
             "compile_traceability": {},
             "cosim_parity": {},
@@ -59,7 +80,8 @@ class TestSynthesisEndpoint:
 
         assert response.status_code == 422
 
-    def test_terminal_rejects_target_without_pnr(self, client):
+    def test_terminal_rejects_target_without_pnr(self, client: TestClient) -> None:
+        """A terminal request for a target without place and route is rejected with 422."""
         response = client.post(
             "/api/synth/terminal",
             json={
@@ -72,7 +94,8 @@ class TestSynthesisEndpoint:
 
         assert response.status_code == 422
 
-    def test_synth_all_valid_targets(self, client):
+    def test_synth_all_valid_targets(self, client: TestClient) -> None:
+        """Each valid target synthesises and reports itself."""
         verilog = "module test(); endmodule"
         for target in _TARGETS:
             r = client.post("/api/synth/run", json={"verilog": verilog, "target": target})

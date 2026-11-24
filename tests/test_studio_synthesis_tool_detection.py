@@ -10,11 +10,22 @@
 
 from __future__ import annotations
 
-from tests.studio_synthesis_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from starlette.testclient import TestClient
+
+from tests.studio_synthesis_support import (
+    check_tools,
+)
+from tests.studio_synthesis_support import client as client
 
 
 class TestToolDetection:
-    def test_check_tools_returns_dict(self):
+    """Detection of the EDA tools."""
+
+    def test_check_tools_returns_dict(self) -> None:
+        """Tool detection reports availability and version for Yosys and nextpnr."""
         result = check_tools()
         assert "yosys" in result
         assert "nextpnr_ice40" in result
@@ -22,12 +33,14 @@ class TestToolDetection:
             assert "available" in tool_info
             assert "version" in tool_info
 
-    def test_check_tools_has_all_expected(self):
+    def test_check_tools_has_all_expected(self) -> None:
+        """Tool detection reports exactly the expected tools."""
         result = check_tools()
         expected = {"yosys", "nextpnr_ice40", "nextpnr_ecp5", "firtool"}
         assert set(result.keys()) == expected
 
-    def test_tools_status_endpoint(self, client):
+    def test_tools_status_endpoint(self, client: TestClient) -> None:
+        """The tools-status endpoint reports Yosys availability as a boolean."""
         r = client.get("/api/synth/tools-status")
         assert r.status_code == 200
         data = r.json()

@@ -1378,6 +1378,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 19 top-level Studio settings, policy and synthesis test modules
+  import their names explicitly instead of through a suppressed star
+  import, take every name bound after a support's web-stack guard from
+  that support, keep the synthesis clients in their namespaces through
+  redundant-alias imports, replace a type-ignore comment with a cast,
+  gain their missing docstrings and type annotations and are enrolled in
+  the docstring policy.
+
 - The 20 top-level Studio integration, network canvas, progress, Rust
   integration, simulation and synthesis provenance test modules import
   their names explicitly instead of through a suppressed star import,

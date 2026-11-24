@@ -6,12 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (jobs_and_audit) from former test_studio_runtime_settings_parsing.py
 
+"""Parsing the Studio runtime settings: jobs and the audit log."""
+
 from __future__ import annotations
 
-from tests.studio_settings_support import *  # noqa: F403
+import pytest
+from tests.studio_settings_support import (
+    DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES,
+    StudioRuntimeSettings,
+    build_default_studio_runtime_settings,
+)
 
 
 def test_studio_runtime_settings_parses_job_root_and_timeout() -> None:
+    """The job root, default timeout and artefact limit are parsed."""
     settings = build_default_studio_runtime_settings(
         env={
             "SC_NEUROCORE_STUDIO_JOB_ROOT": "/var/lib/sc-neurocore/studio-jobs",
@@ -26,12 +34,14 @@ def test_studio_runtime_settings_parses_job_root_and_timeout() -> None:
 
 
 def test_studio_runtime_settings_default_job_artifact_limit_is_bounded() -> None:
+    """The default job artefact limit is the bounded default."""
     settings = build_default_studio_runtime_settings(env={})
 
     assert settings.job_max_artifact_bytes == DEFAULT_STUDIO_JOB_MAX_ARTIFACT_BYTES
 
 
 def test_studio_runtime_settings_rejects_invalid_job_settings() -> None:
+    """Invalid job root, timeout or artefact limit is rejected with ValueError."""
     with pytest.raises(ValueError, match="job root path"):
         StudioRuntimeSettings(job_root_path="")
     with pytest.raises(ValueError, match="job timeout"):
@@ -49,6 +59,7 @@ def test_studio_runtime_settings_rejects_invalid_job_settings() -> None:
 
 
 def test_studio_runtime_settings_parses_audit_log_path() -> None:
+    """The audit log path is parsed."""
     settings = build_default_studio_runtime_settings(
         env={"SC_NEUROCORE_STUDIO_AUDIT_LOG_PATH": "/var/log/sc-neurocore/studio.jsonl"}
     )
@@ -57,6 +68,7 @@ def test_studio_runtime_settings_parses_audit_log_path() -> None:
 
 
 def test_studio_runtime_settings_disables_audit_rotation_by_default() -> None:
+    """Audit rotation is off by default and five files are retained."""
     settings = build_default_studio_runtime_settings(env={})
 
     assert settings.audit_rotation_bytes is None
@@ -64,6 +76,7 @@ def test_studio_runtime_settings_disables_audit_rotation_by_default() -> None:
 
 
 def test_studio_runtime_settings_parses_audit_rotation_policy() -> None:
+    """The audit rotation size and retained-file count are parsed."""
     settings = build_default_studio_runtime_settings(
         env={
             "SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES": "4096",
@@ -76,11 +89,13 @@ def test_studio_runtime_settings_parses_audit_rotation_policy() -> None:
 
 
 def test_studio_runtime_settings_rejects_empty_audit_log_path() -> None:
+    """An empty audit log path is rejected with ValueError."""
     with pytest.raises(ValueError, match="audit log path"):
         StudioRuntimeSettings(audit_log_path="")
 
 
 def test_studio_runtime_settings_rejects_invalid_audit_rotation_policy() -> None:
+    """An invalid audit rotation size or retained-file count is rejected with ValueError."""
     with pytest.raises(ValueError, match="audit rotation"):
         build_default_studio_runtime_settings(
             env={"SC_NEUROCORE_STUDIO_AUDIT_ROTATION_BYTES": "not-a-number"}

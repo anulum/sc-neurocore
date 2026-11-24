@@ -6,12 +6,20 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Focused free-test suite (audit_export) from former test_studio_app_policy_and_audit.py
 
+"""The Studio audit and quarantine export endpoints and their admin gate."""
+
 from __future__ import annotations
 
-from tests.studio_settings_support import *  # noqa: F403
+from pathlib import Path
+from tests.studio_settings_support import (
+    StudioRuntimeSettings,
+    TestClient,
+    create_app,
+)
 
 
 def test_studio_app_exports_audit_events_for_admin_without_paths(tmp_path: Path) -> None:
+    """An admin's audit export returns verified, hash-chained events without local paths."""
     from sc_neurocore.studio.platform import AuditEvent, JsonlAuditSink
 
     audit_path = tmp_path / "audit" / "studio.jsonl"
@@ -57,6 +65,7 @@ def test_studio_app_exports_audit_events_for_admin_without_paths(tmp_path: Path)
 def test_studio_app_exports_quarantined_audit_events_for_admin_without_paths(
     tmp_path: Path,
 ) -> None:
+    """An admin's quarantine export returns the quarantined events without local paths."""
     from sc_neurocore.studio.platform import AuditEvent, JsonlAuditSink
 
     audit_path = tmp_path / "audit" / "studio.jsonl"
@@ -98,6 +107,7 @@ def test_studio_app_exports_quarantined_audit_events_for_admin_without_paths(
 
 
 def test_studio_app_rejects_audit_export_without_admin_role(tmp_path: Path) -> None:
+    """An audit export without the admin role is rejected with 403."""
     audit_path = tmp_path / "audit" / "studio.jsonl"
     app = create_app(
         runtime_settings=StudioRuntimeSettings(
@@ -119,6 +129,7 @@ def test_studio_app_rejects_audit_export_without_admin_role(tmp_path: Path) -> N
 def test_studio_app_rejects_quarantine_export_without_admin_role(
     tmp_path: Path,
 ) -> None:
+    """A quarantine export without the admin role is rejected with 403."""
     audit_path = tmp_path / "audit" / "studio.jsonl"
     app = create_app(
         runtime_settings=StudioRuntimeSettings(

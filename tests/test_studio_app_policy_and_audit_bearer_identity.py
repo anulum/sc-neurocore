@@ -10,7 +10,14 @@
 
 from __future__ import annotations
 
-from tests.studio_settings_support import *  # noqa: F403
+from pathlib import Path
+import hashlib
+import json
+from tests.studio_settings_support import (
+    StudioRuntimeSettings,
+    TestClient,
+    create_app,
+)
 
 
 def test_studio_app_accepts_bearer_identity_file_principal(tmp_path: Path) -> None:

@@ -10,22 +10,33 @@
 
 from __future__ import annotations
 
-from tests.studio_synthesis_support import *  # noqa: F403
+from typing import Any, cast
+
+import pytest
+from tests.studio_synthesis_support import (
+    run_synthesis,
+)
 
 
 class TestRunSynthesis:
-    def test_unknown_target_raises(self):
+    """Running synthesis directly."""
+
+    def test_unknown_target_raises(self) -> None:
+        """An unknown target raises ValueError."""
         with pytest.raises(ValueError, match="Unknown target"):
             run_synthesis("module t(); endmodule", "nonexistent")
 
-    def test_non_string_verilog_raises(self):
+    def test_non_string_verilog_raises(self) -> None:
+        """Non-string Verilog raises ValueError."""
         with pytest.raises(ValueError, match="verilog_source must be a string"):
-            run_synthesis(123, "ice40")  # type: ignore[arg-type]
+            run_synthesis(cast(Any, 123), "ice40")
 
-    def test_empty_verilog_raises(self):
+    def test_empty_verilog_raises(self) -> None:
+        """Empty Verilog raises ValueError."""
         with pytest.raises(ValueError, match="must not be empty"):
             run_synthesis("   ", "ice40")
 
-    def test_returns_target_field(self):
+    def test_returns_target_field(self) -> None:
+        """A run reports its target."""
         result = run_synthesis("module t(); endmodule", "ice40")
         assert result["target"] == "ice40"

@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.studio_synthesis_support import *  # noqa: F403
+from typing import Any
+
+from pathlib import Path
+import json
+import pytest
+from tests.studio_synthesis_support import (
+    _parse_yosys_json,
+)
 
 
-def _write(tmp_path, name, modules):
+def _write(tmp_path: Path, name: str, modules: dict[str, Any]) -> str:
     json_path = str(tmp_path / name)
     with open(json_path, "w") as f:
         json.dump({"modules": modules}, f)
     return json_path
 
 
-def _top(*cell_types, nets=0):
+def _top(*cell_types: str, nets: int = 0) -> dict[str, Any]:
     return {
         "cells": {f"c{index}": {"type": cell_type} for index, cell_type in enumerate(cell_types)},
         "netnames": {f"n{index}": {} for index in range(nets)},
@@ -28,14 +35,18 @@ def _top(*cell_types, nets=0):
 
 
 class TestYosysJsonParser:
-    def test_parse_empty_design(self, tmp_path):
+    """Counting resources from a Yosys JSON netlist."""
+
+    def test_parse_empty_design(self, tmp_path: Path) -> None:
+        """An empty design has no resources."""
         result, uncounted = _parse_yosys_json(_write(tmp_path, "empty.json", {}), "ice40")
         assert result["luts"] == 0
         assert result["ffs"] == 0
         assert result["cells"] == 0
         assert uncounted == {}
 
-    def test_parse_with_luts_and_ffs(self, tmp_path):
+    def test_parse_with_luts_and_ffs(self, tmp_path: Path) -> None:
+        """LUTs, flip-flops, DSPs, cells and wires are counted."""
         path = _write(
             tmp_path,
             "design.json",
@@ -51,20 +62,23 @@ class TestYosysJsonParser:
         assert result["wires"] == 3
         assert uncounted == {}
 
-    def test_parse_ecp5_and_xilinx_flip_flops(self, tmp_path):
+    def test_parse_ecp5_and_xilinx_flip_flops(self, tmp_path: Path) -> None:
+        """ECP5 and Xilinx flip-flops are counted."""
         ecp5, _ = _parse_yosys_json(_write(tmp_path, "e.json", {"top": _top("TRELLIS_FF")}), "ecp5")
         xilinx, _ = _parse_yosys_json(_write(tmp_path, "x.json", {"top": _top("FDRE")}), "xilinx")
         assert ecp5["ffs"] == 1
         assert xilinx["ffs"] == 1
 
-    def test_a_generic_cell_left_unmapped_is_reported_not_guessed(self, tmp_path):
+    def test_a_generic_cell_left_unmapped_is_reported_not_guessed(self, tmp_path: Path) -> None:
+        """An unmapped generic cell is reported, not counted."""
         result, uncounted = _parse_yosys_json(
             _write(tmp_path, "g.json", {"top": _top("$dff", "SB_LUT4")}), "ice40"
         )
         assert result["ffs"] == 0
         assert uncounted == {"$dff": 1}
 
-    def test_parse_bram_detection(self, tmp_path):
+    def test_parse_bram_detection(self, tmp_path: Path) -> None:
+        """Block RAMs are counted per family."""
         ice40, _ = _parse_yosys_json(
             _write(tmp_path, "i.json", {"top": _top("SB_RAM40_4K", "SB_RAM40_4KNR")}), "ice40"
         )
@@ -78,7 +92,8 @@ class TestYosysJsonParser:
         # In RAMB18 halves: a RAMB36 is two.
         assert xilinx["brams"] == 3
 
-    def test_lut_ram_is_not_block_ram(self, tmp_path):
+    def test_lut_ram_is_not_block_ram(self, tmp_path: Path) -> None:
+        """LUT RAM is not counted as block RAM."""
         xilinx, _ = _parse_yosys_json(
             _write(tmp_path, "x.json", {"top": _top("RAM256X1S", "RAM64X1D")}), "xilinx"
         )
@@ -90,7 +105,10 @@ class TestYosysJsonParser:
         assert gowin["brams"] == 0
         assert uncounted == {"RAM16SDP4": 2}
 
-    def test_carry_and_wide_multiplexers_are_counted_by_what_they_occupy(self, tmp_path):
+    def test_carry_and_wide_multiplexers_are_counted_by_what_they_occupy(
+        self, tmp_path: Path
+    ) -> None:
+        """Carry chains and wide multiplexers count the LUTs they occupy."""
         ecp5, _ = _parse_yosys_json(
             _write(tmp_path, "e.json", {"top": _top("CCU2C", "LUT4", "PFUMX")}), "ecp5"
         )
@@ -101,7 +119,8 @@ class TestYosysJsonParser:
         assert ecp5["luts"] == 3
         assert gowin["luts"] == 2
 
-    def test_the_cell_library_is_not_the_design(self, tmp_path):
+    def test_the_cell_library_is_not_the_design(self, tmp_path: Path) -> None:
+        """Library modules are not counted as the design."""
         library = {
             "attributes": {"blackbox": "00000000000000000000000000000001"},
             **_top("$specify2", "$specrule", nets=4),
@@ -114,7 +133,8 @@ class TestYosysJsonParser:
         assert result["wires"] == 1
         assert uncounted == {}
 
-    def test_parse_multi_module(self, tmp_path):
+    def test_parse_multi_module(self, tmp_path: Path) -> None:
+        """Resources of several modules are summed."""
         path = _write(tmp_path, "multi.json", {"a": _top("LUT4", nets=1), "b": _top("DFF", nets=1)})
         result, _ = _parse_yosys_json(path, "gowin")
         assert result["luts"] == 1
@@ -122,16 +142,18 @@ class TestYosysJsonParser:
         assert result["cells"] == 2
         assert result["wires"] == 2
 
-    def test_parse_rejects_non_object_modules(self, tmp_path):
-        data = {"modules": []}
+    def test_parse_rejects_non_object_modules(self, tmp_path: Path) -> None:
+        """Modules that are not an object are rejected with ValueError."""
+        data: dict[str, Any] = {"modules": []}
         json_path = str(tmp_path / "bad_modules.json")
         with open(json_path, "w") as f:
             json.dump(data, f)
         with pytest.raises(ValueError, match="'modules' must be an object"):
             _parse_yosys_json(json_path, "ice40")
 
-    def test_parse_rejects_non_object_cells(self, tmp_path):
-        data = {"modules": {"top": {"cells": [], "netnames": {}}}}
+    def test_parse_rejects_non_object_cells(self, tmp_path: Path) -> None:
+        """Cells that are not an object are rejected with ValueError."""
+        data: dict[str, Any] = {"modules": {"top": {"cells": [], "netnames": {}}}}
         json_path = str(tmp_path / "bad_cells.json")
         with open(json_path, "w") as f:
             json.dump(data, f)
