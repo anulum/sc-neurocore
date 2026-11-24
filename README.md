@@ -85,7 +85,7 @@ spikes = sum(neuron.step(0.8) for _ in range(500))
 print(f"{spikes} spikes in 500 steps")
 ```
 
-## Public Development Workbench and the 4.0.0 Roadmap
+## Public Development Workbench and the Group Programme
 
 **SC-NeuroCore will remain a public, open-source development workbench** for the
 **SC Neuromorphic Computing Systems** group. It brings together a connected
@@ -99,11 +99,11 @@ integration of the complete workflow. Focused repositories give teams clearer
 entry points and smaller dependency boundaries when they need one part of it.
 SC-NeuroCore continues as the place to bring those parts together.
 
-The split into focused repositories is planned and is not part of the 4.0.0
-release. Repository names and responsibilities are established; implementation and
-release status are described separately in the map. SC-NeuroCore 4.0.0 is
-published as one package from this repository; it installs as shown in
-[Quick Start](#quick-start).
+Moving code into focused repositories is planned and is not part of the 4.0.0
+release. The repositories are named and published as scaffolds, with their
+responsibilities; implementation and release status are described in the map.
+SC-NeuroCore is published as one package from this repository; it installs as
+shown in [Quick Start](#quick-start).
 
 | Part of the map | Repositories and purpose |
 | --- | --- |
@@ -122,7 +122,7 @@ continuing public workbench role.
 The [group and project map](docs/ecosystem.md) explains the whole programme:
 13 specialised neuromorphic destinations, 25 supporting tools,
 LOOP-TIMING-WITNESS and the planned general circuit-design platform with
-16 adopted destinations, including manufacturing and equipment automation.
+18 adopted destinations, including manufacturing and equipment automation.
 Programme, circuit-platform and lifecycle maps distinguish existing software
 from architecture and planned implementation. Migration guides will accompany
 component releases.

@@ -69,8 +69,8 @@
 <text x="540" y="528" font-size="19" fill="#40566e" font-weight="400">Technical interface: Dataset and stream identities, timebase, encoding and conversion/loss reports.</text>
 <rect x="50" y="599" width="1820" height="208" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="2"/>
 <text x="72" y="633" font-size="25" fill="#126b68" font-weight="700">Compilers and EDA integration</text>
-<text x="72" y="690" font-size="18" fill="#40566e" font-weight="400">Connect existing design tools and translate</text>
-<text x="72" y="712" font-size="18" fill="#40566e" font-weight="400">designs between them.</text>
+<text x="72" y="690" font-size="18" fill="#40566e" font-weight="400">Connect existing design tools, translate designs</text>
+<text x="72" y="712" font-size="18" fill="#40566e" font-weight="400">and study models that propose design steps.</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-compiler">
 <text x="540" y="634" font-size="24" fill="#172c46" font-weight="700">SC-NC-COMPILER</text>
 </a>
@@ -86,11 +86,15 @@
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-flow">
 <text x="540" y="694" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-FLOW</text>
 </a>
-<text x="540" y="750" font-size="19" fill="#40566e" font-weight="400">Technical interface: Model/IR/target constraints; neutral operation/provider and technology profiles.</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-learning">
+<text x="1195" y="694" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-LEARNING</text>
+</a>
+<text x="540" y="750" font-size="19" fill="#40566e" font-weight="400">Technical interface: Model/IR/target constraints; neutral operation/provider and technology profiles; study and grader terms.</text>
 <rect x="50" y="821" width="1820" height="208" rx="16" fill="#ffffff" stroke="#b5c5d8" stroke-width="2"/>
 <text x="72" y="855" font-size="25" fill="#126b68" font-weight="700">Digital FPGA and ASIC</text>
 <text x="72" y="912" font-size="18" fill="#40566e" font-weight="400">Take digital designs from simulation to</text>
-<text x="72" y="934" font-size="18" fill="#40566e" font-weight="400">programmable hardware or custom chips.</text>
+<text x="72" y="934" font-size="18" fill="#40566e" font-weight="400">programmable hardware, FPGA prototypes</text>
+<text x="72" y="956" font-size="18" fill="#40566e" font-weight="400">or custom chips.</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-nc-hardware">
 <text x="540" y="856" font-size="24" fill="#172c46" font-weight="700">SC-NC-HARDWARE</text>
 </a>
@@ -100,13 +104,16 @@
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-physical">
 <text x="540" y="886" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-PHYSICAL</text>
 </a>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#circuit-prototyping">
+<text x="1195" y="886" font-size="24" fill="#172c46" font-weight="700">CIRCUIT-PROTOTYPING</text>
+</a>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#bitstream-evidence-ci">
-<text x="1195" y="886" font-size="24" fill="#172c46" font-weight="700">BITSTREAM-EVIDENCE-CI</text>
+<text x="540" y="916" font-size="24" fill="#172c46" font-weight="700">BITSTREAM-EVIDENCE-CI</text>
 </a>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md#sc-stream-prover">
-<text x="540" y="916" font-size="24" fill="#172c46" font-weight="700">SC-STREAM-PROVER</text>
+<text x="1195" y="916" font-size="24" fill="#172c46" font-weight="700">SC-STREAM-PROVER</text>
 </a>
-<text x="540" y="972" font-size="19" fill="#40566e" font-weight="400">Technical interface: HDL and clock/reset intent, build identities, layout/extraction and comparison results.</text>
+<text x="540" y="972" font-size="19" fill="#40566e" font-weight="400">Technical interface: HDL and clock/reset intent, build identities, prototype runs, layout/extraction and comparison results.</text>
 <text x="50" y="1055" font-size="12" fill="#172c46" font-weight="400">© Concepts 1996–2026 Miroslav Šotek. All rights reserved.  © Code 2020–2026 Miroslav Šotek. All rights reserved.</text>
 <text x="50" y="1072" font-size="12" fill="#172c46" font-weight="400">AGPL-3.0-or-later · Commercial licence available · ORCID 0009-0009-3560-0851 · www.anulum.li · protoscience@anulum.li</text>
 </svg>

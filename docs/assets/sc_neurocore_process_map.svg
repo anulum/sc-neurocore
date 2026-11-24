@@ -5,15 +5,15 @@
 <!-- ORCID: 0009-0009-3560-0851 -->
 <!-- Contact: www.anulum.li | protoscience@anulum.li -->
 <!-- SC-NeuroCore — Programme architecture map -->
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:x="adobe:ns:meta/" xmlns:xmpRights="http://ns.adobe.com/xap/1.0/rights/" width="3200" height="3760" viewBox="0 0 3200 3760" role="img" aria-labelledby="title desc" xml:lang="en">
-<title id="title">SC Neuromorphic Computing Systems — processes and interfaces</title><desc id="desc">Intended process and artefact interfaces for all 56 programme entries. Neuromorphic development and general circuit engineering retain separate semantics, optional adapters and one traceable evidence chain. Feedback creates successor revisions. Arrows show architectural handoffs, not implemented dependencies or physical operating permission.</desc>
-<metadata id="project-metadata"><x:xmpmeta><rdf:RDF><rdf:Description rdf:about=""><dc:title><rdf:Alt><rdf:li xml:lang="x-default">SC Neuromorphic Computing Systems — processes and interfaces</rdf:li></rdf:Alt></dc:title><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Intended process and artefact interfaces for all 56 programme entries. Neuromorphic development and general circuit engineering retain separate semantics, optional adapters and one traceable evidence chain. Feedback creates successor revisions. Arrows show architectural handoffs, not implemented dependencies or physical operating permission.</rdf:li></rdf:Alt></dc:description><dc:rights><rdf:Alt><rdf:li xml:lang="x-default">© Concepts 1996–2026 Miroslav Šotek. All rights reserved. © Code 2020–2026 Miroslav Šotek. All rights reserved.</rdf:li></rdf:Alt></dc:rights><dc:creator><rdf:Seq><rdf:li>Miroslav Šotek</rdf:li></rdf:Seq></dc:creator><dc:publisher><rdf:Bag><rdf:li>ANULUM / Fortis Studio</rdf:li></rdf:Bag></dc:publisher><dc:subject><rdf:Bag><rdf:li>SC-NeuroCore</rdf:li><rdf:li>SC Neuromorphic Computing Systems — processes and interfaces</rdf:li><rdf:li>Architecture</rdf:li></rdf:Bag></dc:subject><dc:source>https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md</dc:source><dc:relation>https://orcid.org/0009-0009-3560-0851</dc:relation><dc:format>image/svg+xml</dc:format><dc:identifier>https://github.com/anulum/sc-neurocore/blob/main/docs/assets/sc_neurocore_process_map.svg</dc:identifier><xmpRights:Marked>True</xmpRights:Marked><xmpRights:UsageTerms><rdf:Alt><rdf:li xml:lang="x-default">AGPL-3.0-or-later; commercial licensing available</rdf:li></rdf:Alt></xmpRights:UsageTerms><xmpRights:WebStatement>https://spdx.org/licenses/AGPL-3.0-or-later.html</xmpRights:WebStatement><cc:license rdf:resource="https://spdx.org/licenses/AGPL-3.0-or-later.html" /></rdf:Description></rdf:RDF></x:xmpmeta></metadata>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:x="adobe:ns:meta/" xmlns:xmpRights="http://ns.adobe.com/xap/1.0/rights/" width="3200" height="3805" viewBox="0 0 3200 3805" role="img" aria-labelledby="title desc" xml:lang="en">
+<title id="title">SC Neuromorphic Computing Systems — processes and interfaces</title><desc id="desc">Intended process and artefact interfaces for all 58 programme entries. Neuromorphic development and general circuit engineering retain separate semantics, optional adapters and one traceable evidence chain. Feedback creates successor revisions. Arrows show architectural handoffs, not implemented dependencies or physical operating permission.</desc>
+<metadata id="project-metadata"><x:xmpmeta><rdf:RDF><rdf:Description rdf:about=""><dc:title><rdf:Alt><rdf:li xml:lang="x-default">SC Neuromorphic Computing Systems — processes and interfaces</rdf:li></rdf:Alt></dc:title><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Intended process and artefact interfaces for all 58 programme entries. Neuromorphic development and general circuit engineering retain separate semantics, optional adapters and one traceable evidence chain. Feedback creates successor revisions. Arrows show architectural handoffs, not implemented dependencies or physical operating permission.</rdf:li></rdf:Alt></dc:description><dc:rights><rdf:Alt><rdf:li xml:lang="x-default">© Concepts 1996–2026 Miroslav Šotek. All rights reserved. © Code 2020–2026 Miroslav Šotek. All rights reserved.</rdf:li></rdf:Alt></dc:rights><dc:creator><rdf:Seq><rdf:li>Miroslav Šotek</rdf:li></rdf:Seq></dc:creator><dc:publisher><rdf:Bag><rdf:li>ANULUM / Fortis Studio</rdf:li></rdf:Bag></dc:publisher><dc:subject><rdf:Bag><rdf:li>SC-NeuroCore</rdf:li><rdf:li>SC Neuromorphic Computing Systems — processes and interfaces</rdf:li><rdf:li>Architecture</rdf:li></rdf:Bag></dc:subject><dc:source>https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md</dc:source><dc:relation>https://orcid.org/0009-0009-3560-0851</dc:relation><dc:format>image/svg+xml</dc:format><dc:identifier>https://github.com/anulum/sc-neurocore/blob/main/docs/assets/sc_neurocore_process_map.svg</dc:identifier><xmpRights:Marked>True</xmpRights:Marked><xmpRights:UsageTerms><rdf:Alt><rdf:li xml:lang="x-default">AGPL-3.0-or-later; commercial licensing available</rdf:li></rdf:Alt></xmpRights:UsageTerms><xmpRights:WebStatement>https://spdx.org/licenses/AGPL-3.0-or-later.html</xmpRights:WebStatement><cc:license rdf:resource="https://spdx.org/licenses/AGPL-3.0-or-later.html" /></rdf:Description></rdf:RDF></x:xmpmeta></metadata>
 <style>text{font-family:DejaVu Sans,Arial,sans-serif}a{text-decoration:none}</style>
 <defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto"><path d="M0 0L9 5L0 10Z" fill="#40566e" /></marker><marker id="feedback" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto"><path d="M0 0L9 5L0 10Z" fill="#855025" /></marker></defs>
-<rect x="0" y="0" width="3200" height="3760" rx="16" fill="#f5f8fc" stroke="none" stroke-width="2" />
+<rect x="0" y="0" width="3200" height="3805" rx="16" fill="#f5f8fc" stroke="none" stroke-width="2" />
 <rect x="0" y="0" width="3200" height="170" rx="16" fill="#122c45" stroke="none" stroke-width="2" />
 <text x="70" y="63" font-size="40" fill="#ffffff" font-weight="700">SC NEUROMORPHIC COMPUTING SYSTEMS</text>
-<text x="70" y="111" font-size="29" fill="#d5e4f4" font-weight="400">Processes, interfaces and feedback · all 56 programme entries</text>
+<text x="70" y="111" font-size="29" fill="#d5e4f4" font-weight="400">Processes, interfaces and feedback · all 58 programme entries</text>
 <text x="70" y="148" font-size="23" fill="#d5e4f4" font-weight="400">Read left → right within each lane, then follow the evidence and optional production paths below.</text>
 <rect x="70" y="198" width="3060" height="115" rx="16" fill="#e9eef5" stroke="none" stroke-width="2" />
 <text x="94" y="235" font-size="23" fill="#172c46" font-weight="700">ARCHITECTURAL HANDOFFS · IMPLEMENTATION AND QUALIFICATION TRACKED SEPARATELY</text>
@@ -143,12 +143,16 @@
 <text x="1673" y="1359" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-PHYSICAL</text>
 </a>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md">
-<text x="1673" y="1393" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-ASSEMBLY</text>
+<text x="1673" y="1393" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-PROTOTYPING</text>
 </a>
-<text x="1673" y="1442" font-size="23" fill="#40566e" font-weight="400">Layout, extraction and physical checks; die / package /</text>
-<text x="1673" y="1475" font-size="23" fill="#40566e" font-weight="400">interposer / PCB correspondence. Existing views can</text>
-<text x="1673" y="1508" font-size="23" fill="#40566e" font-weight="400">enter here.</text>
-<text x="1673" y="1666" font-size="21" fill="#855025" font-weight="400">OUT: checked layout + assembly intent</text>
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md">
+<text x="1673" y="1427" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-ASSEMBLY</text>
+</a>
+<text x="1673" y="1476" font-size="23" fill="#40566e" font-weight="400">FPGA prototype runs of a pinned design; layout,</text>
+<text x="1673" y="1509" font-size="23" fill="#40566e" font-weight="400">extraction and physical checks; die / package /</text>
+<text x="1673" y="1542" font-size="23" fill="#40566e" font-weight="400">interposer / PCB correspondence. Existing views can</text>
+<text x="1673" y="1575" font-size="23" fill="#40566e" font-weight="400">enter here.</text>
+<text x="1673" y="1666" font-size="21" fill="#855025" font-weight="400">OUT: prototype runs + checked layout + assembly intent</text>
 <rect x="2440" y="1275" width="690" height="440" rx="16" fill="#ffffff" stroke="#855025" stroke-width="2" />
 <text x="2463" y="1315" font-size="25" fill="#855025" font-weight="700">BRING-UP &amp; CHARACTERISE</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md">
@@ -267,7 +271,7 @@
 <path d="M1205 2603 L1205 2652" fill="none" stroke="#365ab1" stroke-width="3" marker-end="url(#arrow)" />
 <path d="M1995 2603 L1995 2652" fill="none" stroke="#365ab1" stroke-width="3" marker-end="url(#arrow)" />
 <path d="M2785 2603 L2785 2652" fill="none" stroke="#365ab1" stroke-width="3" marker-end="url(#arrow)" />
-<rect x="70" y="2665" width="3060" height="268" rx="16" fill="#edf2ff" stroke="#365ab1" stroke-width="2" />
+<rect x="70" y="2665" width="3060" height="313" rx="16" fill="#edf2ff" stroke="#365ab1" stroke-width="2" />
 <text x="94" y="2705" font-size="25" fill="#365ab1" font-weight="700">ONE EVIDENCE CHAIN · DOMAIN RESULTS RETAIN THEIR ACTUAL OWNERS</text>
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md">
 <text x="94" y="2751" font-size="23" fill="#172c46" font-weight="700">EVIDENCE-MANIFEST-TOOLKIT</text>
@@ -285,38 +289,42 @@
 <text x="94" y="2886" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-ACCEPTANCE</text>
 </a>
 <text x="820" y="2886" font-size="23" fill="#172c46" font-weight="400">Aggregate requirement-specific circuit results; pass, fail and missing evidence stay distinguishable.</text>
-<text x="94" y="2918" font-size="21" fill="#172c46" font-weight="400">All operations contribute original results → manifests and lineage → scoped assessment. A valid record alone does not qualify a physical claim.</text>
-<text x="70" y="3000" font-size="29" fill="#855025" font-weight="700">OPTIONAL MANUFACTURING AND EQUIPMENT PATH</text>
-<text x="70" y="3034" font-size="22" fill="#172c46" font-weight="400">Entered only with accepted design / technology / process evidence and the applicable supplier or site authority.</text>
-<rect x="70" y="3066" width="930" height="240" rx="16" fill="#fcf0e3" stroke="#855025" stroke-width="2" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md">
-<text x="94" y="3110" font-size="27" fill="#172c46" font-weight="700">CIRCUIT-MANUFACTURING</text>
+<text x="94" y="2931" font-size="23" fill="#172c46" font-weight="700">CIRCUIT-LEARNING</text>
 </a>
-<text x="94" y="3152" font-size="24" fill="#40566e" font-weight="400">Approved routes / recipe versions, material genealogy, work orders,</text>
-<text x="94" y="3185" font-size="24" fill="#40566e" font-weight="400">inspections and controlled supplier handoff. Integrates the existing</text>
-<text x="94" y="3218" font-size="24" fill="#40566e" font-weight="400">manufacturing authority.</text>
-<rect x="1090" y="3066" width="930" height="240" rx="16" fill="#fcf0e3" stroke="#855025" stroke-width="2" />
+<text x="820" y="2931" font-size="23" fill="#172c46" font-weight="400">Study, grade and promote models that propose design steps against a no-model reference; models never sign off.</text>
+<text x="94" y="2963" font-size="21" fill="#172c46" font-weight="400">All operations contribute original results → manifests and lineage → scoped assessment. A valid record alone does not qualify a physical claim.</text>
+<text x="70" y="3045" font-size="29" fill="#855025" font-weight="700">OPTIONAL MANUFACTURING AND EQUIPMENT PATH</text>
+<text x="70" y="3079" font-size="22" fill="#172c46" font-weight="400">Entered only with accepted design / technology / process evidence and the applicable supplier or site authority.</text>
+<rect x="70" y="3111" width="930" height="240" rx="16" fill="#fcf0e3" stroke="#855025" stroke-width="2" />
 <a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md">
-<text x="1114" y="3110" font-size="27" fill="#172c46" font-weight="700">CIRCUIT-AUTOMATION</text>
+<text x="94" y="3155" font-size="27" fill="#172c46" font-weight="700">CIRCUIT-MANUFACTURING</text>
 </a>
-<text x="1114" y="3152" font-size="24" fill="#40566e" font-weight="400">Equipment capabilities and qualified local execution-provider adapters;</text>
-<text x="1114" y="3185" font-size="24" fill="#40566e" font-weight="400">instrument drivers have one source owner shared with LAB.</text>
-<rect x="2110" y="3066" width="1020" height="240" rx="16" fill="#e9eef5" stroke="#855025" stroke-width="2" />
-<text x="2134" y="3110" font-size="25" fill="#855025" font-weight="700">LOCAL CONTROLLER / SITE AUTHORITY</text>
-<text x="2134" y="3152" font-size="24" fill="#40566e" font-weight="400">Retains real-time loops, arbitration, interlocks and protection. Actual equipment</text>
-<text x="2134" y="3185" font-size="24" fill="#40566e" font-weight="400">state governs restart / lost-ack recovery; no blind physical replay.</text>
-<path d="M1000 3185 L1082 3185" fill="none" stroke="#855025" stroke-width="3" marker-end="url(#feedback)" stroke-dasharray="12 8" />
-<path d="M2020 3185 L2102 3185" fill="none" stroke="#855025" stroke-width="3" marker-end="url(#feedback)" stroke-dasharray="12 8" />
-<text x="70" y="3352" font-size="22" fill="#855025" font-weight="700">MANUFACTURING INPUT</text>
-<text x="540" y="3352" font-size="23" fill="#172c46" font-weight="400">Checked design + approved technology + applicable acceptance + authorised route → supplier or admitted local process.</text>
-<text x="70" y="3396" font-size="22" fill="#855025" font-weight="700">OBSERVATION RETURN</text>
-<text x="540" y="3396" font-size="23" fill="#172c46" font-weight="400">Material / inspection / equipment records → CIRCUIT-LAB and the evidence chain → measured-versus-predicted assessment.</text>
-<path d="M3088 3306 L3088 3438" fill="none" stroke="#855025" stroke-width="3" marker-end="url(#feedback)" stroke-dasharray="12 8" />
-<path d="M3088 3438 L132 3438" fill="none" stroke="#855025" stroke-width="3" marker-end="url(#feedback)" stroke-dasharray="12 8" />
-<text x="70" y="3480" font-size="24" fill="#855025" font-weight="700">FEEDBACK TO THE OWNING DESIGN / MODEL</text>
-<text x="70" y="3517" font-size="24" fill="#172c46" font-weight="400">Measurement, conformance failure or field incident creates a new attributable revision; originals remain immutable and comparable.</text>
-<text x="70" y="3553" font-size="22" fill="#172c46" font-weight="400">Data / numerical semantics, physical calibration and local actuation authority remain separate. Architecture does not imply released or qualified capability.</text>
-<text x="70" y="3630" font-size="21" fill="#172c46" font-weight="400">© Concepts 1996–2026 Miroslav Šotek. All rights reserved.  © Code 2020–2026 Miroslav Šotek. All rights reserved.</text>
-<text x="70" y="3663" font-size="21" fill="#172c46" font-weight="400">AGPL-3.0-or-later · Commercial licence available · ORCID 0009-0009-3560-0851 · www.anulum.li · protoscience@anulum.li</text>
-<text x="70" y="3696" font-size="21" fill="#172c46" font-weight="400">Source: github.com/anulum/sc-neurocore · docs/ecosystem.md · See the companion detailed map for each project’s full responsibility and delivery status.</text>
+<text x="94" y="3197" font-size="24" fill="#40566e" font-weight="400">Approved routes / recipe versions, material genealogy, work orders,</text>
+<text x="94" y="3230" font-size="24" fill="#40566e" font-weight="400">inspections and controlled supplier handoff. Integrates the existing</text>
+<text x="94" y="3263" font-size="24" fill="#40566e" font-weight="400">manufacturing authority.</text>
+<rect x="1090" y="3111" width="930" height="240" rx="16" fill="#fcf0e3" stroke="#855025" stroke-width="2" />
+<a href="https://github.com/anulum/sc-neurocore/blob/main/docs/ecosystem.md">
+<text x="1114" y="3155" font-size="27" fill="#172c46" font-weight="700">CIRCUIT-AUTOMATION</text>
+</a>
+<text x="1114" y="3197" font-size="24" fill="#40566e" font-weight="400">Equipment capabilities and qualified local execution-provider adapters;</text>
+<text x="1114" y="3230" font-size="24" fill="#40566e" font-weight="400">instrument drivers have one source owner shared with LAB.</text>
+<rect x="2110" y="3111" width="1020" height="240" rx="16" fill="#e9eef5" stroke="#855025" stroke-width="2" />
+<text x="2134" y="3155" font-size="25" fill="#855025" font-weight="700">LOCAL CONTROLLER / SITE AUTHORITY</text>
+<text x="2134" y="3197" font-size="24" fill="#40566e" font-weight="400">Retains real-time loops, arbitration, interlocks and protection. Actual equipment</text>
+<text x="2134" y="3230" font-size="24" fill="#40566e" font-weight="400">state governs restart / lost-ack recovery; no blind physical replay.</text>
+<path d="M1000 3230L1082 3230" fill="none" stroke="#855025" stroke-width="3" marker-end="url(#feedback)" stroke-dasharray="12 8" />
+<path d="M2020 3230L2102 3230" fill="none" stroke="#855025" stroke-width="3" marker-end="url(#feedback)" stroke-dasharray="12 8" />
+<text x="70" y="3397" font-size="22" fill="#855025" font-weight="700">MANUFACTURING INPUT</text>
+<text x="540" y="3397" font-size="23" fill="#172c46" font-weight="400">Checked design + approved technology + applicable acceptance + authorised route → supplier or admitted local process.</text>
+<text x="70" y="3441" font-size="22" fill="#855025" font-weight="700">OBSERVATION RETURN</text>
+<text x="540" y="3441" font-size="23" fill="#172c46" font-weight="400">Material / inspection / equipment records → CIRCUIT-LAB and the evidence chain → measured-versus-predicted assessment.</text>
+<path d="M3088 3351L3088 3483" fill="none" stroke="#855025" stroke-width="3" marker-end="url(#feedback)" stroke-dasharray="12 8" />
+<path d="M3088 3483L132 3483" fill="none" stroke="#855025" stroke-width="3" marker-end="url(#feedback)" stroke-dasharray="12 8" />
+<text x="70" y="3525" font-size="24" fill="#855025" font-weight="700">FEEDBACK TO THE OWNING DESIGN / MODEL</text>
+<text x="70" y="3562" font-size="24" fill="#172c46" font-weight="400">Measurement, conformance failure or field incident creates a new attributable revision; originals remain immutable and comparable.</text>
+<text x="70" y="3598" font-size="22" fill="#172c46" font-weight="400">Data / numerical semantics, physical calibration and local actuation authority remain separate. Architecture does not imply released or qualified capability.</text>
+<text x="70" y="3675" font-size="21" fill="#172c46" font-weight="400">© Concepts 1996–2026 Miroslav Šotek. All rights reserved.  © Code 2020–2026 Miroslav Šotek. All rights reserved.</text>
+<text x="70" y="3708" font-size="21" fill="#172c46" font-weight="400">AGPL-3.0-or-later · Commercial licence available · ORCID 0009-0009-3560-0851 · www.anulum.li · protoscience@anulum.li</text>
+<text x="70" y="3741" font-size="21" fill="#172c46" font-weight="400">Source: github.com/anulum/sc-neurocore · docs/ecosystem.md · See the companion detailed map for each project’s full responsibility and delivery status.</text>
 </svg>

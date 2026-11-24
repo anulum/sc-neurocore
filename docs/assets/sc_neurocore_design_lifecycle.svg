@@ -37,6 +37,7 @@
 <text x="1124" y="406" class="tag">DOCUMENTED ARCHITECTURE · DELIVERY PLANNED</text>
 <text x="1124" y="448" class="small">Selected tools and qualified profiles</text>
 <text x="1124" y="476" class="small">RTL, netlists and implementation intent</text>
+<text x="1124" y="504" class="small">FPGA prototype runs: CIRCUIT-PROTOTYPING</text>
 <rect x="1104" y="667" width="440" height="184" rx="14" class="planned" />
 <text x="1124" y="702" class="name">Physical verification</text>
 <text x="1124" y="735" class="tag">DOCUMENTED ARCHITECTURE · DELIVERY PLANNED</text>

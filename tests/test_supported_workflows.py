@@ -125,5 +125,5 @@ def test_the_readme_leads_with_what_runs_today() -> None:
     """The quick start and the link to this page stand before the roadmap in the README."""
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     start = readme.index("## Quick Start")
-    assert start < readme.index("## Public Development Workbench and the 4.0.0 Roadmap")
+    assert start < readme.index("## Public Development Workbench and the Group Programme")
     assert "docs/guides/supported_workflows.md" in readme[start : start + 2500]

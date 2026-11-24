@@ -376,7 +376,9 @@ list of changes is the `[4.0.0]` section of [CHANGELOG.md](CHANGELOG.md).
   High Fidelity model catalogue, and every retained component, at a reviewed
   STABLE gate before extracting repositories.
 - Define the public API, dependency, packaging, and migration contracts for
-  focused repositories. Final repository boundaries remain under review.
+  focused repositories. The repositories are named and published as scaffolds
+  (see the [group and project map](docs/ecosystem.md)); their contracts remain
+  under review.
 - Keep this repository and installation as the supported path until the stable
   gate, migration plan, and repository boundaries are approved.
 
@@ -391,9 +393,10 @@ The proposed architecture separates responsibilities at stable interfaces:
 | Studio | Visual workflows and presentation of execution and evidence | Consume the reviewed service APIs |
 | Benchmarks and evidence | Reproducible measurements and acceptance artefacts | Validate producer contracts without becoming a runtime dependency |
 
-These are capability boundaries for planning, not approved repository names
-or a final package count. Retained research components keep explicit maturity
-labels until their stable contracts are accepted.
+These capability areas map onto the published SC-NC repositories on the group
+and project map; moving code into them waits for the stable gate and accepted
+contracts. Retained research components keep explicit maturity labels until
+their stable contracts are accepted.
 
 ### FPGA deployment proof (P0 blocker) PARTIALLY DONE
 

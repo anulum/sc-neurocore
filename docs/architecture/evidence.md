@@ -64,5 +64,7 @@ device establish different facts, and none of them stands in for another.
 
 The wider programme plans a family of measurement and evidence tools, so
 that a claim about timing, data quality, numerical agreement or deployment
-can be traced to its source. Their status is on the
-[group and project map](../ecosystem.md). None is announced as available.
+can be traced to its source. Each tool's delivery status is on the
+[group and project map](../ecosystem.md): LOOP-TIMING-WITNESS is released with
+simulation evidence, and the others are public repositories whose
+implementations are planned or under development.

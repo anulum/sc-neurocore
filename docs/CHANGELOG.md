@@ -554,6 +554,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   path re-exports those names as the same objects, so historical imports and
   pickles keep working, and its guarantee stage records what the new module
   returns.
+- The group and project map (`docs/ecosystem.md`) states the published
+  programme: 58 entries, with CIRCUIT-PROTOTYPING and CIRCUIT-LEARNING as the
+  17th and 18th circuit destinations, and every SC-NC, circuit and supporting
+  tool repository linked to its public repository with its current delivery
+  status. A scaffold repository holds validation tooling and documentation,
+  not the capability; implementation and extraction stay planned. The README
+  counts, the programme, process, partner and circuit-platform maps, the
+  lifecycle map, two presentation slides and their PNG and JPG renderings
+  follow. The print page is now rendered from the Markdown page, which also
+  brings in the timing witness's current status and drops a repeated
+  provenance comment.
 
 - `sc_neurocore.studio.project` held two responsibilities, project storage
   and the graph-to-target pipeline. The pipeline (`run_pipeline`,
