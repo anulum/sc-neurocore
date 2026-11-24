@@ -10,18 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_sst_neuron_support import *  # noqa: F403
-
 
 class TestSSTSingularRates:
-    def test_alpha_singular_returns_limit_at_singularity(self):
+    """The singular gating-rate helper at and around its removable singularity."""
+
+    def test_alpha_singular_returns_limit_at_singularity(self) -> None:
+        """Alpha singular returns limit at singularity."""
         from sc_neurocore.neurons.models.sst_neuron import _alpha_singular
 
         # At numerator 0 the closed-form L'Hôpital limit (equal to slope) is used.
         assert _alpha_singular(0.0, -4.0, -4.0) == -4.0
         assert _alpha_singular(0.0, 5.0, 5.0) == 5.0
 
-    def test_alpha_singular_continuous_across_singularity(self):
+    def test_alpha_singular_continuous_across_singularity(self) -> None:
+        """Alpha singular continuous across singularity."""
         from sc_neurocore.neurons.models.sst_neuron import _alpha_singular
 
         left = _alpha_singular(-1e-7, 5.0, 5.0)

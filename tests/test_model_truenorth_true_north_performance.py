@@ -10,12 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_truenorth_support import *  # noqa: F403
+import time
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.truenorth import (
+    TrueNorthNeuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestTrueNorthPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the TrueNorthNeuron."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = TrueNorthNeuron()
         N = 100000
         t0 = time.perf_counter()
@@ -29,7 +47,8 @@ class TestTrueNorthPerformance:
             strict_minimum_per_second=100_000.0,
         )
 
-    def test_network_throughput(self):
+    def test_network_throughput(self) -> None:
+        """The network meets its throughput floor."""
         pop = Population(TrueNorthNeuron, n=50, label="bench")
         drive = PoissonInput(n=50, rate_hz=500.0, weight=50.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

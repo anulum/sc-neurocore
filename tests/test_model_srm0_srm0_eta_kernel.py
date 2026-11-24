@@ -10,10 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_srm0_support import *  # noqa: F403
+import math
+from sc_neurocore.neurons.models.srm0 import (
+    SRM0Neuron,
+)
 
 
 class TestSRM0EtaKernel:
+    """The refractory kernel eta of the SRM0Neuron."""
+
     def test_eta_set_on_spike(self) -> None:
         """After spike: eta = -eta_reset (negative = afterhyperpolarisation)."""
         n = SRM0Neuron()
@@ -25,7 +30,7 @@ class TestSRM0EtaKernel:
             raise AssertionError("No spike")
 
     def test_eta_decays_exponentially(self) -> None:
-        """eta *= exp(-dt/tau_eta) each step."""
+        """Each step multiplies the kernel eta by exp(-dt/tau_eta)."""
         n = SRM0Neuron()
         n._eta = -5.0
         eta0 = n._eta
@@ -46,7 +51,7 @@ class TestSRM0EtaKernel:
                 break
 
     def test_eta_zero_long_after_spike(self) -> None:
-        """eta decays to ~0 long after spike."""
+        """The kernel eta decays to about 0 long after a spike."""
         n = SRM0Neuron()
         n._eta = -5.0
         for _ in range(500):

@@ -10,26 +10,36 @@
 
 from __future__ import annotations
 
-from tests.model_traub_miles_support import *  # noqa: F403
+from sc_neurocore.neurons.models.traub_miles import (
+    TraubMilesNeuron,
+)
+from tests.model_traub_miles_support import (
+    _run,
+)
 
 
 class TestTraubMilesFI:
-    def test_subthreshold_silent(self):
+    """The current-to-rate response of the TraubMilesNeuron."""
+
+    def test_subthreshold_silent(self) -> None:
+        """A subthreshold current gives no spikes."""
         n = TraubMilesNeuron()
         assert len(_run(n, current=0.0, steps=50000)) == 0
 
-    def test_suprathreshold_fires(self):
+    def test_suprathreshold_fires(self) -> None:
+        """A suprathreshold current fires repeatedly."""
         n = TraubMilesNeuron()
         assert len(_run(n, current=2.0, steps=50000)) >= 100
 
-    def test_monotonic_fi(self):
+    def test_monotonic_fi(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [1.0, 2.0, 5.0, 10.0, 20.0]:
             n = TraubMilesNeuron()
             rates.append(len(_run(n, current=I, steps=50000)))
         assert all(rates[i] <= rates[i + 1] for i in range(len(rates) - 1))
 
-    def test_rate_scales_sublinearly(self):
+    def test_rate_scales_sublinearly(self) -> None:
         """HH f-I is not linear — verify monotonic but non-trivial scaling."""
         n2 = TraubMilesNeuron()
         n10 = TraubMilesNeuron()

@@ -10,19 +10,33 @@
 
 from __future__ import annotations
 
-from tests.model_terman_wang_support import *  # noqa: F403
+from typing import Any, cast
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.terman_wang import (
+    TermanWangOscillator,
+)
+from tests.model_terman_wang_support import (
+    _run,
+)
 
 
 class TestTermanWangParameters:
+    """Parameter behaviour of the TermanWangOscillator."""
+
     @pytest.mark.parametrize("field", ["v", "w", "alpha", "rho", "v_peak"])
-    def test_rejects_non_numeric_state_offsets_and_threshold(self, field: str):
+    def test_rejects_non_numeric_state_offsets_and_threshold(self, field: str) -> None:
+        """The model rejects non-numeric state offsets and threshold."""
         with pytest.raises(TypeError, match=field):
-            TermanWangOscillator(**{field: object()})
+            kwargs: dict[str, Any] = {field: object()}
+            TermanWangOscillator(**kwargs)
 
     @pytest.mark.parametrize("field", ["beta", "epsilon", "dt"])
-    def test_rejects_non_numeric_positive_parameters(self, field: str):
+    def test_rejects_non_numeric_positive_parameters(self, field: str) -> None:
+        """The model rejects non-numeric positive parameters."""
         with pytest.raises(TypeError, match=field):
-            TermanWangOscillator(**{field: object()})
+            kwargs: dict[str, Any] = {field: object()}
+            TermanWangOscillator(**kwargs)
 
     @pytest.mark.parametrize(
         ("field", "value"),
@@ -36,25 +50,30 @@ class TestTermanWangParameters:
             ("v_peak", np.inf),
         ],
     )
-    def test_rejects_invalid_numerical_configuration(self, field: str, value: float):
+    def test_rejects_invalid_numerical_configuration(self, field: str, value: float) -> None:
+        """An invalid numerical configuration is rejected."""
         with pytest.raises(ValueError):
-            TermanWangOscillator(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            TermanWangOscillator(**kwargs)
 
-    def test_rejects_non_finite_current_before_state_mutation(self):
+    def test_rejects_non_finite_current_before_state_mutation(self) -> None:
+        """A non-finite current is rejected before any state change."""
         n = TermanWangOscillator()
         before = (n.v, n.w)
         with pytest.raises(FloatingPointError, match="current"):
             n.step(np.nan)
         assert (n.v, n.w) == before
 
-    def test_rejects_non_numeric_current_before_state_mutation(self):
+    def test_rejects_non_numeric_current_before_state_mutation(self) -> None:
+        """The model rejects non-numeric current before state mutation."""
         n = TermanWangOscillator()
         before = (n.v, n.w)
         with pytest.raises(TypeError, match="current"):
-            n.step(object())
+            n.step(cast(Any, object()))
         assert (n.v, n.w) == before
 
-    def test_rejects_corrupted_runtime_scale_before_state_mutation(self):
+    def test_rejects_corrupted_runtime_scale_before_state_mutation(self) -> None:
+        """The model rejects corrupted runtime scale before state mutation."""
         n = TermanWangOscillator()
         n.beta = 0.0
         before = (n.v, n.w)
@@ -62,7 +81,8 @@ class TestTermanWangParameters:
             n.step(1.0)
         assert (n.v, n.w) == before
 
-    def test_rejects_corrupted_runtime_state_before_mutation(self):
+    def test_rejects_corrupted_runtime_state_before_mutation(self) -> None:
+        """Corrupted runtime state is rejected before any change."""
         n = TermanWangOscillator()
         n.v = np.inf
         before = (n.v, n.w)
@@ -70,29 +90,34 @@ class TestTermanWangParameters:
             n.step(1.0)
         assert (n.v, n.w) == before
 
-    def test_rejects_cubic_overflow_before_state_mutation(self):
+    def test_rejects_cubic_overflow_before_state_mutation(self) -> None:
+        """The model rejects cubic overflow before state mutation."""
         n = TermanWangOscillator(v=1.0e308, w=-0.5)
         before = (n.v, n.w)
         with pytest.raises(FloatingPointError, match="derivative"):
             n.step(1.0)
         assert (n.v, n.w) == before
 
-    def test_derivative_rejects_nonfinite_runtime_inputs(self):
+    def test_derivative_rejects_nonfinite_runtime_inputs(self) -> None:
+        """Derivative rejects non-finite runtime inputs."""
         n = TermanWangOscillator()
         with pytest.raises(FloatingPointError, match="state and current must be finite"):
             n._derivatives(np.nan, n.w, 1.0)
 
-    def test_derivative_rejects_nonfinite_output(self):
+    def test_derivative_rejects_nonfinite_output(self) -> None:
+        """Derivative rejects non-finite output."""
         n = TermanWangOscillator()
         n.alpha = np.inf
         with pytest.raises(FloatingPointError, match="derivative"):
             n._derivatives(n.v, n.w, 1.0)
 
-    def test_rejects_nonfinite_candidate_directly(self):
+    def test_rejects_nonfinite_candidate_directly(self) -> None:
+        """The model rejects non-finite candidate directly."""
         with pytest.raises(FloatingPointError, match="candidate"):
             TermanWangOscillator._validate_candidate(np.nan, -0.5)
 
-    def test_epsilon_controls_timescale(self):
+    def test_epsilon_controls_timescale(self) -> None:
+        """Epsilon controls timescale."""
         n_fast = TermanWangOscillator(epsilon=0.1)
         n_slow = TermanWangOscillator(epsilon=0.005)
         s_fast = len(_run(n_fast, current=1.0, steps=100000))
@@ -100,13 +125,15 @@ class TestTermanWangParameters:
         assert s_fast != s_slow
 
     @pytest.mark.parametrize("dt", [0.02, 0.05, 0.1])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = TermanWangOscillator(dt=dt)
         for _ in range(50000):
             n.step(1.0)
         assert np.isfinite(n.v)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = TermanWangOscillator()

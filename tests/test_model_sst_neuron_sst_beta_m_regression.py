@@ -10,24 +10,32 @@
 
 from __future__ import annotations
 
-from tests.model_sst_neuron_support import *  # noqa: F403
+from sc_neurocore.neurons.models.sst_neuron import (
+    SSTNeuron,
+)
+from tests.model_sst_neuron_support import (
+    _spikes,
+)
 
 
 class TestSSTBetaMRegression:
     """Guards the corrected β_m offset against the depolarisation-block bug."""
 
-    def test_firing_rate_increases_with_current(self):
+    def test_firing_rate_increases_with_current(self) -> None:
+        """Firing rate increases with current."""
         low = _spikes(SSTNeuron(), 0.5, 30000)
         mid = _spikes(SSTNeuron(), 2.0, 30000)
         high = _spikes(SSTNeuron(), 5.0, 30000)
         assert low < mid < high
 
-    def test_no_depolarisation_block_at_strong_drive(self):
+    def test_no_depolarisation_block_at_strong_drive(self) -> None:
+        """No depolarisation block at strong drive."""
         # The bug stuck V near threshold and capped firing at three spikes for any
         # stimulus; healthy kinetics fire repetitively under strong drive.
         assert _spikes(SSTNeuron(), 5.0, 40000) > 100
 
-    def test_membrane_recovers_below_threshold_after_drive(self):
+    def test_membrane_recovers_below_threshold_after_drive(self) -> None:
+        """Membrane recovers below threshold after drive."""
         n = SSTNeuron()
         for _ in range(40000):
             n.step(2.0)

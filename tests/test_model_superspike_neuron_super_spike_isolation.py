@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.model_superspike_neuron_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.superspike_neuron import (
+    SuperSpikeNeuron,
+)
 
 
 class TestSuperSpikeIsolation:
-    def test_construction_defaults(self):
+    """The SuperSpikeNeuron in isolation."""
+
+    def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = SuperSpikeNeuron()
         assert n.v == 0.0
         assert n.trace == 0.0
@@ -23,21 +29,25 @@ class TestSuperSpikeIsolation:
         assert n.v_threshold == 1.0
         assert n.beta_sg == 10.0
 
-    def test_alpha_precomputed(self):
+    def test_alpha_precomputed(self) -> None:
+        """The decay factors alpha_m and alpha_e are precomputed as exp(-1/10)."""
         n = SuperSpikeNeuron()
         assert abs(n.alpha_m - np.exp(-1.0 / 10.0)) < 1e-12
         assert abs(n.alpha_e - np.exp(-1.0 / 10.0)) < 1e-12
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert SuperSpikeNeuron().step(0.0) in (0, 1)
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = SuperSpikeNeuron()
         for _ in range(50000):
             n.step(0.2)
         assert np.isfinite(n.v) and np.isfinite(n.trace)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = SuperSpikeNeuron()
         for _ in range(100):
             n.step(0.5)

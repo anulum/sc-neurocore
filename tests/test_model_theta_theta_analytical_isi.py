@@ -10,7 +10,14 @@
 
 from __future__ import annotations
 
-from tests.model_theta_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.theta import (
+    ThetaNeuron,
+)
+from tests.model_theta_support import (
+    _run,
+)
 
 
 class TestThetaAnalyticalISI:

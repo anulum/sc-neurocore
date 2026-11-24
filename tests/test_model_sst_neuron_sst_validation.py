@@ -10,10 +10,16 @@
 
 from __future__ import annotations
 
-from tests.model_sst_neuron_support import *  # noqa: F403
+from typing import Any
+import pytest
+from sc_neurocore.neurons.models.sst_neuron import (
+    SSTNeuron,
+)
 
 
 class TestSSTValidation:
+    """Input and state validation of the SSTNeuron."""
+
     @pytest.mark.parametrize(
         "kwargs",
         [
@@ -24,33 +30,41 @@ class TestSSTValidation:
             {"g_t": -1.0},
         ],
     )
-    def test_rejects_invalid_parameters(self, kwargs: dict[str, float]):
+    def test_rejects_invalid_parameters(self, kwargs: dict[str, Any]) -> None:
+        """The model rejects invalid parameters."""
         with pytest.raises(ValueError):
             SSTNeuron(**kwargs)
 
-    def test_accepts_zero_conductances(self):
+    def test_accepts_zero_conductances(self) -> None:
+        """The model accepts zero conductances."""
         assert SSTNeuron(g_t=0.0, g_h=0.0, g_m=0.0).g_t == 0.0
 
     @pytest.mark.parametrize("field", ["v", "e_na", "e_k", "e_ca"])
-    def test_rejects_non_finite_field(self, field: str):
+    def test_rejects_non_finite_field(self, field: str) -> None:
+        """The model rejects non-finite field."""
         with pytest.raises(ValueError, match="must be finite"):
-            SSTNeuron(**{field: float("nan")})
+            kwargs: dict[str, Any] = {field: float("nan")}
+            SSTNeuron(**kwargs)
 
-    def test_rejects_boolean_field(self):
+    def test_rejects_boolean_field(self) -> None:
+        """The model rejects boolean field."""
         with pytest.raises(ValueError, match="must be finite"):
-            SSTNeuron(v=True)  # type: ignore[arg-type]
+            SSTNeuron(v=True)
 
-    def test_rejects_non_finite_current(self):
+    def test_rejects_non_finite_current(self) -> None:
+        """The model rejects non-finite current."""
         with pytest.raises(ValueError, match="must be finite"):
             SSTNeuron().step(float("inf"))
 
-    def test_runtime_validation_catches_corrupted_state(self):
+    def test_runtime_validation_catches_corrupted_state(self) -> None:
+        """Runtime validation catches corrupted state."""
         n = SSTNeuron()
         n.dt = -1.0
         with pytest.raises(ValueError, match="dt must be positive"):
             n.step(0.0)
 
-    def test_non_finite_candidate_fails_closed(self):
+    def test_non_finite_candidate_fails_closed(self) -> None:
+        """Non-finite candidate fails closed."""
         n = SSTNeuron()
         with pytest.raises((FloatingPointError, OverflowError)):
             for _ in range(80):

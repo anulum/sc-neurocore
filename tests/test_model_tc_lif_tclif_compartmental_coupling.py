@@ -10,19 +10,24 @@
 
 from __future__ import annotations
 
-from tests.model_tc_lif_support import *  # noqa: F403
+from sc_neurocore.neurons.models.sc_leaky_tc_lif import (
+    SCLeakyTwoCompartmentLIFNeuron,
+)
+from tests.model_tc_lif_support import (
+    _run,
+)
 
 
 class TestTCLIFCompartmentalCoupling:
     """kappa controls soma←dendrite coupling."""
 
-    def test_dendrite_charges_independently(self):
+    def test_dendrite_charges_independently(self) -> None:
         """v_d responds to i_dend, not to i_soma directly."""
         n = SCLeakyTwoCompartmentLIFNeuron(theta=100.0)  # prevent spikes
         n.step(0.0, 1.0)  # i_dend=1.0
         assert n.v_d > 0.0
 
-    def test_dendritic_input_boosts_soma(self):
+    def test_dendritic_input_boosts_soma(self) -> None:
         """Dendritic current flows to soma via kappa: v_s += kappa*(v_d - v_s)/tau_s."""
         n_dend = SCLeakyTwoCompartmentLIFNeuron()
         n_nodend = SCLeakyTwoCompartmentLIFNeuron()
@@ -32,7 +37,7 @@ class TestTCLIFCompartmentalCoupling:
             f"Dend: {s_dend}, no dend: {s_nodend} — dendritic input should help"
         )
 
-    def test_kappa_controls_coupling_strength(self):
+    def test_kappa_controls_coupling_strength(self) -> None:
         """Higher kappa → more dendritic influence on soma."""
         n_weak = SCLeakyTwoCompartmentLIFNeuron(kappa=0.1)
         n_strong = SCLeakyTwoCompartmentLIFNeuron(kappa=2.0)
@@ -40,7 +45,7 @@ class TestTCLIFCompartmentalCoupling:
         s_strong = len(_run(n_strong, i_soma=0.5, steps=5000, i_dend=3.0))
         assert s_strong > s_weak
 
-    def test_somatic_reset_dendrite_unchanged(self):
+    def test_somatic_reset_dendrite_unchanged(self) -> None:
         """On spike: v_s → v_reset but v_d retains its value."""
         n = SCLeakyTwoCompartmentLIFNeuron()
         for _ in range(5000):
@@ -51,7 +56,7 @@ class TestTCLIFCompartmentalCoupling:
                 # Can't check exact value, but it shouldn't be v_rest
                 break
 
-    def test_timescale_separation(self):
+    def test_timescale_separation(self) -> None:
         """tau_d=20 >> tau_s=2: dendrite is 10× slower than soma."""
         n = SCLeakyTwoCompartmentLIFNeuron(theta=100.0)
         vs0, vd0 = n.v_s, n.v_d

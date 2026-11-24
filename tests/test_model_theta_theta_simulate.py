@@ -10,13 +10,18 @@
 
 from __future__ import annotations
 
-from tests.model_theta_support import *  # noqa: F403
+import numpy as np
+import sc_neurocore.accel.theta as backends
+from sc_neurocore.neurons.models.theta import (
+    ThetaNeuron,
+)
 
 
 class TestThetaSimulate:
     """Engineering-verification surface for ``ThetaNeuron.simulate``."""
 
     def test_simulate_python_returns_finite_trace(self) -> None:
+        """Simulate python returns finite trace."""
         n = ThetaNeuron()
         trace, spikes = n.simulate(1000, current=1.0, backend="python")
         assert trace.shape == (1000,)
@@ -25,6 +30,7 @@ class TestThetaSimulate:
         assert n.theta == float(trace[-1])
 
     def test_simulate_rust_matches_python(self) -> None:
+        """Simulate rust matches python."""
         assert backends._HAS_RUST
         py = ThetaNeuron()
         rs = ThetaNeuron()
@@ -34,6 +40,7 @@ class TestThetaSimulate:
         assert np.array_equal(tr_py, tr_rs)
 
     def test_simulate_rust_accepts_complete_non_default_contract(self) -> None:
+        """Simulate rust accepts complete non-default contract."""
         assert backends._HAS_RUST
         py = ThetaNeuron(theta=0.37, dt=0.037)
         rs = ThetaNeuron(theta=0.37, dt=0.037)
@@ -43,6 +50,7 @@ class TestThetaSimulate:
         np.testing.assert_allclose(tr_rs, tr_py, rtol=0.0, atol=2.0e-12)
 
     def test_simulate_complete_returns_aligned_events(self) -> None:
+        """Simulate complete returns aligned events."""
         neuron = ThetaNeuron(theta=0.37, dt=0.037)
         phase, events = neuron.simulate_complete(400, current=2.2, backend="python")
         assert phase.shape == events.shape == (400,)

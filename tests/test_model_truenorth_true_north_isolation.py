@@ -10,33 +10,41 @@
 
 from __future__ import annotations
 
-from tests.model_truenorth_support import *  # noqa: F403
+from sc_neurocore.neurons.models.truenorth import (
+    TrueNorthNeuron,
+)
 
 
 class TestTrueNorthIsolation:
-    def test_construction_defaults(self):
+    """The TrueNorthNeuron in isolation."""
+
+    def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = TrueNorthNeuron()
         assert n.v == 0
         assert n.leak == 0
         assert n.threshold == 100
         assert n.v_reset == 0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert TrueNorthNeuron().step(0) in (0, 1)
 
-    def test_integer_types(self):
+    def test_integer_types(self) -> None:
         """All state and params are integers (digital neuron)."""
         n = TrueNorthNeuron()
         assert isinstance(n.v, int)
         assert isinstance(n.threshold, int)
         assert isinstance(n.leak, int)
 
-    def test_state_evolves(self):
+    def test_state_evolves(self) -> None:
+        """The state evolves under drive."""
         n = TrueNorthNeuron()
         n.step(50)
         assert n.v == 50  # 0 + 50 - 0 = 50
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = TrueNorthNeuron()
         for _ in range(20):
             n.step(50)

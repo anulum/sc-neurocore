@@ -10,22 +10,28 @@
 
 from __future__ import annotations
 
-from tests.model_truenorth_support import *  # noqa: F403
+from sc_neurocore.neurons.models.truenorth import (
+    TrueNorthNeuron,
+)
 
 
 class TestTrueNorthFI:
-    def test_zero_input_silent(self):
+    """The current-to-rate response of the TrueNorthNeuron."""
+
+    def test_zero_input_silent(self) -> None:
+        """Zero input gives no spikes."""
         n = TrueNorthNeuron()
         assert sum(n.step(0) for _ in range(1000)) == 0
 
-    def test_monotonic_fi(self):
+    def test_monotonic_fi(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [10, 20, 50, 100]:
             n = TrueNorthNeuron()
             rates.append(sum(n.step(I) for _ in range(1000)))
         assert all(rates[i] <= rates[i + 1] for i in range(len(rates) - 1))
 
-    def test_suprathreshold_every_step(self):
+    def test_suprathreshold_every_step(self) -> None:
         """I ≥ threshold → spike every step."""
         n = TrueNorthNeuron()
         spikes = sum(n.step(100) for _ in range(100))

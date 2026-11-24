@@ -10,14 +10,39 @@
 
 from __future__ import annotations
 
-from tests.model_terman_wang_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    spike_count,
+)
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.terman_wang import (
+    TermanWangOscillator,
+)
 
 
 class TestTermanWangPipeline:
-    def test_population(self):
+    """The TermanWangOscillator in the network pipeline."""
+
+    def test_population(self) -> None:
+        """A population of the model is built."""
         assert Population(TermanWangOscillator, n=10, label="tw").n == 10
 
-    def test_network_spikes(self):
+    def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(TermanWangOscillator, n=10, label="tw")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=1.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -26,7 +51,8 @@ class TestTermanWangPipeline:
         # Slow oscillator — may need long run
         assert isinstance(mon.count, int)
 
-    def test_projection_wiring(self):
+    def test_projection_wiring(self) -> None:
+        """A projection wires the source to the target."""
         src = Population(TermanWangOscillator, n=5, label="src")
         tgt = Population(TermanWangOscillator, n=5, label="tgt")
         drive = PoissonInput(n=5, rate_hz=500.0, weight=1.0, dt=0.001, seed=42)
@@ -36,7 +62,8 @@ class TestTermanWangPipeline:
         net.run(duration=5.0, dt=0.001, backend="python")
         assert isinstance(mon.count, int)
 
-    def test_analysis(self):
+    def test_analysis(self) -> None:
+        """The analysis reports spikes and a rate for a driven run."""
         n = TermanWangOscillator()
         train = np.array([float(n.step(1.0)) for _ in range(100000)])
         sc = spike_count(train)

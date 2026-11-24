@@ -10,23 +10,29 @@
 
 from __future__ import annotations
 
-from tests.model_superspike_neuron_support import *  # noqa: F403
+from sc_neurocore.neurons.models.superspike_neuron import (
+    SuperSpikeNeuron,
+)
 
 
 class TestSuperSpikeLIFDynamics:
-    def test_voltage_leaky_integration(self):
-        """v = alpha_m · v + I. Standard LIF with precomputed alpha."""
+    """Dynamics of the SuperSpikeNeuron."""
+
+    def test_voltage_leaky_integration(self) -> None:
+        """The update is the standard LIF v = alpha_m · v + I, with alpha precomputed."""
         n = SuperSpikeNeuron(v_threshold=100.0)
         n.step(0.5)
         assert abs(n.v - 0.5) < 1e-10  # v = alpha*0 + 0.5 = 0.5
 
-    def test_spike_at_threshold(self):
+    def test_spike_at_threshold(self) -> None:
+        """A step that lifts v above threshold spikes."""
         n = SuperSpikeNeuron()
         n.v = 0.9
         s = n.step(0.2)  # v = alpha*0.9 + 0.2 ≈ 1.014 ≥ 1.0
         assert s == 1
 
-    def test_reset_on_spike(self):
+    def test_reset_on_spike(self) -> None:
+        """A spike resets the voltage to v_reset."""
         n = SuperSpikeNeuron()
         n.v = 0.9
         n.step(0.2)  # spike

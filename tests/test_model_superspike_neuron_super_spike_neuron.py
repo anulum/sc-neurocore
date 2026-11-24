@@ -10,12 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_superspike_neuron_support import *  # noqa: F403
+from sc_neurocore.neurons.models.superspike_neuron import (
+    SuperSpikeNeuron,
+)
 
 
 class TestSuperSpikeNeuron:
-    def test_fires(self):
-        from sc_neurocore.neurons.models.superspike_neuron import SuperSpikeNeuron
+    """The SuperSpikeNeuron fires under drive."""
 
+    def test_fires(self) -> None:
+        """Sustained drive makes the neuron fire."""
         n = SuperSpikeNeuron()
         assert sum(n.step(30.0) for _ in range(200)) > 0

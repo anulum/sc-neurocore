@@ -10,25 +10,36 @@
 
 from __future__ import annotations
 
-from tests.model_srm0_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.srm0 import (
+    SRM0Neuron,
+)
 
 
 class TestSRM0Isolation:
+    """The SRM0Neuron in isolation."""
+
     def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = SRM0Neuron()
         assert n.v == 0.0 and n.v_threshold == 1.0 and n.tau_m == 20.0
         assert n.tau_eta == 50.0 and n.eta_reset == 5.0
 
     def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert SRM0Neuron().step(0.0) in (0, 1)
 
     def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = SRM0Neuron()
         for _ in range(50000):
             n.step(2.0)
         assert np.isfinite(n.v)
 
     def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = SRM0Neuron()
         for _ in range(100):
             n.step(5.0)
@@ -36,6 +47,7 @@ class TestSRM0Isolation:
         assert n.v == n.v_rest and n._eta == 0.0
 
     def test_get_state(self) -> None:
+        """The state dictionary holds v, eta and t after a step."""
         n = SRM0Neuron()
         n.step(1.0)
         state = n.get_state()
@@ -45,6 +57,7 @@ class TestSRM0Isolation:
         "kwargs",
         [{"tau_m": 0.0}, {"tau_eta": -1.0}, {"dt": 0.0}, {"eta_reset": -1.0}, {"v": float("nan")}],
     )
-    def test_invalid_initial_contract_rejected(self, kwargs: dict[str, float]) -> None:
+    def test_invalid_initial_contract_rejected(self, kwargs: dict[str, Any]) -> None:
+        """Invalid initial contract rejected."""
         with pytest.raises((TypeError, ValueError)):
             SRM0Neuron(**kwargs)

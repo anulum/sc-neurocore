@@ -10,11 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_tc_lif_support import *  # noqa: F403
+from sc_neurocore.neurons.models.sc_leaky_tc_lif import (
+    SCLeakyTwoCompartmentLIFNeuron,
+)
 
 
 class TestTCLIFSteadyState:
-    def test_soma_steady_state(self):
+    """Soma and dendrite steady states of the two-compartment LIF neuron."""
+
+    def test_soma_steady_state(self) -> None:
         """At steady state (no spikes): v_s_ss depends on both i_soma and v_d."""
         n = SCLeakyTwoCompartmentLIFNeuron(theta=100.0)  # prevent spikes
         for _ in range(10000):
@@ -25,7 +29,7 @@ class TestTCLIFSteadyState:
         v_ss = 0.5 / (1.0 + n.kappa)
         assert abs(n.v_s - v_ss) < 0.01, f"v_s={n.v_s:.4f}, expected={v_ss:.4f}"
 
-    def test_dendrite_steady_state(self):
+    def test_dendrite_steady_state(self) -> None:
         """v_d_ss = i_dend (at v_rest=0, from -(v_d-0)+i_dend=0 → v_d=i_dend)."""
         n = SCLeakyTwoCompartmentLIFNeuron(theta=100.0)
         for _ in range(10000):

@@ -10,11 +10,21 @@
 
 from __future__ import annotations
 
-from tests.model_traub_miles_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.traub_miles import (
+    TraubMilesNeuron,
+)
+from tests.model_traub_miles_support import (
+    _rk4_expected_after_call,
+)
 
 
 class TestTraubMilesIsolation:
-    def test_construction_defaults(self):
+    """The TraubMilesNeuron in isolation."""
+
+    def test_construction_defaults(self) -> None:
+        """Construction defaults."""
         n = TraubMilesNeuron()
         assert n.v == -67.0
         assert n.g_na == 100.0
@@ -22,10 +32,12 @@ class TestTraubMilesIsolation:
         assert n.dt == 0.01
         assert n.v_threshold == -20.0
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert TraubMilesNeuron().step(0.0) in (0, 1)
 
-    def test_four_variables_evolve(self):
+    def test_four_variables_evolve(self) -> None:
+        """Four variables evolve."""
         n = TraubMilesNeuron()
         initial = (n.v, n.m, n.h, n.n)
         for _ in range(100):
@@ -33,21 +45,23 @@ class TestTraubMilesIsolation:
         for name, v0, v1 in zip(["v", "m", "h", "n"], initial, (n.v, n.m, n.h, n.n)):
             assert v0 != v1, f"{name} didn't evolve"
 
-    def test_state_finite_long_run(self):
+    def test_state_finite_long_run(self) -> None:
+        """The state stays finite over a long run."""
         n = TraubMilesNeuron()
         for _ in range(50000):
             n.step(5.0)
         for var in [n.v, n.m, n.h, n.n]:
             assert np.isfinite(var)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = TraubMilesNeuron()
         for _ in range(500):
             n.step(5.0)
         n.reset()
         assert n.v == -67.0 and n.m == 0.05 and n.h == 0.6 and n.n == 0.3
 
-    def test_ten_substeps(self):
+    def test_ten_substeps(self) -> None:
         """Model uses 10 sub-steps: 10 × dt=0.01 = 0.1 ms per step()."""
         n = TraubMilesNeuron()
         v0 = n.v
@@ -55,7 +69,8 @@ class TestTraubMilesIsolation:
         # With 10 sub-steps, V should have changed substantially
         assert abs(n.v - v0) > 0.01
 
-    def test_step_uses_candidate_first_rk4_substeps(self):
+    def test_step_uses_candidate_first_rk4_substeps(self) -> None:
+        """Step uses candidate first RK4 substeps."""
         n = TraubMilesNeuron(v=-63.5, m=0.08, h=0.55, n=0.32)
         expected = _rk4_expected_after_call(n, 4.0)
         euler_candidate = (

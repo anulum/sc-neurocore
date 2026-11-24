@@ -10,12 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_srm0_support import *  # noqa: F403
+import time
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.srm0 import (
+    SRM0Neuron,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestSRM0Performance:
+    """Throughput of the SRM0Neuron."""
+
     def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = SRM0Neuron()
         N = 50000
         t0 = time.perf_counter()
@@ -29,6 +47,7 @@ class TestSRM0Performance:
         )
 
     def test_network_throughput(self) -> None:
+        """The network meets its throughput floor."""
         pop = Population(SRM0Neuron, n=50, label="bench")
         drive = PoissonInput(n=50, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

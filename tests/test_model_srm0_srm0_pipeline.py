@@ -10,14 +10,41 @@
 
 from __future__ import annotations
 
-from tests.model_srm0_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats.basic import (
+    firing_rate,
+    isi,
+    spike_count,
+)
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.projection import (
+    Projection,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.srm0 import (
+    SRM0Neuron,
+)
 
 
 class TestSRM0Pipeline:
+    """The SRM0Neuron in the network pipeline."""
+
     def test_population(self) -> None:
+        """A population of the model is built."""
         assert Population(SRM0Neuron, n=10, label="srm0").n == 10
 
     def test_network_spikes(self) -> None:
+        """A driven network runs and is monitored."""
         pop = Population(SRM0Neuron, n=10, label="srm0")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)
@@ -26,6 +53,7 @@ class TestSRM0Pipeline:
         assert mon.count > 0
 
     def test_projection_wiring(self) -> None:
+        """A projection wires the source to the target."""
         src = Population(SRM0Neuron, n=10, label="src")
         tgt = Population(SRM0Neuron, n=10, label="tgt")
         drive = PoissonInput(n=10, rate_hz=500.0, weight=5.0, dt=0.001, seed=42)
@@ -36,6 +64,7 @@ class TestSRM0Pipeline:
         assert mon.count > 0
 
     def test_analysis(self) -> None:
+        """The analysis reports spikes and a rate for a driven run."""
         n = SRM0Neuron()
         train = np.array([float(n.step(5.0)) for _ in range(10000)])
         sc = spike_count(train)
@@ -46,6 +75,7 @@ class TestSRM0Pipeline:
         assert rate > 0
 
     def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = SRM0Neuron()

@@ -10,12 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_terman_wang_support import *  # noqa: F403
+import time
+from sc_neurocore.network.monitor import (
+    SpikeMonitor,
+)
+from sc_neurocore.network.network import (
+    Network,
+)
+from sc_neurocore.network.population import (
+    Population,
+)
+from sc_neurocore.network.stimulus import (
+    PoissonInput,
+)
+from sc_neurocore.neurons.models.terman_wang import (
+    TermanWangOscillator,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 class TestTermanWangPerformance:
-    def test_isolation_throughput(self):
+    """Throughput of the TermanWangOscillator."""
+
+    def test_isolation_throughput(self) -> None:
+        """The isolated model meets its throughput floor."""
         n = TermanWangOscillator()
         N = 50000
         t0 = time.perf_counter()
@@ -28,7 +46,8 @@ class TestTermanWangPerformance:
             strict_minimum_per_second=10_000.0,
         )
 
-    def test_network_throughput(self):
+    def test_network_throughput(self) -> None:
+        """The network meets its throughput floor."""
         pop = Population(TermanWangOscillator, n=50, label="bench")
         drive = PoissonInput(n=50, rate_hz=500.0, weight=1.0, dt=0.001, seed=42)
         mon = SpikeMonitor(pop)

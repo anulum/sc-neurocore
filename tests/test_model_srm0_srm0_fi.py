@@ -10,19 +10,30 @@
 
 from __future__ import annotations
 
-from tests.model_srm0_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.srm0 import (
+    SRM0Neuron,
+)
+from tests.model_srm0_support import (
+    _run,
+)
 
 
 class TestSRM0FI:
+    """The current-to-rate response of the SRM0Neuron."""
+
     def test_subthreshold_silent(self) -> None:
+        """A subthreshold current gives no spikes."""
         n = SRM0Neuron()
         assert len(_run(n, current=0.5, steps=10000)) == 0
 
     def test_suprathreshold_fires(self) -> None:
+        """A suprathreshold current fires repeatedly."""
         n = SRM0Neuron()
         assert len(_run(n, current=2.0, steps=10000)) >= 20
 
     def test_monotonic_fi(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [2.0, 3.0, 5.0, 10.0]:
             n = SRM0Neuron()
@@ -30,6 +41,7 @@ class TestSRM0FI:
         assert all(rates[i] <= rates[i + 1] for i in range(len(rates) - 1))
 
     def test_isi_regularity(self) -> None:
+        """Constant drive gives regular inter-spike intervals."""
         n = SRM0Neuron()
         spikes = _run(n, current=5.0, steps=10000)
         if len(spikes) >= 20:

@@ -10,7 +10,12 @@
 
 from __future__ import annotations
 
-from tests.model_stochastic_if_support import *  # noqa: F403
+from typing import Any
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.stochastic_if import (
+    StochasticIFNeuron,
+)
 
 
 class TestStochasticIFValidation:
@@ -23,14 +28,16 @@ class TestStochasticIFValidation:
     ) -> None:
         """Check that NaN or infinite voltage and drive parameters raise ValueError."""
         with pytest.raises(ValueError, match=field):
-            StochasticIFNeuron(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            StochasticIFNeuron(**kwargs)
 
     @pytest.mark.parametrize("field", ["tau_m", "dt"])
     @pytest.mark.parametrize("value", [0.0, -1.0, np.nan, np.inf, -np.inf])
     def test_rejects_non_positive_or_non_finite_timescales(self, field: str, value: float) -> None:
         """Check that zero, negative or non-finite tau_m and dt raise ValueError."""
         with pytest.raises(ValueError, match=field):
-            StochasticIFNeuron(**{field: value})
+            kwargs: dict[str, Any] = {field: value}
+            StochasticIFNeuron(**kwargs)
 
     @pytest.mark.parametrize("sigma", [-1.0, np.nan, np.inf, -np.inf])
     def test_rejects_negative_or_non_finite_noise_scale(self, sigma: float) -> None:

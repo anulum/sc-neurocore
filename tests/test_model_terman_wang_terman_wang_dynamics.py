@@ -10,35 +10,46 @@
 
 from __future__ import annotations
 
-from tests.model_terman_wang_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.terman_wang import (
+    TermanWangOscillator,
+)
+from tests.model_terman_wang_support import (
+    _rhs,
+    _rk4_reference,
+    _run,
+)
 
 
 class TestTermanWangDynamics:
-    def test_cubic_nullcline(self):
+    """Dynamics of the TermanWangOscillator."""
+
+    def test_cubic_nullcline(self) -> None:
         """f(v) = 3v - v³ + 2. At v=0: f=2. At v=1: f=4. At v=-1: f=0."""
         assert abs((3 * 0 - 0**3 + 2) - 2.0) < 1e-10
         assert abs((3 * 1 - 1**3 + 2) - 4.0) < 1e-10
         assert abs((3 * (-1) - (-1) ** 3 + 2) - 0.0) < 1e-10
 
-    def test_sigmoid_recovery(self):
+    def test_sigmoid_recovery(self) -> None:
         """g(v) = alpha * (1 + tanh(v/beta))."""
         n = TermanWangOscillator()
         g_at_0 = n.alpha * (1.0 + np.tanh(0.0 / n.beta))
         assert abs(g_at_0 - n.alpha) < 1e-10  # tanh(0) = 0 → g = alpha
 
-    def test_derivative_formula(self):
+    def test_derivative_formula(self) -> None:
         """Derivative helper matches the documented two-state ODE."""
         n = TermanWangOscillator(v=-1.2, w=-0.25)
         assert n._derivatives(n.v, n.w, 1.0) == pytest.approx(_rhs(n, n.v, n.w, 1.0))
 
-    def test_step_matches_independent_rk4_reference(self):
+    def test_step_matches_independent_rk4_reference(self) -> None:
         """One step matches an independent coupled RK4 calculation."""
         n = TermanWangOscillator(v=-1.2, w=-0.25)
         expected = _rk4_reference(n, n.v, n.w, 1.0)
         assert n.step(1.0) == 0
         assert (n.v, n.w) == pytest.approx(expected, abs=1.0e-15)
 
-    def test_slow_w_dynamics(self):
+    def test_slow_w_dynamics(self) -> None:
         """epsilon=0.02 → w evolves 50× slower than v."""
         n = TermanWangOscillator()
         v0, w0 = n.v, n.w
@@ -47,18 +58,19 @@ class TestTermanWangDynamics:
         dw = abs(n.w - w0)
         assert dv > 10 * dw, f"dv={dv:.6f}, dw={dw:.6f}"
 
-    def test_oscillation_at_moderate_I(self):
+    def test_oscillation_at_moderate_I(self) -> None:
         """I=0.5–1.0: slow relaxation oscillation."""
         n = TermanWangOscillator()
         spikes = _run(n, current=1.0, steps=100000)
         assert len(spikes) >= 5
 
-    def test_silent_at_zero(self):
+    def test_silent_at_zero(self) -> None:
+        """Zero current gives no spikes."""
         n = TermanWangOscillator()
         spikes = _run(n, current=0.0, steps=50000)
         assert len(spikes) <= 2  # at most transient
 
-    def test_suppression_at_high_I(self):
+    def test_suppression_at_high_I(self) -> None:
         """I≥2: depolarisation block (V stays above v_peak, only 1 crossing)."""
         n = TermanWangOscillator()
         spikes = _run(n, current=5.0, steps=50000)

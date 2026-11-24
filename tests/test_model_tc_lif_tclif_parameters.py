@@ -10,18 +10,26 @@
 
 from __future__ import annotations
 
-from tests.model_tc_lif_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.sc_leaky_tc_lif import (
+    SCLeakyTwoCompartmentLIFNeuron,
+)
 
 
 class TestTCLIFParameters:
+    """Parameter behaviour of the SCLeakyTwoCompartmentLIFNeuron."""
+
     @pytest.mark.parametrize("dt", [0.5, 1.0, 2.0])
-    def test_dt_stability(self, dt: float):
+    def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = SCLeakyTwoCompartmentLIFNeuron(dt=dt)
         for _ in range(5000):
             n.step(2.0)
         assert np.isfinite(n.v_s)
 
-    def test_deterministic(self):
+    def test_deterministic(self) -> None:
+        """The same inputs give the same trace."""
         traces = []
         for _ in range(2):
             n = SCLeakyTwoCompartmentLIFNeuron()

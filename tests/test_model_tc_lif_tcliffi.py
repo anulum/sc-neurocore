@@ -10,15 +10,24 @@
 
 from __future__ import annotations
 
-from tests.model_tc_lif_support import *  # noqa: F403
+from sc_neurocore.neurons.models.sc_leaky_tc_lif import (
+    SCLeakyTwoCompartmentLIFNeuron,
+)
+from tests.model_tc_lif_support import (
+    _run,
+)
 
 
 class TestTCLIFFI:
-    def test_zero_input_silent(self):
+    """The current-to-rate response of the two-compartment LIF neuron."""
+
+    def test_zero_input_silent(self) -> None:
+        """Zero input gives no spikes."""
         n = SCLeakyTwoCompartmentLIFNeuron()
         assert len(_run(n, i_soma=0.0, steps=5000)) == 0
 
-    def test_monotonic_fi(self):
+    def test_monotonic_fi(self) -> None:
+        """The firing rate does not fall as the current rises."""
         rates = []
         for I in [1.5, 2.0, 3.0, 5.0]:
             n = SCLeakyTwoCompartmentLIFNeuron()

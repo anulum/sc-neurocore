@@ -10,20 +10,22 @@
 
 from __future__ import annotations
 
-from tests.model_superspike_neuron_support import *  # noqa: F403
+from sc_neurocore.neurons.models.superspike_neuron import (
+    SuperSpikeNeuron,
+)
 
 
 class TestSuperSpikeEligibilityTrace:
     """trace = α_e · trace + σ'(V). Leaky integrator of surrogate gradient."""
 
-    def test_trace_accumulates_sg(self):
+    def test_trace_accumulates_sg(self) -> None:
         """Trace grows when σ'(V) > 0 (always, but peaks near threshold)."""
         n = SuperSpikeNeuron()
         t0 = n.trace
         n.step(0.5)
         assert n.trace > t0
 
-    def test_trace_decays_without_sg(self):
+    def test_trace_decays_without_sg(self) -> None:
         """With V far from threshold: σ' ≈ 0, trace decays."""
         n = SuperSpikeNeuron()
         n.trace = 5.0
@@ -31,7 +33,7 @@ class TestSuperSpikeEligibilityTrace:
         n.step(0.0)  # v stays negative, σ' tiny
         assert n.trace < 5.0
 
-    def test_trace_peaks_near_threshold(self):
+    def test_trace_peaks_near_threshold(self) -> None:
         """When V hovers near threshold, trace accumulates fastest."""
         # Near threshold: higher SG → faster trace growth
         n_near = SuperSpikeNeuron()

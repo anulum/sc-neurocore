@@ -10,10 +10,20 @@
 
 from __future__ import annotations
 
-from tests.model_srm0_support import *  # noqa: F403
+import math
+import pytest
+from sc_neurocore.neurons.models.srm0 import (
+    SRM0Neuron,
+)
+from tests.model_srm0_support import (
+    _exact_reference,
+    _run,
+)
 
 
 class TestSRM0Dynamics:
+    """Dynamics of the SRM0Neuron."""
+
     def test_voltage_integrates(self) -> None:
         """Unlike SpikeResponseNeuron, SRM0 accumulates V over steps."""
         n = SRM0Neuron()
@@ -23,6 +33,7 @@ class TestSRM0Dynamics:
         assert n.v > v_prev  # V grew from integration
 
     def test_exact_flow_one_step(self) -> None:
+        """Exact flow one step."""
         n = SRM0Neuron()
         n._eta = -2.0
         expected_v, expected_eta = _exact_reference(n, current=0.5)
@@ -31,6 +42,7 @@ class TestSRM0Dynamics:
         assert abs(n._eta - expected_eta) < 1e-12
 
     def test_exact_flow_differs_from_membrane_euler(self) -> None:
+        """Exact flow differs from membrane Euler."""
         n = SRM0Neuron()
         n._eta = -2.0
         current = 0.5
@@ -40,6 +52,7 @@ class TestSRM0Dynamics:
         assert abs(n.v - euler_v) > 1e-5
 
     def test_invalid_runtime_current_preserves_state(self) -> None:
+        """Invalid runtime current preserves state."""
         n = SRM0Neuron()
         before = (n.v, n._eta, n._t, n._last_spike_time)
         with pytest.raises(ValueError, match="current"):

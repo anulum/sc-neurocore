@@ -10,19 +10,21 @@
 
 from __future__ import annotations
 
-from tests.model_superspike_neuron_support import *  # noqa: F403
+from sc_neurocore.neurons.models.superspike_neuron import (
+    SuperSpikeNeuron,
+)
 
 
 class TestSuperSpikeSurrogateGradient:
     """Core: σ'(V) = 1/(β|V-θ|+1)². Peaks at V=θ, decays with distance."""
 
-    def test_sg_peak_at_threshold(self):
+    def test_sg_peak_at_threshold(self) -> None:
         """σ'(θ) = 1/(0+1)² = 1.0 — maximum at threshold."""
         n = SuperSpikeNeuron()
         n.v = n.v_threshold
         assert abs(n.surrogate_grad() - 1.0) < 1e-10
 
-    def test_sg_symmetric_around_threshold(self):
+    def test_sg_symmetric_around_threshold(self) -> None:
         """σ'(θ+δ) = σ'(θ-δ) — symmetric in |V-θ|."""
         n = SuperSpikeNeuron()
         for delta in [0.1, 0.5, 1.0, 5.0]:
@@ -32,7 +34,7 @@ class TestSuperSpikeSurrogateGradient:
             sg_below = n.surrogate_grad()
             assert abs(sg_above - sg_below) < 1e-10, f"delta={delta}"
 
-    def test_sg_decays_with_distance(self):
+    def test_sg_decays_with_distance(self) -> None:
         """σ' decreases as |V-θ| increases."""
         n = SuperSpikeNeuron()
         sgs = []
@@ -42,14 +44,14 @@ class TestSuperSpikeSurrogateGradient:
         # Should be monotonically decreasing
         assert all(sgs[i] >= sgs[i + 1] for i in range(len(sgs) - 1))
 
-    def test_sg_formula_exact(self):
+    def test_sg_formula_exact(self) -> None:
         """Verify σ' = 1/(β|V-θ|+1)² at specific V."""
         n = SuperSpikeNeuron()
         n.v = 0.5  # |V-θ| = 0.5
         expected = 1.0 / (n.beta_sg * 0.5 + 1.0) ** 2
         assert abs(n.surrogate_grad() - expected) < 1e-10
 
-    def test_beta_controls_sharpness(self):
+    def test_beta_controls_sharpness(self) -> None:
         """Higher beta → sharper peak (faster decay away from θ)."""
         n_sharp = SuperSpikeNeuron(beta_sg=50.0)
         n_soft = SuperSpikeNeuron(beta_sg=1.0)

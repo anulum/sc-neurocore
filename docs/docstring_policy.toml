@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4225
+expected_file_count = 4278
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -16944,3 +16944,215 @@ rationale = "Exercise SC-NeuroCore: model spinnaker lif spi n naker lif refracto
 [[file]]
 path = "tests/test_ecosystem_map_consistency.py"
 rationale = "Bind the group and project map to the split map and to its own entry counts."
+
+[[file]]
+path = "tests/test_model_srm0_srm0_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model srm0 srm0 dynamics."
+
+[[file]]
+path = "tests/test_model_srm0_srm0_eta_kernel.py"
+rationale = "Exercise SC-NeuroCore: model srm0 srm0 eta kernel."
+
+[[file]]
+path = "tests/test_model_srm0_srm0_fi.py"
+rationale = "Exercise SC-NeuroCore: model srm0 srm0 fi."
+
+[[file]]
+path = "tests/test_model_srm0_srm0_isolation.py"
+rationale = "Exercise SC-NeuroCore: model srm0 srm0 isolation."
+
+[[file]]
+path = "tests/test_model_srm0_srm0_performance.py"
+rationale = "Exercise SC-NeuroCore: model srm0 srm0 performance."
+
+[[file]]
+path = "tests/test_model_srm0_srm0_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model srm0 srm0 pipeline."
+
+[[file]]
+path = "tests/test_model_sst_neuron_sst_adaptation.py"
+rationale = "Exercise SC-NeuroCore: model sst neuron sst adaptation."
+
+[[file]]
+path = "tests/test_model_sst_neuron_sst_beta_m_regression.py"
+rationale = "Exercise SC-NeuroCore: model sst neuron sst beta m regression."
+
+[[file]]
+path = "tests/test_model_sst_neuron_sst_integrator.py"
+rationale = "Exercise SC-NeuroCore: model sst neuron sst integrator."
+
+[[file]]
+path = "tests/test_model_sst_neuron_sst_isolation.py"
+rationale = "Exercise SC-NeuroCore: model sst neuron sst isolation."
+
+[[file]]
+path = "tests/test_model_sst_neuron_sst_network.py"
+rationale = "Exercise SC-NeuroCore: model sst neuron sst network."
+
+[[file]]
+path = "tests/test_model_sst_neuron_sst_singular_rates.py"
+rationale = "Exercise SC-NeuroCore: model sst neuron sst singular rates."
+
+[[file]]
+path = "tests/test_model_sst_neuron_sst_validation.py"
+rationale = "Exercise SC-NeuroCore: model sst neuron sst validation."
+
+[[file]]
+path = "tests/test_model_superspike_neuron_super_spike_eligibility_trace.py"
+rationale = "Exercise SC-NeuroCore: model superspike neuron super spike eligibility trace."
+
+[[file]]
+path = "tests/test_model_superspike_neuron_super_spike_fi.py"
+rationale = "Exercise SC-NeuroCore: model superspike neuron super spike fi."
+
+[[file]]
+path = "tests/test_model_superspike_neuron_super_spike_isolation.py"
+rationale = "Exercise SC-NeuroCore: model superspike neuron super spike isolation."
+
+[[file]]
+path = "tests/test_model_superspike_neuron_super_spike_lif_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model superspike neuron super spike lif dynamics."
+
+[[file]]
+path = "tests/test_model_superspike_neuron_super_spike_neuron.py"
+rationale = "Exercise SC-NeuroCore: model superspike neuron super spike neuron."
+
+[[file]]
+path = "tests/test_model_superspike_neuron_super_spike_performance.py"
+rationale = "Exercise SC-NeuroCore: model superspike neuron super spike performance."
+
+[[file]]
+path = "tests/test_model_superspike_neuron_super_spike_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model superspike neuron super spike pipeline."
+
+[[file]]
+path = "tests/test_model_superspike_neuron_super_spike_surrogate_gradient.py"
+rationale = "Exercise SC-NeuroCore: model superspike neuron super spike surrogate gradient."
+
+[[file]]
+path = "tests/test_model_tc_lif_tclif_compartmental_coupling.py"
+rationale = "Exercise SC-NeuroCore: model tc lif tclif compartmental coupling."
+
+[[file]]
+path = "tests/test_model_tc_lif_tclif_isolation.py"
+rationale = "Exercise SC-NeuroCore: model tc lif tclif isolation."
+
+[[file]]
+path = "tests/test_model_tc_lif_tclif_parameters.py"
+rationale = "Exercise SC-NeuroCore: model tc lif tclif parameters."
+
+[[file]]
+path = "tests/test_model_tc_lif_tclif_performance.py"
+rationale = "Exercise SC-NeuroCore: model tc lif tclif performance."
+
+[[file]]
+path = "tests/test_model_tc_lif_tclif_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model tc lif tclif pipeline."
+
+[[file]]
+path = "tests/test_model_tc_lif_tclif_steady_state.py"
+rationale = "Exercise SC-NeuroCore: model tc lif tclif steady state."
+
+[[file]]
+path = "tests/test_model_tc_lif_tcliffi.py"
+rationale = "Exercise SC-NeuroCore: model tc lif tcliffi."
+
+[[file]]
+path = "tests/test_model_terman_wang_terman_wang_dynamics.py"
+rationale = "Exercise SC-NeuroCore: model terman wang terman wang dynamics."
+
+[[file]]
+path = "tests/test_model_terman_wang_terman_wang_isolation.py"
+rationale = "Exercise SC-NeuroCore: model terman wang terman wang isolation."
+
+[[file]]
+path = "tests/test_model_terman_wang_terman_wang_parameters.py"
+rationale = "Exercise SC-NeuroCore: model terman wang terman wang parameters."
+
+[[file]]
+path = "tests/test_model_terman_wang_terman_wang_performance.py"
+rationale = "Exercise SC-NeuroCore: model terman wang terman wang performance."
+
+[[file]]
+path = "tests/test_model_terman_wang_terman_wang_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model terman wang terman wang pipeline."
+
+[[file]]
+path = "tests/test_model_theta_theta_analytical_isi.py"
+rationale = "Exercise SC-NeuroCore: model theta theta analytical isi."
+
+[[file]]
+path = "tests/test_model_theta_theta_bifurcation.py"
+rationale = "Exercise SC-NeuroCore: model theta theta bifurcation."
+
+[[file]]
+path = "tests/test_model_theta_theta_edge_cases.py"
+rationale = "Exercise SC-NeuroCore: model theta theta edge cases."
+
+[[file]]
+path = "tests/test_model_theta_theta_isolation.py"
+rationale = "Exercise SC-NeuroCore: model theta theta isolation."
+
+[[file]]
+path = "tests/test_model_theta_theta_parameters.py"
+rationale = "Exercise SC-NeuroCore: model theta theta parameters."
+
+[[file]]
+path = "tests/test_model_theta_theta_phase_space.py"
+rationale = "Exercise SC-NeuroCore: model theta theta phase space."
+
+[[file]]
+path = "tests/test_model_theta_theta_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model theta theta pipeline."
+
+[[file]]
+path = "tests/test_model_theta_theta_simulate.py"
+rationale = "Exercise SC-NeuroCore: model theta theta simulate."
+
+[[file]]
+path = "tests/test_model_theta_theta_validation.py"
+rationale = "Exercise SC-NeuroCore: model theta theta validation."
+
+[[file]]
+path = "tests/test_model_traub_miles_traub_miles_fi.py"
+rationale = "Exercise SC-NeuroCore: model traub miles traub miles fi."
+
+[[file]]
+path = "tests/test_model_traub_miles_traub_miles_hh_properties.py"
+rationale = "Exercise SC-NeuroCore: model traub miles traub miles hh properties."
+
+[[file]]
+path = "tests/test_model_traub_miles_traub_miles_isolation.py"
+rationale = "Exercise SC-NeuroCore: model traub miles traub miles isolation."
+
+[[file]]
+path = "tests/test_model_traub_miles_traub_miles_parameters.py"
+rationale = "Exercise SC-NeuroCore: model traub miles traub miles parameters."
+
+[[file]]
+path = "tests/test_model_traub_miles_traub_miles_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model traub miles traub miles pipeline."
+
+[[file]]
+path = "tests/test_model_truenorth_true_north_fi.py"
+rationale = "Exercise SC-NeuroCore: model truenorth true north fi."
+
+[[file]]
+path = "tests/test_model_truenorth_true_north_integer_arithmetic.py"
+rationale = "Exercise SC-NeuroCore: model truenorth true north integer arithmetic."
+
+[[file]]
+path = "tests/test_model_truenorth_true_north_isolation.py"
+rationale = "Exercise SC-NeuroCore: model truenorth true north isolation."
+
+[[file]]
+path = "tests/test_model_truenorth_true_north_leak_effect.py"
+rationale = "Exercise SC-NeuroCore: model truenorth true north leak effect."
+
+[[file]]
+path = "tests/test_model_truenorth_true_north_performance.py"
+rationale = "Exercise SC-NeuroCore: model truenorth true north performance."
+
+[[file]]
+path = "tests/test_model_truenorth_true_north_pipeline.py"
+rationale = "Exercise SC-NeuroCore: model truenorth true north pipeline."

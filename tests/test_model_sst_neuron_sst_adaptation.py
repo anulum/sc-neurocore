@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.model_sst_neuron_support import *  # noqa: F403
+from sc_neurocore.neurons.models.sst_neuron import (
+    SSTNeuron,
+)
+from tests.model_sst_neuron_support import (
+    _spikes,
+)
 
 
 class TestSSTAdaptation:
-    def test_m_current_block_changes_firing(self):
+    """The M-current adaptation of the SSTNeuron."""
+
+    def test_m_current_block_changes_firing(self) -> None:
+        """M current block changes firing."""
         intact = _spikes(SSTNeuron(), 2.0, 40000)
         blocked = _spikes(SSTNeuron(g_m=0.0), 2.0, 40000)
         assert intact != blocked

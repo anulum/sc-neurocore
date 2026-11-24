@@ -10,32 +10,42 @@
 
 from __future__ import annotations
 
-from tests.model_terman_wang_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.neurons.models.terman_wang import (
+    TermanWangOscillator,
+)
 
 
 class TestTermanWangIsolation:
-    def test_defaults(self):
+    """The TermanWangOscillator in isolation."""
+
+    def test_defaults(self) -> None:
+        """The defaults match the published model."""
         n = TermanWangOscillator()
         assert n.v == -1.5 and n.w == -0.5
         assert n.alpha == 3.0 and n.beta == 0.2 and n.epsilon == 0.02
 
-    def test_step_returns_binary(self):
+    def test_step_returns_binary(self) -> None:
+        """One step returns a binary spike."""
         assert TermanWangOscillator().step(0.0) in (0, 1)
 
-    def test_two_variables_evolve(self):
+    def test_two_variables_evolve(self) -> None:
+        """Two variables evolve."""
         n = TermanWangOscillator()
         v0, w0 = n.v, n.w
         for _ in range(500):
             n.step(1.0)
         assert n.v != v0 and n.w != w0
 
-    def test_state_finite(self):
+    def test_state_finite(self) -> None:
+        """The state stays finite under drive."""
         n = TermanWangOscillator()
         for _ in range(100000):
             n.step(1.0)
         assert np.isfinite(n.v) and np.isfinite(n.w)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """A reset after drive leaves a valid state."""
         n = TermanWangOscillator()
         for _ in range(1000):
             n.step(1.0)

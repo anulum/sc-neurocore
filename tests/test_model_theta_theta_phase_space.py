@@ -10,7 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_theta_support import *  # noqa: F403
+import math
+import pytest
+from sc_neurocore.neurons.models.theta import (
+    ThetaNeuron,
+)
+from tests.model_theta_support import (
+    _exact_theta_candidate,
+    _wrap_phase,
+)
 
 
 class TestThetaPhaseSpace:
@@ -44,6 +52,7 @@ class TestThetaPhaseSpace:
         assert abs(n.theta - expected) < 1e-12
 
     def test_exact_positive_flow_separates_from_forward_euler(self) -> None:
+        """Exact positive flow separates from forward Euler."""
         n = ThetaNeuron(theta=1.0, dt=0.2)
         current = 2.0
         euler = _wrap_phase(
@@ -56,6 +65,7 @@ class TestThetaPhaseSpace:
         assert abs(n.theta - euler) > 1e-4
 
     def test_exact_flow_reports_within_step_crossing(self) -> None:
+        """Exact flow reports within step crossing."""
         n = ThetaNeuron(theta=2.5, dt=1.0)
         expected, spiked = _exact_theta_candidate(n.theta, 1.0, n.dt)
         assert spiked
@@ -63,6 +73,7 @@ class TestThetaPhaseSpace:
         assert abs(n.theta - expected) < 1e-12
 
     def test_negative_current_stable_fixed_point_is_preserved(self) -> None:
+        """Negative current stable fixed point is preserved."""
         n = ThetaNeuron(theta=-math.pi / 2.0, dt=100.0)
         assert n.step(-1.0) == 0
         assert abs(n.theta + math.pi / 2.0) < 1e-12

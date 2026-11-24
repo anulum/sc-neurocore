@@ -10,12 +10,22 @@
 
 from __future__ import annotations
 
-from tests.model_theta_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.neurons.models.theta import (
+    ThetaNeuron,
+)
+from tests.model_theta_support import (
+    _run,
+)
 
 
 class TestThetaParameters:
+    """Parameter behaviour of the ThetaNeuron."""
+
     @pytest.mark.parametrize("dt", [0.005, 0.01, 0.02])
     def test_dt_stability(self, dt: float) -> None:
+        """The state stays finite across time steps."""
         n = ThetaNeuron(dt=dt)
         for _ in range(50000):
             n.step(2.0)

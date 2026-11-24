@@ -10,11 +10,15 @@
 
 from __future__ import annotations
 
-from tests.model_truenorth_support import *  # noqa: F403
+from sc_neurocore.neurons.models.truenorth import (
+    TrueNorthNeuron,
+)
 
 
 class TestTrueNorthLeakEffect:
-    def test_leak_reduces_effective_rate(self):
+    """The leak's effect on the TrueNorthNeuron's rate."""
+
+    def test_leak_reduces_effective_rate(self) -> None:
         """Higher leak → lower effective current → fewer spikes."""
         n_noleak = TrueNorthNeuron(leak=0)
         n_leak = TrueNorthNeuron(leak=10)
@@ -22,7 +26,7 @@ class TestTrueNorthLeakEffect:
         s_leak = sum(n_leak.step(20) for _ in range(1000))
         assert s_noleak > s_leak
 
-    def test_analytical_rate_with_leak(self):
+    def test_analytical_rate_with_leak(self) -> None:
         """Rate = steps / ceil(θ / (I - leak)) when I > leak."""
         n = TrueNorthNeuron(leak=10, threshold=100)
         I = 20
