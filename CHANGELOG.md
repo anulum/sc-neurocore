@@ -1378,6 +1378,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 12 top-level plot test modules import their names explicitly
+  instead of through a suppressed star import, take every name bound
+  after the matplotlib guard, the network fixture included, from their
+  support, gain their missing docstrings and type annotations and are
+  enrolled in the docstring policy.
+
 - The three top-level DOI-verification test modules import their names
   explicitly instead of through a suppressed star import, take the
   provenance tool from their support after its path guard, gain their

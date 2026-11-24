@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.viz_plots_support import *  # noqa: F403
+import numpy as np
+from tests.viz_plots_support import (
+    plots,
+)
 
 
 class TestSpikeTrainComparison:
-    def test_returns_axes(self):
+    """The spike-train comparison plot."""
+
+    def test_returns_axes(self) -> None:
+        """The comparison of three labelled spike trains returns a value (the check is that it is not None)."""
         trains = [np.array([1, 5, 10]), np.array([2, 6, 11]), np.array([3, 7, 12])]
         ax = plots.spike_train_comparison(trains, labels=["A", "B", "C"])
         assert ax is not None

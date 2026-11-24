@@ -10,11 +10,26 @@
 
 from __future__ import annotations
 
-from tests.viz_plots_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sc_neurocore.network.monitor import SpikeMonitor, StateMonitor
+    from sc_neurocore.network.network import Network
+    from sc_neurocore.network.projection import Projection
+
+from tests.viz_plots_support import (
+    plots,
+)
+from tests.viz_plots_support import small_network as small_network
 
 
 class TestISIHistogram:
-    def test_returns_axes(self, small_network):
+    """The ISI histogram plot."""
+
+    def test_returns_axes(
+        self, small_network: tuple[Network, SpikeMonitor, StateMonitor, Projection]
+    ) -> None:
+        """The ISI histogram of one neuron returns a value (the check is that it is not None)."""
         _, sm, _, _ = small_network
         ax = plots.isi_histogram(sm, neuron_id=0, bins=20)
         assert ax is not None

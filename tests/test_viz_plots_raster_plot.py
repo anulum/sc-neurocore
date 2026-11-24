@@ -10,11 +10,26 @@
 
 from __future__ import annotations
 
-from tests.viz_plots_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sc_neurocore.network.monitor import SpikeMonitor, StateMonitor
+    from sc_neurocore.network.network import Network
+    from sc_neurocore.network.projection import Projection
+
+from tests.viz_plots_support import (
+    plots,
+)
+from tests.viz_plots_support import small_network as small_network
 
 
 class TestRasterPlot:
-    def test_returns_axes(self, small_network):
+    """The spike raster plot of a monitor."""
+
+    def test_returns_axes(
+        self, small_network: tuple[Network, SpikeMonitor, StateMonitor, Projection]
+    ) -> None:
+        """The raster plot of the spike monitor returns an object with a figure."""
         _, sm, _, _ = small_network
         ax = plots.raster_plot(sm)
         assert ax is not None

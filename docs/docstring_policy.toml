@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4639
+expected_file_count = 4651
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -18600,3 +18600,51 @@ rationale = "Exercise SC-NeuroCore: verify dois fold surname."
 [[file]]
 path = "tests/test_verify_dois_resolve_doi_routing.py"
 rationale = "Exercise SC-NeuroCore: verify dois resolve doi routing."
+
+[[file]]
+path = "tests/test_viz_plots_cross_correlogram.py"
+rationale = "Exercise SC-NeuroCore: viz plots cross correlogram."
+
+[[file]]
+path = "tests/test_viz_plots_firing_rate_plot.py"
+rationale = "Exercise SC-NeuroCore: viz plots firing rate plot."
+
+[[file]]
+path = "tests/test_viz_plots_instantaneous_rate.py"
+rationale = "Exercise SC-NeuroCore: viz plots instantaneous rate."
+
+[[file]]
+path = "tests/test_viz_plots_isi_histogram.py"
+rationale = "Exercise SC-NeuroCore: viz plots isi histogram."
+
+[[file]]
+path = "tests/test_viz_plots_network_graph.py"
+rationale = "Exercise SC-NeuroCore: viz plots network graph."
+
+[[file]]
+path = "tests/test_viz_plots_phase_portrait.py"
+rationale = "Exercise SC-NeuroCore: viz plots phase portrait."
+
+[[file]]
+path = "tests/test_viz_plots_population_activity.py"
+rationale = "Exercise SC-NeuroCore: viz plots population activity."
+
+[[file]]
+path = "tests/test_viz_plots_psd_plot.py"
+rationale = "Exercise SC-NeuroCore: viz plots psd plot."
+
+[[file]]
+path = "tests/test_viz_plots_raster_plot.py"
+rationale = "Exercise SC-NeuroCore: viz plots raster plot."
+
+[[file]]
+path = "tests/test_viz_plots_spike_train_comparison.py"
+rationale = "Exercise SC-NeuroCore: viz plots spike train comparison."
+
+[[file]]
+path = "tests/test_viz_plots_voltage_trace.py"
+rationale = "Exercise SC-NeuroCore: viz plots voltage trace."
+
+[[file]]
+path = "tests/test_viz_plots_weight_matrix.py"
+rationale = "Exercise SC-NeuroCore: viz plots weight matrix."

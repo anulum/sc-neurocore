@@ -10,11 +10,26 @@
 
 from __future__ import annotations
 
-from tests.viz_plots_support import *  # noqa: F403
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sc_neurocore.network.monitor import SpikeMonitor, StateMonitor
+    from sc_neurocore.network.network import Network
+    from sc_neurocore.network.projection import Projection
+
+from tests.viz_plots_support import (
+    plots,
+)
+from tests.viz_plots_support import small_network as small_network
 
 
 class TestVoltageTrace:
-    def test_returns_axes(self, small_network):
+    """The voltage-trace plot."""
+
+    def test_returns_axes(
+        self, small_network: tuple[Network, SpikeMonitor, StateMonitor, Projection]
+    ) -> None:
+        """The voltage traces of two neurons returns a value (the check is that it is not None)."""
         _, _, st, _ = small_network
         ax = plots.voltage_trace(st, neuron_ids=[0, 1])
         assert ax is not None
