@@ -8,10 +8,13 @@
 
 """Summary evidence and seeded reproducibility for SCDenseLayer."""
 
-from tests.test_layers.sc_dense_layer_support import *
+import numpy as np
+from tests.test_layers.sc_dense_layer_support import (
+    _make_layer,
+)
 
 
-def test_dense_summary_average_matches_mean():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_dense_summary_average_matches_mean() -> None:
     """Average firing rate in summary matches mean of stats."""
     layer = _make_layer(n_neurons=2)
     layer.run(10)
@@ -20,7 +23,7 @@ def test_dense_summary_average_matches_mean():  # type: ignore[no-untyped-def] #
     assert np.isclose(summary["avg_firing_rate_hz"], float(np.mean(rates)))
 
 
-def test_dense_summary_fields_present():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_dense_summary_fields_present() -> None:
     """Summary includes expected keys and stat entries."""
     layer = _make_layer(n_neurons=2)
     layer.run(6)
@@ -30,7 +33,7 @@ def test_dense_summary_fields_present():  # type: ignore[no-untyped-def] # Prese
     assert {"neuron", "total_spikes", "firing_rate_hz"} <= set(summary["stats"][0].keys())
 
 
-def test_dense_seed_reproducible():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_dense_seed_reproducible() -> None:
     """Same seed and params yield identical spike trains."""
     layer_a = _make_layer(base_seed=77)
     layer_b = _make_layer(base_seed=77)

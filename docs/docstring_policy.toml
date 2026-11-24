@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5079
+expected_file_count = 5096
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20360,3 +20360,71 @@ rationale = "Exercise SC-NeuroCore: verilog expr emitter rounding."
 [[file]]
 path = "tests/test_verilog_expr_emitter_validation.py"
 rationale = "Exercise SC-NeuroCore: verilog expr emitter validation."
+
+[[file]]
+path = "tests/interfaces/test_dvs_input_bitstream.py"
+rationale = "Exercise SC-NeuroCore: dvs input bitstream."
+
+[[file]]
+path = "tests/interfaces/test_dvs_input_event_validation.py"
+rationale = "Exercise SC-NeuroCore: dvs input event validation."
+
+[[file]]
+path = "tests/interfaces/test_dvs_input_performance.py"
+rationale = "Exercise SC-NeuroCore: dvs input performance."
+
+[[file]]
+path = "tests/interfaces/test_dvs_input_surface.py"
+rationale = "Exercise SC-NeuroCore: dvs input surface."
+
+[[file]]
+path = "tests/interfaces/test_dvs_input_validation.py"
+rationale = "Exercise SC-NeuroCore: dvs input validation."
+
+[[file]]
+path = "tests/sources/test_bitstream_current_source_performance.py"
+rationale = "Exercise SC-NeuroCore: bitstream current source performance."
+
+[[file]]
+path = "tests/sources/test_bitstream_current_source_step_state.py"
+rationale = "Exercise SC-NeuroCore: bitstream current source step state."
+
+[[file]]
+path = "tests/sources/test_bitstream_current_source_trace.py"
+rationale = "Exercise SC-NeuroCore: bitstream current source trace."
+
+[[file]]
+path = "tests/sources/test_bitstream_current_source_validation.py"
+rationale = "Exercise SC-NeuroCore: bitstream current source validation."
+
+[[file]]
+path = "tests/test_layers/test_sc_dense_layer_performance.py"
+rationale = "Exercise SC-NeuroCore: sc dense layer performance."
+
+[[file]]
+path = "tests/test_layers/test_sc_dense_layer_runtime.py"
+rationale = "Exercise SC-NeuroCore: sc dense layer runtime."
+
+[[file]]
+path = "tests/test_layers/test_sc_dense_layer_summary.py"
+rationale = "Exercise SC-NeuroCore: sc dense layer summary."
+
+[[file]]
+path = "tests/test_layers/test_sc_dense_layer_validation.py"
+rationale = "Exercise SC-NeuroCore: sc dense layer validation."
+
+[[file]]
+path = "tests/test_layers/test_sc_dense_layer_weighted_sources.py"
+rationale = "Exercise SC-NeuroCore: sc dense layer weighted sources."
+
+[[file]]
+path = "tests/test_optics/test_gdsii_empty_layout_guard.py"
+rationale = "Exercise SC-NeuroCore: gdsii empty layout guard."
+
+[[file]]
+path = "tests/test_optics/test_gdsii_gds_file_roundtrip.py"
+rationale = "Exercise SC-NeuroCore: gdsii gds file roundtrip."
+
+[[file]]
+path = "tests/test_optics/test_gdsii_layout_arithmetic.py"
+rationale = "Exercise SC-NeuroCore: gdsii layout arithmetic."

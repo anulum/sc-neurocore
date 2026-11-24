@@ -18,10 +18,17 @@ pytest.importorskip(
     reason="gdsfactory is an optional dep (install via `pip install sc-neurocore[optics]`)",
 )
 
-from gdsii_support import *  # noqa: E402,F403
+from pathlib import Path
+from gdsii_support import (
+    CompilationResult,
+)
+from gdsii_support import _clear_gdsfactory_cache as _clear_gdsfactory_cache
+from gdsii_support import populated_result as populated_result
 
 
 class TestLayoutArithmetic:
+    """The layout dictionary and pitch arithmetic of the GDSII export."""
+
     def test_returns_full_layout_dict(
         self, populated_result: CompilationResult, tmp_path: Path
     ) -> None:

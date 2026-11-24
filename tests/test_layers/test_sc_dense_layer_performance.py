@@ -8,12 +8,17 @@
 
 """Opt-in performance contract for SCDenseLayer."""
 
-from tests.test_layers.sc_dense_layer_support import *
+import pytest
+import time
+from tests.test_layers.sc_dense_layer_support import (
+    _make_layer,
+    _perf_enabled,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 
 @pytest.mark.skipif(not _perf_enabled(), reason="Set SC_NEUROCORE_PERF=1 to enable perf checks.")
-def test_dense_layer_perf_small():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_dense_layer_perf_small() -> None:
     """Benchmark a small run for basic performance sanity."""
     layer = _make_layer(n_neurons=8, length=64)
     start = time.perf_counter()

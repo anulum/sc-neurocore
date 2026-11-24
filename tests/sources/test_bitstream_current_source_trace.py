@@ -8,16 +8,20 @@
 
 """Realised traces, estimates, determinism, and bipolar-mode contracts."""
 
-from tests.sources.bitstream_current_source_support import *
+import numpy as np
+import pytest
+from tests.sources.bitstream_current_source_support import (
+    _make_source,
+)
 
 
-def test_source_full_current_estimate_matches_scalar():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_source_full_current_estimate_matches_scalar() -> None:
     """full_current_estimate should equal current_scalar."""
     source = _make_source()
     assert np.isclose(source.full_current_estimate(), source.current_scalar)
 
 
-def test_source_current_trace_matches_realised_step_sequence_unipolar():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_source_current_trace_matches_realised_step_sequence_unipolar() -> None:
     """current_trace should expose the exact realised per-cycle unipolar current."""
     source = _make_source(
         x_inputs=[0.25, 0.75, 1.0],
@@ -37,7 +41,7 @@ def test_source_current_trace_matches_realised_step_sequence_unipolar():  # type
     assert np.allclose(trace, stepped)
 
 
-def test_source_current_trace_matches_realised_step_sequence_bipolar():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_source_current_trace_matches_realised_step_sequence_bipolar() -> None:
     """current_trace should expose the exact realised per-cycle bipolar XNOR current."""
     source = _make_source(
         x_inputs=[-1.0, 1.0],
@@ -59,7 +63,7 @@ def test_source_current_trace_matches_realised_step_sequence_bipolar():  # type:
     assert np.allclose(trace, stepped)
 
 
-def test_source_full_current_estimate_is_mean_realised_trace_for_multi_channel_unipolar():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_source_full_current_estimate_is_mean_realised_trace_for_multi_channel_unipolar() -> None:
     """The full estimate must match the same realised current trace used by step()."""
     source = _make_source(
         x_inputs=[0.8, 0.8, 0.8],
@@ -75,14 +79,14 @@ def test_source_full_current_estimate_is_mean_realised_trace_for_multi_channel_u
     assert source.full_current_estimate() < source.y_max
 
 
-def test_source_seed_determinism():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_source_seed_determinism() -> None:
     """Same seed and params yield identical post matrices."""
     source_a = _make_source(seed=10)
     source_b = _make_source(seed=10)
     assert np.array_equal(source_a.post_matrix, source_b.post_matrix)
 
 
-def test_source_bipolar_mode_preserves_negative_weight_sign():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_source_bipolar_mode_preserves_negative_weight_sign() -> None:
     """Bipolar mode should map a positive input times negative weight below neutral."""
     source = _make_source(
         x_inputs=[1.0],
@@ -101,7 +105,7 @@ def test_source_bipolar_mode_preserves_negative_weight_sign():  # type: ignore[n
     assert np.isclose(source.step(), -1.0)
 
 
-def test_source_bipolar_mode_maps_zero_product_to_neutral_current():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_source_bipolar_mode_maps_zero_product_to_neutral_current() -> None:
     """Bipolar mode should decode a zero-valued product to the current midpoint."""
     source = _make_source(
         x_inputs=[0.0],

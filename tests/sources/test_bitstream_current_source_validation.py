@@ -8,10 +8,14 @@
 
 """Construction and mode validation for BitstreamCurrentSource."""
 
-from tests.sources.bitstream_current_source_support import *
+from sc_neurocore.sources.bitstream_current_source import BitstreamCurrentSource
+import pytest
+from tests.sources.bitstream_current_source_support import (
+    _make_source,
+)
 
 
-def test_source_init_mismatch_raises():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_source_init_mismatch_raises() -> None:
     """Mismatched input/weight lengths should raise ValueError."""
     with pytest.raises(ValueError):
         _ = BitstreamCurrentSource(
@@ -24,7 +28,7 @@ def test_source_init_mismatch_raises():  # type: ignore[no-untyped-def] # Preser
         )
 
 
-def test_source_requires_at_least_one_input_in_all_sc_modes():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_source_requires_at_least_one_input_in_all_sc_modes() -> None:
     """Bipolar mode must preserve the legacy no-empty-dot-product invariant."""
     with pytest.raises(ValueError, match="at least one"):
         _make_source(
@@ -38,7 +42,7 @@ def test_source_requires_at_least_one_input_in_all_sc_modes():  # type: ignore[n
         )
 
 
-def test_source_rejects_unknown_sc_mode():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_source_rejects_unknown_sc_mode() -> None:
     """Unknown SC mode should fail closed instead of silently using AND semantics."""
     with pytest.raises(ValueError, match="sc_mode"):
         _make_source(sc_mode="ternary")

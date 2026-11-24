@@ -8,17 +8,19 @@
 
 """Neuron, recorder, run, and reset contracts for SCDenseLayer."""
 
-from tests.test_layers.sc_dense_layer_support import *
+from tests.test_layers.sc_dense_layer_support import (
+    _make_layer,
+)
 
 
-def test_dense_builds_neurons_and_recorders():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_dense_builds_neurons_and_recorders() -> None:
     """Verify neuron and recorder counts match n_neurons."""
     layer = _make_layer(n_neurons=3)
     assert len(layer.neurons) == 3
     assert len(layer.recorders) == 3
 
 
-def test_dense_run_collects_spikes():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_dense_run_collects_spikes() -> None:
     """Run a short simulation and confirm spike matrix shape."""
     layer = _make_layer(n_neurons=3)
     layer.run(5)
@@ -26,14 +28,14 @@ def test_dense_run_collects_spikes():  # type: ignore[no-untyped-def] # Preserve
     assert spikes.shape == (3, 5)
 
 
-def test_dense_get_spike_trains_empty_returns_zeros():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_dense_get_spike_trains_empty_returns_zeros() -> None:
     """Empty recorder list returns a (0,0) matrix."""
     layer = _make_layer(n_neurons=0)
     spikes = layer.get_spike_trains()
     assert spikes.shape == (0, 0)
 
 
-def test_dense_reset_clears_recorders():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_dense_reset_clears_recorders() -> None:
     """Reset clears recorded spike history."""
     layer = _make_layer()
     layer.run(4)
@@ -41,7 +43,7 @@ def test_dense_reset_clears_recorders():  # type: ignore[no-untyped-def] # Prese
     assert all(len(rec.spikes) == 0 for rec in layer.recorders)
 
 
-def test_dense_run_longer_than_source_length():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_dense_run_longer_than_source_length() -> None:
     """Running beyond bitstream length should not crash and keeps T steps."""
     layer = _make_layer(length=4)
     layer.run(6)

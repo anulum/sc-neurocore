@@ -1378,6 +1378,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 17 test modules in the interfaces, sources, test_layers and
+  test_optics directories that star-imported their supports import
+  their names explicitly, replace their 37 type-ignore comments with
+  return annotations, gain their missing docstrings and are enrolled in
+  the docstring policy.
+
 - The 30 test modules that star-imported a support module beside them
   through a relative import (backend selection, behaviour probe,
   Ermentrout-Kopell population dispatch, Rulkov map backends, thermal SC

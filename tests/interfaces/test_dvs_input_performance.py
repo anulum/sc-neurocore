@@ -8,7 +8,12 @@
 
 """Focused DVS input performance contracts."""
 
-from tests.interfaces.dvs_input_support import *
+from sc_neurocore.interfaces.dvs_input import DVSInputLayer
+import pytest
+import time
+from tests.interfaces.dvs_input_support import (
+    _perf_enabled,
+)
 from tests.performance_guard import assert_load_tolerant_throughput
 
 

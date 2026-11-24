@@ -18,10 +18,16 @@ pytest.importorskip(
     reason="gdsfactory is an optional dep (install via `pip install sc-neurocore[optics]`)",
 )
 
-from gdsii_support import *  # noqa: E402,F403
+from pathlib import Path
+from gdsii_support import (
+    CompilationResult,
+)
+from gdsii_support import _clear_gdsfactory_cache as _clear_gdsfactory_cache
 
 
 class TestEmptyLayoutGuard:
+    """GDSII export of a cascade without modulators."""
+
     def test_zero_modulators_raises(self, tmp_path: Path) -> None:
         """Reject an empty physical layout instead of writing a silent shell."""
         empty = CompilationResult(

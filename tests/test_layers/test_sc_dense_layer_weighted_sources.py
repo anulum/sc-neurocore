@@ -8,10 +8,14 @@
 
 """Bipolar and per-neuron weighted-source contracts for SCDenseLayer."""
 
-from tests.test_layers.sc_dense_layer_support import *
+import numpy as np
+import pytest
+from tests.test_layers.sc_dense_layer_support import (
+    _make_layer,
+)
 
 
-def test_dense_layer_passes_bipolar_mode_to_current_source():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_dense_layer_passes_bipolar_mode_to_current_source() -> None:
     """SCDenseLayer should expose signed XNOR SC inference through its source."""
     layer = _make_layer(
         x_inputs=[1.0],
@@ -29,7 +33,7 @@ def test_dense_layer_passes_bipolar_mode_to_current_source():  # type: ignore[no
     assert np.isclose(layer.source.full_current_estimate(), -1.0)
 
 
-def test_dense_layer_accepts_per_neuron_weight_matrix():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_dense_layer_accepts_per_neuron_weight_matrix() -> None:
     """A dense layer should support distinct SC dot-product weights per neuron."""
     layer = _make_layer(
         n_neurons=2,
@@ -46,7 +50,7 @@ def test_dense_layer_accepts_per_neuron_weight_matrix():  # type: ignore[no-unty
     assert layer.sources[1].full_current_estimate() == pytest.approx(0.0)
 
 
-def test_dense_layer_matrix_weights_drive_distinct_neuron_spike_trains():  # type: ignore[no-untyped-def] # Preserved legacy test AST
+def test_dense_layer_matrix_weights_drive_distinct_neuron_spike_trains() -> None:
     """Per-neuron sources should feed their matching neurons during run()."""
     layer = _make_layer(
         n_neurons=2,

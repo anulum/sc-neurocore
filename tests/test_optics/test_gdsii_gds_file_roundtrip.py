@@ -18,10 +18,18 @@ pytest.importorskip(
     reason="gdsfactory is an optional dep (install via `pip install sc-neurocore[optics]`)",
 )
 
-from gdsii_support import *  # noqa: E402,F403
+from pathlib import Path
+from gdsii_support import (
+    CompilationResult,
+    gf,
+)
+from gdsii_support import _clear_gdsfactory_cache as _clear_gdsfactory_cache
+from gdsii_support import populated_result as populated_result
 
 
 class TestGDSFileRoundtrip:
+    """GDSII files written by the export and read back."""
+
     def test_file_created_and_nonempty(
         self, populated_result: CompilationResult, tmp_path: Path
     ) -> None:

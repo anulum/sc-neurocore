@@ -8,7 +8,10 @@
 
 """Focused DVS input bitstream contracts."""
 
-from tests.interfaces.dvs_input_support import *
+from typing import Any
+from sc_neurocore.interfaces.dvs_input import DVSInputLayer
+import numpy as np
+import pytest
 
 
 def test_dvs_generate_bitstream_frame_shape() -> None:
