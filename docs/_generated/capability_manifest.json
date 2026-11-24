@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5644
+    "test_files": 5645
   },
   "documentation": {
     "public_pages": [
@@ -3523,6 +3523,7 @@
       "tests/fim_symmetry_dynamics_support.py",
       "tests/fitzhugh_nagumo_backends_support.py",
       "tests/fixtures/advanced_plasticity.py",
+      "tests/fixtures/gotm_brain.py",
       "tests/folded_area_estimator_support.py",
       "tests/folded_heterogeneous_params_support.py",
       "tests/folded_interconnect_support.py",

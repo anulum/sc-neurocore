@@ -10,10 +10,22 @@
 
 from __future__ import annotations
 
-from tests.gotm_brain_support import *  # noqa: F403
+import numpy as np
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.quantum_cognition.content_indexer import (
+    ContentChunk,
+)
+from sc_neurocore.quantum_cognition.gotm_brain import (
+    GOTMBrain,
+)
 
 
 class TestBrainPersistence:
+    """Saving and restoring the GOTM brain state."""
+
     def test_save_load_round_trip(self, tmp_path: Path) -> None:
         """save_state → load_state preserves full brain state."""
         brain = GOTMBrain(n_neurons=8, bridge_backend="emulated", seed=42)

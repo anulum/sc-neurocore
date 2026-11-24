@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.gotm_brain_support import *  # noqa: F403
-
 
 class TestVProperty:
+    """The v alias of the membrane voltage."""
+
     def test_v_reads_Vm(self) -> None:
+        """Reading v gives the Vm voltage."""
         from sc_neurocore.quantum_cognition import SpinPoolMPS, HybridFisherPosnerLIF
 
         pool = SpinPoolMPS(n_sites=4)
@@ -22,6 +23,7 @@ class TestVProperty:
         assert n.v == n.Vm == -70.0
 
     def test_v_writes_Vm(self) -> None:
+        """Writing v sets the Vm voltage."""
         from sc_neurocore.quantum_cognition import SpinPoolMPS, HybridFisherPosnerLIF
 
         pool = SpinPoolMPS(n_sites=4)

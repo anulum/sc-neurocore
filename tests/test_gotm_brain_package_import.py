@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.gotm_brain_support import *  # noqa: F403
-
 
 class TestPackageImport:
+    """The public exports of the quantum cognition package."""
+
     def test_import_new_symbols(self) -> None:
+        """The package exports the indexer and brain names."""
         from sc_neurocore.quantum_cognition import (
             ContentChunk,
             GOTMBrain,

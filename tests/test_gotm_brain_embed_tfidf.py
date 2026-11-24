@@ -10,16 +10,24 @@
 
 from __future__ import annotations
 
-from tests.gotm_brain_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.quantum_cognition.content_indexer import (
+    ContentChunk,
+    embed_tfidf,
+)
 
 
 class TestEmbedTfidf:
+    """TF-IDF embedding of indexed content."""
+
     def test_empty_corpus_returns_empty_matrix_and_vocab(self) -> None:
+        """An empty corpus gives an empty matrix and vocabulary."""
         matrix, vocab = embed_tfidf([], n_dims=7)
         assert matrix.shape == (0, 7)
         assert vocab == {}
 
     def test_terms_filtered_out_returns_zero_matrix(self) -> None:
+        """A corpus whose terms are all filtered gives zeros."""
         chunks = [
             ContentChunk("R", "a.md", 0, "single unique alpha", "markdown", 1.0),
             ContentChunk("R", "b.md", 0, "another unique beta", "markdown", 1.0),
@@ -30,6 +38,7 @@ class TestEmbedTfidf:
         assert np.all(matrix == 0.0)
 
     def test_corpus_tfidf_stems_stopwords_filters_and_l2_normalises(self) -> None:
+        """TF-IDF stems, drops stop words and normalises each row."""
         chunks = [
             ContentChunk(
                 "R",

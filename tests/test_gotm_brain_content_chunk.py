@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.gotm_brain_support import *  # noqa: F403
+from sc_neurocore.quantum_cognition.content_indexer import (
+    ContentChunk,
+)
 
 
 class TestContentChunk:
+    """The indexed content chunk record."""
+
     def test_create(self) -> None:
+        """A chunk keeps its repository, digest and summary."""
         c = ContentChunk(
             repo_name="TEST",
             file_path="a.py",
@@ -28,6 +33,7 @@ class TestContentChunk:
         assert c.summary == "hello world"
 
     def test_to_dict(self) -> None:
+        """A chunk converts to a dictionary with its fields."""
         c = ContentChunk(
             repo_name="R",
             file_path="b.md",

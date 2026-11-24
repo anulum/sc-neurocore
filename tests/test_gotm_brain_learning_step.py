@@ -10,11 +10,16 @@
 
 from __future__ import annotations
 
-from tests.gotm_brain_support import *  # noqa: F403
+from sc_neurocore.quantum_cognition.gotm_brain import (
+    LearningStep,
+)
 
 
 class TestLearningStep:
+    """The record of one learning step."""
+
     def test_to_dict(self) -> None:
+        """A learning step converts to a dictionary."""
         s = LearningStep(
             step_index=0,
             directive="FOCUS",

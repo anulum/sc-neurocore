@@ -10,27 +10,50 @@
 
 from __future__ import annotations
 
-from tests.gotm_brain_support import *  # noqa: F403
+from pathlib import Path
+from sc_neurocore.quantum_cognition.content_indexer import ContentChunk
+from sc_neurocore.quantum_cognition.fisher_posner import HybridFisherPosnerLIF
+from sc_neurocore.quantum_cognition.gotm_brain import GOTMBrain
+from sc_neurocore.quantum_cognition.gotm_brain import LearningStep
+from typing import cast
+import importlib
+import importlib.abc
+import importlib.machinery
+import numpy as np
+import pytest
+import sys
+from tests.gotm_brain_support import (
+    _BlockingLLMFinder,
+    _FixedSpikeNeuron,
+    _GOTM_MODULE,
+    _GotmBrainModule,
+)
 
 
 class TestGOTMBrain:
+    """The GOTM brain that learns from indexed repositories."""
+
     def test_init(self) -> None:
+        """A new brain has its neurons and no steps."""
         brain = GOTMBrain(n_neurons=8, bridge_backend="emulated")
         assert brain.n_neurons == 8
         assert len(brain.neurons) == 8
         assert brain._total_steps == 0
 
     def test_init_validation(self) -> None:
+        """A neuron count out of range is rejected."""
         with pytest.raises(ValueError, match="n_neurons"):
             GOTMBrain(n_neurons=0)
 
     def test_get_llm_guidance_returns_valid(self) -> None:
+        """The guidance is one of the three directives."""
         brain = GOTMBrain(n_neurons=4, bridge_backend="emulated")
         directive = brain.get_llm_guidance("test context")
         # Must always return a valid directive regardless of LLM availability
         assert directive in ("FOCUS", "EXPLORE", "STABILIZE")
 
     def test_process_content(self) -> None:
+        """Content gives spike indices within the neuron range."""
         brain = GOTMBrain(n_neurons=8, bridge_backend="emulated")
         vector = np.random.rand(8)
         spikes = brain.process_content(vector, "FOCUS")
@@ -75,18 +98,21 @@ class TestGOTMBrain:
         assert gotm._LLMEndpoint is None
 
     def test_process_content_padding(self) -> None:
+        """Short content is padded before processing."""
         brain = GOTMBrain(n_neurons=8, bridge_backend="emulated")
         short_vector = np.ones(4)
         spikes = brain.process_content(short_vector, "EXPLORE")
         assert isinstance(spikes, list)
 
     def test_process_content_truncation(self) -> None:
+        """Long content is truncated before processing."""
         brain = GOTMBrain(n_neurons=4, bridge_backend="emulated")
         long_vector = np.ones(16)
         spikes = brain.process_content(long_vector, "STABILIZE")
         assert isinstance(spikes, list)
 
     def test_learn_step(self) -> None:
+        """A learning step records its index and directive."""
         brain = GOTMBrain(n_neurons=8, bridge_backend="emulated")
         chunk = ContentChunk("R", "a.py", 0, "test content", "code", 1.0)
         vector = np.random.rand(8)
@@ -97,12 +123,14 @@ class TestGOTMBrain:
         assert brain._total_steps == 1
 
     def test_learn_from_repo(self, tmp_repo: Path) -> None:
+        """Learning from a repository stops at the step limit."""
         brain = GOTMBrain(n_neurons=8, bridge_backend="emulated")
         steps = brain.learn_from_repo(str(tmp_repo), max_chunks=5)
         assert len(steps) <= 5
         assert brain._total_steps == len(steps)
 
     def test_get_learning_state(self) -> None:
+        """The learning state reports neurons, steps and the pool."""
         brain = GOTMBrain(n_neurons=4, bridge_backend="emulated")
         chunk = ContentChunk("R", "a.py", 0, "state test", "code", 1.0)
         brain.learn_step(chunk, np.random.rand(4))
@@ -112,6 +140,7 @@ class TestGOTMBrain:
         assert "pool_state" in state
 
     def test_get_history(self) -> None:
+        """The history records each step's directive."""
         brain = GOTMBrain(n_neurons=4, bridge_backend="emulated")
         chunk = ContentChunk("R", "a.py", 0, "history test", "code", 1.0)
         brain.learn_step(chunk, np.random.rand(4))
@@ -120,6 +149,7 @@ class TestGOTMBrain:
         assert history[0]["directive"] in ("FOCUS", "EXPLORE", "STABILIZE")
 
     def test_reset(self) -> None:
+        """A reset clears the steps and the history."""
         brain = GOTMBrain(n_neurons=4, bridge_backend="emulated")
         brain.learn_step(
             ContentChunk("R", "a.py", 0, "reset test", "code", 1.0),
@@ -130,6 +160,7 @@ class TestGOTMBrain:
         assert len(brain._history) == 0
 
     def test_repr(self) -> None:
+        """The representation names the brain and its size."""
         brain = GOTMBrain(n_neurons=4, bridge_backend="emulated")
         r = repr(brain)
         assert "GOTMBrain" in r

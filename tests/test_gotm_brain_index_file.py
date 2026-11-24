@@ -10,11 +10,15 @@
 
 from __future__ import annotations
 
-from tests.gotm_brain_support import *  # noqa: F403
+from pathlib import Path
+from sc_neurocore.quantum_cognition.content_indexer import index_file
 
 
 class TestIndexFile:
+    """Indexing single source files."""
+
     def test_index_python(self, tmp_repo: Path) -> None:
+        """A Python file gives docstring or code chunks."""
         py_file = tmp_repo / "src" / "example" / "core.py"
         chunks = index_file(py_file, "TEST", tmp_repo)
         assert len(chunks) > 0
@@ -22,17 +26,20 @@ class TestIndexFile:
         assert "docstring" in types or "code" in types
 
     def test_index_markdown(self, tmp_repo: Path) -> None:
+        """A Markdown file gives markdown chunks."""
         md_file = tmp_repo / "docs" / "README.md"
         chunks = index_file(md_file, "TEST", tmp_repo)
         assert len(chunks) > 0
         assert chunks[0].content_type == "markdown"
 
     def test_index_rust(self, tmp_repo: Path) -> None:
+        """A Rust file gives chunks."""
         rs_file = tmp_repo / "src" / "lib.rs"
         chunks = index_file(rs_file, "TEST", tmp_repo)
         assert len(chunks) > 0
 
     def test_skip_unknown_ext(self, tmp_repo: Path) -> None:
+        """A file of unknown type gives no chunks."""
         unk = tmp_repo / "test.xyz"
         unk.write_text("unknown")
         chunks = index_file(unk, "TEST", tmp_repo)

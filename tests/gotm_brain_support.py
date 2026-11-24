@@ -6,9 +6,10 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_gotm_brain.py
 
+"""Shared imports and test helpers of the GOTM brain and content-indexer suites."""
+
 from __future__ import annotations
 
-"""Tests for content_indexer.py and gotm_brain.py."""
 import importlib
 import importlib.abc
 import importlib.machinery
@@ -74,46 +75,6 @@ class _FixedSpikeNeuron:
         return 0.0, self._spiked
 
 
-@pytest.fixture
-def tmp_repo(tmp_path: Path) -> Path:
-    """Create a minimal fake GOTM repository for testing."""
-    src = tmp_path / "src" / "example"
-    src.mkdir(parents=True)
-    (src / "__init__.py").write_text('"""Example module docstring."""\n')
-    (src / "core.py").write_text(
-        '"""Core module.\n\n'
-        "Implements the main algorithm.\n"
-        '"""\n\n'
-        "import numpy as np\n\n"
-        "def compute(x):\n"
-        '    """Compute the result."""\n'
-        "    return x * 2\n"
-    )
-    docs = tmp_path / "docs"
-    docs.mkdir()
-    (docs / "README.md").write_text(
-        "# Example Repository\n\n"
-        "This is a test repository for the GOTM brain.\n\n"
-        "## Features\n\n"
-        "- Feature 1: quantum coupling\n"
-        "- Feature 2: metabolic feedback\n"
-    )
-    (tmp_path / "Cargo.toml").write_text('[package]\nname = "example"\nversion = "0.1.0"\n')
-    rust_src = tmp_path / "src" / "lib.rs"
-    rust_src.write_text(
-        "/// Main computation function.\n"
-        "/// Returns the doubled input.\n"
-        "pub fn compute(x: f64) -> f64 {\n"
-        "    x * 2.0\n"
-        "}\n"
-    )
-    # Add a __pycache__ dir that should be skipped
-    cache = tmp_path / "__pycache__"
-    cache.mkdir()
-    (cache / "junk.pyc").write_bytes(b"\x00" * 100)
-    return tmp_path
-
-
 __all__ = [
     "importlib",
     "sys",
@@ -139,6 +100,5 @@ __all__ = [
     "_GotmBrainModule",
     "_BlockingLLMFinder",
     "_FixedSpikeNeuron",
-    "tmp_repo",
     "__all__",
 ]

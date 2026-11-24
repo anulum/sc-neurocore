@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
-from tests.gotm_brain_support import *  # noqa: F403
-
 
 class TestPopulationWrapper:
+    """The population wrapper around the hybrid neuron."""
+
     def test_step_returns_int(self) -> None:
+        """One step gives an integer spike."""
         from sc_neurocore.quantum_cognition.fisher_posner import (
             HybridFisherPosnerLIFNeuron,
         )
@@ -26,6 +27,7 @@ class TestPopulationWrapper:
         assert result in (0, 1)
 
     def test_v_property(self) -> None:
+        """The v property reads and writes the voltage."""
         from sc_neurocore.quantum_cognition.fisher_posner import (
             HybridFisherPosnerLIFNeuron,
         )
@@ -37,6 +39,7 @@ class TestPopulationWrapper:
         assert n.v == -55.0
 
     def test_spiking(self) -> None:
+        """Strong input makes the neuron spike."""
         from sc_neurocore.quantum_cognition.fisher_posner import (
             HybridFisherPosnerLIFNeuron,
         )
@@ -49,6 +52,7 @@ class TestPopulationWrapper:
         assert total_spikes > 0
 
     def test_reset(self) -> None:
+        """A reset restores the rest voltage."""
         from sc_neurocore.quantum_cognition.fisher_posner import (
             HybridFisherPosnerLIFNeuron,
         )
@@ -60,6 +64,7 @@ class TestPopulationWrapper:
         assert n.v == -70.0
 
     def test_get_state(self) -> None:
+        """The state reports the voltage and ATP."""
         from sc_neurocore.quantum_cognition.fisher_posner import (
             HybridFisherPosnerLIFNeuron,
         )

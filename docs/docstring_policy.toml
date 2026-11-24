@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 3647
+expected_file_count = 3661
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -14632,3 +14632,59 @@ rationale = "Exercise SC-NeuroCore: folded interconnect multi population compile
 [[file]]
 path = "tests/test_folded_interconnect_threshold_bias_heterogeneous.py"
 rationale = "Exercise SC-NeuroCore: folded interconnect threshold bias heterogeneous."
+
+[[file]]
+path = "tests/fixtures/gotm_brain.py"
+rationale = "Provide the session-wide fake GOTM repository fixture of the GOTM brain and content-indexer suites."
+
+[[file]]
+path = "tests/gotm_brain_support.py"
+rationale = "Provide the shared imports and test helpers of the GOTM brain and content-indexer suites."
+
+[[file]]
+path = "tests/test_gotm_brain_brain_persistence.py"
+rationale = "Exercise SC-NeuroCore: gotm brain brain persistence."
+
+[[file]]
+path = "tests/test_gotm_brain_content_chunk.py"
+rationale = "Exercise SC-NeuroCore: gotm brain content chunk."
+
+[[file]]
+path = "tests/test_gotm_brain_embed_chunks.py"
+rationale = "Exercise SC-NeuroCore: gotm brain embed chunks."
+
+[[file]]
+path = "tests/test_gotm_brain_embed_tfidf.py"
+rationale = "Exercise SC-NeuroCore: gotm brain embed tfidf."
+
+[[file]]
+path = "tests/test_gotm_brain_gotm_brain.py"
+rationale = "Exercise SC-NeuroCore: gotm brain gotm brain."
+
+[[file]]
+path = "tests/test_gotm_brain_index_file.py"
+rationale = "Exercise SC-NeuroCore: gotm brain index file."
+
+[[file]]
+path = "tests/test_gotm_brain_index_repo.py"
+rationale = "Exercise SC-NeuroCore: gotm brain index repo."
+
+[[file]]
+path = "tests/test_gotm_brain_learning_step.py"
+rationale = "Exercise SC-NeuroCore: gotm brain learning step."
+
+[[file]]
+path = "tests/test_gotm_brain_package_import.py"
+rationale = "Exercise SC-NeuroCore: gotm brain package import."
+
+[[file]]
+path = "tests/test_gotm_brain_population_wrapper.py"
+rationale = "Exercise SC-NeuroCore: gotm brain population wrapper."
+
+[[file]]
+path = "tests/test_gotm_brain_text_extraction.py"
+rationale = "Exercise SC-NeuroCore: gotm brain text extraction."
+
+[[file]]
+path = "tests/test_gotm_brain_v_property.py"
+rationale = "Exercise SC-NeuroCore: gotm brain v property."

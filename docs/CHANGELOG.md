@@ -1320,6 +1320,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 12 top-level GOTM brain and content-indexer test modules import
+  their names explicitly instead of through a suppressed star import,
+  gain their missing docstrings and are enrolled in the docstring
+  policy. Their shared tmp_repo fixture moves unchanged to
+  tests/fixtures/gotm_brain.py, registered for the session by
+  pytest_plugins in tests/conftest.py, and the support keeps only its
+  shared imports and test helpers.
+
 - The 13 top-level dense optimisation, folded heterogeneous-parameter
   and folded interconnect test modules import their names explicitly
   instead of through a suppressed star import, gain their missing
