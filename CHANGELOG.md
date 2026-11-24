@@ -1378,6 +1378,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 3 top-level NumPy interop test modules import their names
+  explicitly instead of through a suppressed star import, keep the Rust
+  engine skip by importing the engine from the guarded support, gain
+  their missing docstrings and are enrolled in the docstring policy.
+
 - The 14 top-level NIR test modules (the NIR to FPGA pipeline and the
   dict-form NIR importer) import their names explicitly instead of
   through a suppressed star import; the single-user temporary-directory

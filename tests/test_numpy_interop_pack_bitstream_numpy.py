@@ -10,25 +10,31 @@
 
 from __future__ import annotations
 
-from tests.numpy_interop_support import *  # noqa: F403
+import numpy as np
+from tests.numpy_interop_support import (
+    v3,
+)
 
 
 class TestPackBitstreamNumpy:
     """Zero-copy pack_bitstream_numpy tests."""
 
-    def test_basic_pack(self):
+    def test_basic_pack(self) -> None:
+        """Packing a short bit array returns a uint64 NumPy array."""
         bits = np.array([1, 0, 1, 1, 0, 1, 0, 0, 1], dtype=np.uint8)
         packed = v3.pack_bitstream_numpy(bits)
         assert isinstance(packed, np.ndarray)
         assert packed.dtype == np.uint64
 
-    def test_roundtrip(self):
+    def test_roundtrip(self) -> None:
+        """Packing then unpacking returns the original bits."""
         bits = np.array([1, 0, 1, 1, 0, 1, 0, 0, 1], dtype=np.uint8)
         packed = v3.pack_bitstream_numpy(bits)
         recovered = v3.unpack_bitstream_numpy(packed, len(bits))
         np.testing.assert_array_equal(bits, recovered)
 
-    def test_large_array(self):
+    def test_large_array(self) -> None:
+        """A million bits pack into the expected number of uint64 words."""
         rng = np.random.RandomState(42)
         bits = rng.randint(0, 2, 1_000_000).astype(np.uint8)
         packed = v3.pack_bitstream_numpy(bits)
@@ -36,7 +42,7 @@ class TestPackBitstreamNumpy:
         expected_words = (1_000_000 + 63) // 64
         assert len(packed) == expected_words
 
-    def test_consistency_with_list_variant(self):
+    def test_consistency_with_list_variant(self) -> None:
         """Numpy and list variants must produce identical results."""
         rng = np.random.RandomState(42)
         bits = rng.randint(0, 2, 1000).astype(np.uint8)
@@ -44,12 +50,14 @@ class TestPackBitstreamNumpy:
         packed_list = v3.pack_bitstream(bits.tolist())
         np.testing.assert_array_equal(packed_np, np.array(packed_list, dtype=np.uint64))
 
-    def test_all_zeros(self):
+    def test_all_zeros(self) -> None:
+        """All-zero bits pack into zero words."""
         bits = np.zeros(128, dtype=np.uint8)
         packed = v3.pack_bitstream_numpy(bits)
         assert all(w == 0 for w in packed)
 
-    def test_all_ones(self):
+    def test_all_ones(self) -> None:
+        """Sixty-four one bits pack into one all-ones word."""
         bits = np.ones(64, dtype=np.uint8)
         packed = v3.pack_bitstream_numpy(bits)
         assert packed[0] == np.uint64(0xFFFFFFFFFFFFFFFF)

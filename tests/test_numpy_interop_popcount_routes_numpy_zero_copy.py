@@ -10,22 +10,27 @@
 
 from __future__ import annotations
 
-from tests.numpy_interop_support import *  # noqa: F403
+import numpy as np
+from tests.numpy_interop_support import (
+    v3,
+)
 
 
 class TestPopcountRoutesNumpyZeroCopy:
     """``popcount`` takes the zero-copy numpy path yet stays result-identical (KR-4)."""
 
-    def test_numpy_matches_popcount_numpy(self):
+    def test_numpy_matches_popcount_numpy(self) -> None:
+        """The generic popcount gives a NumPy array the same result as popcount_numpy."""
         packed = np.array([0xFFFFFFFFFFFFFFFF, 0x0F0F0F0F0F0F0F0F], dtype=np.uint64)
         assert v3.popcount(packed) == v3.popcount_numpy(packed) == 96
 
-    def test_numpy_matches_list_variant(self):
+    def test_numpy_matches_list_variant(self) -> None:
         """The fast numpy path and the list-extract path agree on a large bitstream."""
         rng = np.random.RandomState(7)
         bits = rng.randint(0, 2, 10000).astype(np.uint8)
         packed = v3.pack_bitstream_numpy(bits)
         assert v3.popcount(packed) == v3.popcount(packed.tolist()) == int(bits.sum())
 
-    def test_numpy_empty(self):
+    def test_numpy_empty(self) -> None:
+        """The generic popcount of an empty NumPy array is zero."""
         assert v3.popcount(np.array([], dtype=np.uint64)) == 0

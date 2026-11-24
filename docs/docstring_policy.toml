@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4370
+expected_file_count = 4373
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -17524,3 +17524,15 @@ rationale = "Exercise SC-NeuroCore: nir import parameter resolution."
 [[file]]
 path = "tests/test_nir_import_shared_templates.py"
 rationale = "Exercise SC-NeuroCore: nir import shared templates."
+
+[[file]]
+path = "tests/test_numpy_interop_pack_bitstream_numpy.py"
+rationale = "Exercise SC-NeuroCore: numpy interop pack bitstream numpy."
+
+[[file]]
+path = "tests/test_numpy_interop_popcount_numpy.py"
+rationale = "Exercise SC-NeuroCore: numpy interop popcount numpy."
+
+[[file]]
+path = "tests/test_numpy_interop_popcount_routes_numpy_zero_copy.py"
+rationale = "Exercise SC-NeuroCore: numpy interop popcount routes numpy zero copy."
