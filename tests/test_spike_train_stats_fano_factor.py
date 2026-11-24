@@ -10,16 +10,26 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    fano_factor,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestFanoFactor:
-    def test_poisson_near_one(self):
+    """The Fano factor of spike counts in windows."""
+
+    def test_poisson_near_one(self) -> None:
+        """A 100 Hz Poisson train has a Fano factor between 0.5 and 2."""
         train = _poisson_train(100.0, 5.0)
         ff = fano_factor(train, window_ms=100.0)
         assert 0.5 < ff < 2.0
 
-    def test_regular_below_one(self):
+    def test_regular_below_one(self) -> None:
+        """A regular train has a Fano factor below 0.5."""
         train = np.zeros(5000, dtype=np.uint8)
         train[10::20] = 1
         ff = fano_factor(train, window_ms=100.0)

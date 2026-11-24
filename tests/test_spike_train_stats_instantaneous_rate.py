@@ -10,20 +10,30 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+from sc_neurocore.analysis.spike_stats import (
+    instantaneous_rate,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestInstantaneousRate:
-    def test_gaussian(self):
+    """Kernel estimates of the instantaneous firing rate."""
+
+    def test_gaussian(self) -> None:
+        """A Gaussian kernel gives one positive-mean rate value per step."""
         train = _poisson_train(100.0, 1.0)
         rate = instantaneous_rate(train, kernel="gaussian", sigma_ms=20.0)
         assert rate.size == train.size
         assert rate.mean() > 0
 
-    def test_exponential(self):
+    def test_exponential(self) -> None:
+        """An exponential kernel gives a non-empty rate."""
         rate = instantaneous_rate(_poisson_train(50.0, 0.5), kernel="exponential")
         assert rate.size > 0
 
-    def test_rectangular(self):
+    def test_rectangular(self) -> None:
+        """A rectangular kernel gives a non-empty rate."""
         rate = instantaneous_rate(_poisson_train(50.0, 0.5), kernel="rectangular")
         assert rate.size > 0

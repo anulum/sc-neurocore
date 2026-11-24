@@ -10,15 +10,25 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    cv2,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestCV2:
-    def test_regular_low(self):
+    """The CV2 measure of local ISI variability."""
+
+    def test_regular_low(self) -> None:
+        """A regular train has a CV2 below 0.1."""
         train = np.zeros(1000, dtype=np.uint8)
         train[10::20] = 1
         assert cv2(train) < 0.1
 
-    def test_poisson(self):
+    def test_poisson(self) -> None:
+        """A 50 Hz Poisson train has a CV2 between 0.3 and 1.5."""
         c = cv2(_poisson_train(50.0, 5.0))
         assert 0.3 < c < 1.5

@@ -10,10 +10,16 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    spike_count,
+)
 
 
 class TestSpikeCount:
-    def test_count(self):
+    """Counting the spikes of a train."""
+
+    def test_count(self) -> None:
+        """Seven steps with four spikes count four."""
         train = np.array([1, 0, 1, 1, 0, 0, 1], dtype=np.uint8)
         assert spike_count(train) == 4

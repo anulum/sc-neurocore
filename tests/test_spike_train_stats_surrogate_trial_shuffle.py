@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+from sc_neurocore.analysis.spike_stats import (
+    surrogate_trial_shuffle,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestSurrogateTrialShuffle:
-    def test_preserves_trials(self):
+    """Trial-shuffling surrogates."""
+
+    def test_preserves_trials(self) -> None:
+        """Trial shuffling keeps the five trials and their spike counts."""
         trains = [_poisson_train(50.0, 0.2, seed=i) for i in range(5)]
         shuffled = surrogate_trial_shuffle(trains, seed=1)
         assert len(shuffled) == 5

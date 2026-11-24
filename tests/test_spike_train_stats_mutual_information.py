@@ -10,16 +10,25 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+from sc_neurocore.analysis.spike_stats import (
+    mutual_information,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestMutualInformation:
-    def test_self_positive(self):
+    """The mutual information of two binned spike trains."""
+
+    def test_self_positive(self) -> None:
+        """A train has positive mutual information with itself."""
         train = _poisson_train(100.0, 1.0)
         mi = mutual_information(train, train, bin_size=20)
         assert mi > 0
 
-    def test_independent_low(self):
+    def test_independent_low(self) -> None:
+        """Two independent trains share less information than a train shares with itself."""
         a = _poisson_train(50.0, 1.0, seed=1)
         b = _poisson_train(50.0, 1.0, seed=99)
         mi = mutual_information(a, b, bin_size=20)

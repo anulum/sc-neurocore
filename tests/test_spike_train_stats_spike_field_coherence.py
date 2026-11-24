@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    spike_field_coherence,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestSpikeFieldCoherence:
-    def test_shape(self):
+    """Spike-field coherence with an LFP."""
+
+    def test_shape(self) -> None:
+        """A Poisson train against a 40 Hz sine gives a non-empty coherence with one frequency per value."""
         train = _poisson_train(100.0, 0.5)
         lfp = np.sin(2 * np.pi * 40 * np.arange(train.size) * 0.001)
         sfc, freqs = spike_field_coherence(train, lfp)

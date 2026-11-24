@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    phase_locking_value,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestPhaseLockingValue:
-    def test_locked(self):
+    """The phase-locking value of spikes to an LFP."""
+
+    def test_locked(self) -> None:
+        """Spikes at the peaks of a 10 Hz sine give a phase-locking value above 0.5."""
         lfp = np.sin(2 * np.pi * 10 * np.arange(10000) * 0.001)
         train = np.zeros(10000, dtype=np.uint8)
         peaks = np.where(lfp > 0.99)[0]
@@ -22,7 +31,8 @@ class TestPhaseLockingValue:
         plv = phase_locking_value(train, lfp)
         assert plv > 0.5
 
-    def test_random_low(self):
+    def test_random_low(self) -> None:
+        """Poisson spikes against a 10 Hz sine give a phase-locking value below 0.5."""
         lfp = np.sin(2 * np.pi * 10 * np.arange(5000) * 0.001)
         train = _poisson_train(50.0, 5.0)[:5000]
         plv = phase_locking_value(train, lfp)

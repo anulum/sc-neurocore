@@ -10,16 +10,26 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import pytest
+from sc_neurocore.analysis.spike_stats import (
+    event_synchronization,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestEventSynchronization:
-    def test_identical_high(self):
+    """Event synchronisation of two spike trains."""
+
+    def test_identical_high(self) -> None:
+        """A train with itself gives event synchronisation above 0.5."""
         train = _poisson_train(50.0, 0.5)
         s = event_synchronization(train, train, tau_ms=2.0)
         assert s > 0.5
 
-    def test_independent_low(self):
+    def test_independent_low(self) -> None:
+        """Two independent trains give event synchronisation below 0.5."""
         a = _poisson_train(50.0, 0.5, seed=1)
         b = _poisson_train(50.0, 0.5, seed=2)
         s = event_synchronization(a, b, tau_ms=1.0)
@@ -28,6 +38,7 @@ class TestEventSynchronization:
     def test_pure_python_fallback_when_rust_unavailable(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Without the Rust engine a train with itself still gives event synchronisation above 0.5."""
         # Force the pure-Python double-loop branch; the native accelerator is
         # built in this environment and would otherwise shadow it.
         monkeypatch.setattr("sc_neurocore.analysis.spike_stats.correlation._HAS_RUST", False)

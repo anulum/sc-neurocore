@@ -10,11 +10,17 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    bin_spike_train,
+)
 
 
 class TestBinSpikeTrain:
-    def test_basic(self):
+    """Binning a binary spike train."""
+
+    def test_basic(self) -> None:
+        """Ten steps in bins of five give the counts 2 and 3."""
         train = np.array([1, 0, 1, 0, 0, 1, 1, 1, 0, 0], dtype=np.uint8)
         binned = bin_spike_train(train, bin_size=5)
         assert binned.tolist() == [2, 3]

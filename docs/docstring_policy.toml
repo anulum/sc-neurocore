@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4539
+expected_file_count = 4576
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -18200,3 +18200,151 @@ rationale = "Exercise SC-NeuroCore: spike train stats extended synchrony."
 [[file]]
 path = "tests/test_spike_train_stats_extended_waveform.py"
 rationale = "Exercise SC-NeuroCore: spike train stats extended waveform."
+
+[[file]]
+path = "tests/test_spike_train_stats_bin_spike_train.py"
+rationale = "Exercise SC-NeuroCore: spike train stats bin spike train."
+
+[[file]]
+path = "tests/test_spike_train_stats_burst_detection.py"
+rationale = "Exercise SC-NeuroCore: spike train stats burst detection."
+
+[[file]]
+path = "tests/test_spike_train_stats_cross_correlation.py"
+rationale = "Exercise SC-NeuroCore: spike train stats cross correlation."
+
+[[file]]
+path = "tests/test_spike_train_stats_cv2.py"
+rationale = "Exercise SC-NeuroCore: spike train stats cv2."
+
+[[file]]
+path = "tests/test_spike_train_stats_cvisi.py"
+rationale = "Exercise SC-NeuroCore: spike train stats cvisi."
+
+[[file]]
+path = "tests/test_spike_train_stats_event_synchronization.py"
+rationale = "Exercise SC-NeuroCore: spike train stats event synchronization."
+
+[[file]]
+path = "tests/test_spike_train_stats_fano_factor.py"
+rationale = "Exercise SC-NeuroCore: spike train stats fano factor."
+
+[[file]]
+path = "tests/test_spike_train_stats_firing_rate.py"
+rationale = "Exercise SC-NeuroCore: spike train stats firing rate."
+
+[[file]]
+path = "tests/test_spike_train_stats_first_spike_latency.py"
+rationale = "Exercise SC-NeuroCore: spike train stats first spike latency."
+
+[[file]]
+path = "tests/test_spike_train_stats_functional_connectivity.py"
+rationale = "Exercise SC-NeuroCore: spike train stats functional connectivity."
+
+[[file]]
+path = "tests/test_spike_train_stats_instantaneous_rate.py"
+rationale = "Exercise SC-NeuroCore: spike train stats instantaneous rate."
+
+[[file]]
+path = "tests/test_spike_train_stats_isi.py"
+rationale = "Exercise SC-NeuroCore: spike train stats isi."
+
+[[file]]
+path = "tests/test_spike_train_stats_isi_distance.py"
+rationale = "Exercise SC-NeuroCore: spike train stats isi distance."
+
+[[file]]
+path = "tests/test_spike_train_stats_isi_entropy.py"
+rationale = "Exercise SC-NeuroCore: spike train stats isi entropy."
+
+[[file]]
+path = "tests/test_spike_train_stats_local_variation.py"
+rationale = "Exercise SC-NeuroCore: spike train stats local variation."
+
+[[file]]
+path = "tests/test_spike_train_stats_mutual_information.py"
+rationale = "Exercise SC-NeuroCore: spike train stats mutual information."
+
+[[file]]
+path = "tests/test_spike_train_stats_pairwise_correlation.py"
+rationale = "Exercise SC-NeuroCore: spike train stats pairwise correlation."
+
+[[file]]
+path = "tests/test_spike_train_stats_phase_locking_value.py"
+rationale = "Exercise SC-NeuroCore: spike train stats phase locking value."
+
+[[file]]
+path = "tests/test_spike_train_stats_population_rate.py"
+rationale = "Exercise SC-NeuroCore: spike train stats population rate."
+
+[[file]]
+path = "tests/test_spike_train_stats_population_vector_decode.py"
+rationale = "Exercise SC-NeuroCore: spike train stats population vector decode."
+
+[[file]]
+path = "tests/test_spike_train_stats_power_spectrum.py"
+rationale = "Exercise SC-NeuroCore: spike train stats power spectrum."
+
+[[file]]
+path = "tests/test_spike_train_stats_psth.py"
+rationale = "Exercise SC-NeuroCore: spike train stats psth."
+
+[[file]]
+path = "tests/test_spike_train_stats_response_onset.py"
+rationale = "Exercise SC-NeuroCore: spike train stats response onset."
+
+[[file]]
+path = "tests/test_spike_train_stats_significance_bootstrap.py"
+rationale = "Exercise SC-NeuroCore: spike train stats significance bootstrap."
+
+[[file]]
+path = "tests/test_spike_train_stats_spike_count.py"
+rationale = "Exercise SC-NeuroCore: spike train stats spike count."
+
+[[file]]
+path = "tests/test_spike_train_stats_spike_field_coherence.py"
+rationale = "Exercise SC-NeuroCore: spike train stats spike field coherence."
+
+[[file]]
+path = "tests/test_spike_train_stats_spike_phase_histogram.py"
+rationale = "Exercise SC-NeuroCore: spike train stats spike phase histogram."
+
+[[file]]
+path = "tests/test_spike_train_stats_spike_times.py"
+rationale = "Exercise SC-NeuroCore: spike train stats spike times."
+
+[[file]]
+path = "tests/test_spike_train_stats_spike_train_coherence.py"
+rationale = "Exercise SC-NeuroCore: spike train stats spike train coherence."
+
+[[file]]
+path = "tests/test_spike_train_stats_spike_train_pca.py"
+rationale = "Exercise SC-NeuroCore: spike train stats spike train pca."
+
+[[file]]
+path = "tests/test_spike_train_stats_spike_triggered_average.py"
+rationale = "Exercise SC-NeuroCore: spike train stats spike triggered average."
+
+[[file]]
+path = "tests/test_spike_train_stats_surrogate_dither.py"
+rationale = "Exercise SC-NeuroCore: spike train stats surrogate dither."
+
+[[file]]
+path = "tests/test_spike_train_stats_surrogate_isi_shuffle.py"
+rationale = "Exercise SC-NeuroCore: spike train stats surrogate isi shuffle."
+
+[[file]]
+path = "tests/test_spike_train_stats_surrogate_trial_shuffle.py"
+rationale = "Exercise SC-NeuroCore: spike train stats surrogate trial shuffle."
+
+[[file]]
+path = "tests/test_spike_train_stats_transfer_entropy.py"
+rationale = "Exercise SC-NeuroCore: spike train stats transfer entropy."
+
+[[file]]
+path = "tests/test_spike_train_stats_van_rossum_distance.py"
+rationale = "Exercise SC-NeuroCore: spike train stats van rossum distance."
+
+[[file]]
+path = "tests/test_spike_train_stats_victor_purpura_distance.py"
+rationale = "Exercise SC-NeuroCore: spike train stats victor purpura distance."

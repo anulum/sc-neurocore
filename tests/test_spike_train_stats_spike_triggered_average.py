@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    spike_triggered_average,
+)
 
 
 class TestSpikeTriggeredAverage:
-    def test_shape(self):
+    """The spike-triggered average of a stimulus."""
+
+    def test_shape(self) -> None:
+        """A 50-step window gives a 50-sample average."""
         stim = np.sin(np.linspace(0, 10 * np.pi, 1000))
         train = np.zeros(1000, dtype=np.uint8)
         train[100::100] = 1
         sta = spike_triggered_average(stim, train, window_steps=50)
         assert sta.shape == (50,)
 
-    def test_no_spikes(self):
+    def test_no_spikes(self) -> None:
+        """A silent train gives an all-zero average."""
         sta = spike_triggered_average(np.ones(100), np.zeros(100, dtype=np.uint8))
         np.testing.assert_allclose(sta, 0.0)

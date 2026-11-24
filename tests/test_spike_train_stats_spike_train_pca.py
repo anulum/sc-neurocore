@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    spike_train_pca,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestSpikeTrainPCA:
-    def test_shape(self):
+    """PCA of a population of spike trains."""
+
+    def test_shape(self) -> None:
+        """Three components of eight trains give three projections and three non-negative variances."""
         trains = [_poisson_train(50.0 + i * 10, 0.5, seed=i) for i in range(8)]
         proj, var = spike_train_pca(trains, n_components=3)
         assert proj.shape[0] == 3

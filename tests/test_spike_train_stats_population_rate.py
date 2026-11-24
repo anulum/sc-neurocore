@@ -10,15 +10,24 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+from sc_neurocore.analysis.spike_stats import (
+    population_rate,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestPopulationRate:
-    def test_positive(self):
+    """The smoothed rate of a population."""
+
+    def test_positive(self) -> None:
+        """Ten Poisson trains give a non-empty rate with a positive mean."""
         trains = [_poisson_train(100.0, 0.5, seed=i) for i in range(10)]
         rate = population_rate(trains, sigma_ms=20.0)
         assert rate.size > 0
         assert rate.mean() > 0
 
-    def test_empty(self):
+    def test_empty(self) -> None:
+        """No trains give an empty rate."""
         assert population_rate([]).size == 0

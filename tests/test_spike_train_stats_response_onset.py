@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    response_onset,
+)
 
 
 class TestResponseOnset:
-    def test_detects(self):
+    """Detection of the response onset after a baseline."""
+
+    def test_detects(self) -> None:
+        """A burst at step 200 after a 150-step baseline is detected between 0.15 and 0.25 s."""
         train = np.zeros(500, dtype=np.uint8)
         train[200:210] = 1
         onset = response_onset(train, baseline_steps=150)
         assert 0.15 < onset < 0.25
 
-    def test_no_response(self):
+    def test_no_response(self) -> None:
+        """A silent train gives NaN."""
         assert np.isnan(response_onset(np.zeros(200, dtype=np.uint8), baseline_steps=100))

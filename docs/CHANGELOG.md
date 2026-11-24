@@ -1378,6 +1378,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The 37 top-level spike-train statistics test modules import their
+  names explicitly instead of through a suppressed star import, gain
+  their missing docstrings and type annotations and are enrolled in the
+  docstring policy.
+
 - The 14 top-level extended spike-train statistics test modules import
   their names explicitly instead of through a suppressed star import,
   keep the support's fixtures in their own namespaces through

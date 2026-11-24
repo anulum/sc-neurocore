@@ -10,16 +10,25 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+from sc_neurocore.analysis.spike_stats import (
+    van_rossum_distance,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestVanRossumDistance:
-    def test_identical_zero(self):
+    """The van Rossum distance between spike trains."""
+
+    def test_identical_zero(self) -> None:
+        """A train is at distance zero from itself."""
         train = _poisson_train(100.0, 0.5)
         d = van_rossum_distance(train, train)
         assert d < 1e-6
 
-    def test_different_positive(self):
+    def test_different_positive(self) -> None:
+        """Two independent trains are at a positive distance."""
         a = _poisson_train(100.0, 0.5, seed=1)
         b = _poisson_train(100.0, 0.5, seed=2)
         d = van_rossum_distance(a, b)

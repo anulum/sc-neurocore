@@ -10,16 +10,28 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+from typing import Any
+
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    significance_bootstrap,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestSignificanceBootstrap:
-    def test_returns_pvalue(self):
+    """Bootstrap significance of a two-train statistic."""
+
+    def test_returns_pvalue(self) -> None:
+        """The bootstrap of a mean-difference statistic gives a p-value inside [0, 1] and a non-negative observed value."""
         a = _poisson_train(100.0, 0.5, seed=1)
         b = _poisson_train(100.0, 0.5, seed=2)
 
-        def stat(x, y):
-            return abs(x.mean() - y.mean())
+        def stat(x: np.ndarray[Any, Any], y: np.ndarray[Any, Any]) -> float:
+            """Return the absolute difference of the two trains' means."""
+            return float(abs(x.mean() - y.mean()))
 
         obs, pval = significance_bootstrap(stat, a, b, n_surrogates=50, seed=42)
         assert 0.0 <= pval <= 1.0

@@ -10,17 +10,27 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    isi_distance,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestISIDistance:
-    def test_same_train(self):
+    """The ISI distance between two spike trains."""
+
+    def test_same_train(self) -> None:
+        """A train has an ISI distance of zero to itself."""
         train = np.zeros(1000, dtype=np.uint8)
         train[10::20] = 1
         d = isi_distance(train, train)
         assert d < 1e-10
 
-    def test_different(self):
+    def test_different(self) -> None:
+        """Trains at 50 and 100 Hz have a positive ISI distance."""
         a = _poisson_train(50.0, 1.0, seed=1)
         b = _poisson_train(100.0, 1.0, seed=2)
         d = isi_distance(a, b)

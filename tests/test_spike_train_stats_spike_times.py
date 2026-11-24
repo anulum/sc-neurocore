@@ -10,15 +10,22 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    spike_times,
+)
 
 
 class TestSpikeTimes:
-    def test_basic(self):
+    """Spike times from a binary train."""
+
+    def test_basic(self) -> None:
+        """Spikes at steps 1 and 4 give times of 1 and 4 ms."""
         train = np.array([0, 1, 0, 0, 1, 0], dtype=np.uint8)
         t = spike_times(train, dt=0.001)
         assert len(t) == 2
         np.testing.assert_allclose(t, [0.001, 0.004])
 
-    def test_empty(self):
+    def test_empty(self) -> None:
+        """A silent train gives no spike times."""
         assert spike_times(np.zeros(10, dtype=np.uint8)).size == 0

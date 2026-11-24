@@ -10,18 +10,25 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    burst_detection,
+)
 
 
 class TestBurstDetection:
-    def test_detects_burst(self):
+    """Burst detection by maximum ISI and minimum spike count."""
+
+    def test_detects_burst(self) -> None:
+        """Six consecutive spikes form at least one burst of three or more spikes."""
         train = np.zeros(1000, dtype=np.uint8)
         train[100:106] = 1
         bursts = burst_detection(train, dt=0.001, max_isi_ms=2.0, min_spikes=3)
         assert len(bursts) >= 1
         assert bursts[0][2] >= 3
 
-    def test_no_burst_in_regular(self):
+    def test_no_burst_in_regular(self) -> None:
+        """A train spiking every 50 ms has no bursts."""
         train = np.zeros(1000, dtype=np.uint8)
         train[::50] = 1
         bursts = burst_detection(train, dt=0.001, max_isi_ms=5.0, min_spikes=3)

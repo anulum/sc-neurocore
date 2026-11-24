@@ -10,16 +10,25 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+from sc_neurocore.analysis.spike_stats import (
+    psth,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestPSTH:
-    def test_shape(self):
+    """The peri-stimulus time histogram."""
+
+    def test_shape(self) -> None:
+        """Ten trials give a non-empty PSTH with one rate per bin centre."""
         trials = [_poisson_train(100.0, 0.5, seed=i) for i in range(10)]
         rates, centers = psth(trials, bin_ms=10.0)
         assert rates.size > 0
         assert rates.size == centers.size
 
-    def test_empty(self):
+    def test_empty(self) -> None:
+        """No trials give an empty PSTH."""
         rates, centers = psth([])
         assert rates.size == 0

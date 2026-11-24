@@ -10,11 +10,20 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    spike_phase_histogram,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestSpikePhaseHistogram:
-    def test_shape(self):
+    """The histogram of spike phases in an LFP."""
+
+    def test_shape(self) -> None:
+        """Eighteen bins give 18 counts and 18 bin centres."""
         lfp = np.sin(2 * np.pi * 10 * np.arange(5000) * 0.001)
         train = _poisson_train(100.0, 5.0)[:5000]
         hist, centers = spike_phase_histogram(train, lfp, n_bins=18)

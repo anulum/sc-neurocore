@@ -10,16 +10,26 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    pairwise_correlation,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestPairwiseCorrelation:
-    def test_self_correlation(self):
+    """The pairwise correlation matrix of spike trains."""
+
+    def test_self_correlation(self) -> None:
+        """A train and its copy have a correlation of one."""
         train = _poisson_train(100.0, 1.0)
         mat = pairwise_correlation([train, train])
         np.testing.assert_allclose(mat[0, 1], 1.0, atol=1e-10)
 
-    def test_shape(self):
+    def test_shape(self) -> None:
+        """Five trains give a 5x5 matrix."""
         trains = [_poisson_train(50.0, 0.5, seed=i) for i in range(5)]
         mat = pairwise_correlation(trains)
         assert mat.shape == (5, 5)

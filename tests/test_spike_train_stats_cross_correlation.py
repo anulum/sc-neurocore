@@ -10,23 +10,34 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    cross_correlation,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestCrossCorrelation:
-    def test_autocorrelation_peak_at_zero(self):
+    """The cross-correlogram of two spike trains."""
+
+    def test_autocorrelation_peak_at_zero(self) -> None:
+        """The autocorrelogram of a Poisson train peaks at zero lag."""
         train = _poisson_train(100.0, 1.0)
         cc, lags = cross_correlation(train, train, max_lag_ms=20.0)
         zero_idx = len(lags) // 2
         assert cc[zero_idx] == cc.max()
 
-    def test_independent_low_correlation(self):
+    def test_independent_low_correlation(self) -> None:
+        """Two independent Poisson trains stay below 0.3 at every lag."""
         a = _poisson_train(100.0, 1.0, seed=1)
         b = _poisson_train(100.0, 1.0, seed=2)
         cc, _ = cross_correlation(a, b, max_lag_ms=10.0)
         assert np.abs(cc).max() < 0.3
 
     def test_silent_train_returns_zero_correlogram(self) -> None:
+        """Two silent trains give an all-zero correlogram with one value per lag."""
         # A silent train has zero variance, so the normaliser is zero and the
         # correlogram is returned flat rather than dividing by zero.
         silent = np.zeros(200, dtype=np.float64)

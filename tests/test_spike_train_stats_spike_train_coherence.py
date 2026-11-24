@@ -10,11 +10,19 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+from sc_neurocore.analysis.spike_stats import (
+    spike_train_coherence,
+)
+from tests.spike_train_stats_support import (
+    _poisson_train,
+)
 
 
 class TestSpikeTrainCoherence:
-    def test_shape(self):
+    """The coherence of two spike trains."""
+
+    def test_shape(self) -> None:
+        """A train with itself gives a non-empty coherence with one frequency per value."""
         train = _poisson_train(100.0, 0.5)
         coh, freqs = spike_train_coherence(train, train)
         assert coh.size == freqs.size

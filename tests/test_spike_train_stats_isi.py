@@ -10,17 +10,24 @@
 
 from __future__ import annotations
 
-from tests.spike_train_stats_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.analysis.spike_stats import (
+    isi,
+)
 
 
 class TestISI:
-    def test_regular(self):
+    """The inter-spike intervals of a spike train."""
+
+    def test_regular(self) -> None:
+        """A spike every 20 steps gives intervals of 20 ms."""
         train = np.zeros(100, dtype=np.uint8)
         train[10::20] = 1
         intervals = isi(train, dt=0.001)
         np.testing.assert_allclose(intervals, 0.02, atol=1e-10)
 
-    def test_single_spike(self):
+    def test_single_spike(self) -> None:
+        """A single spike gives no intervals."""
         train = np.zeros(50, dtype=np.uint8)
         train[25] = 1
         assert isi(train).size == 0
