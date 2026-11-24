@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from tests.test_quantum_cognition.fisher_posner_support import *  # noqa: F403
+from sc_neurocore.quantum_cognition.fisher_posner import (
+    HybridFisherPosnerLIFNeuron,
+)
 
 
 class TestHybridFisherPosnerLIFNeuron:

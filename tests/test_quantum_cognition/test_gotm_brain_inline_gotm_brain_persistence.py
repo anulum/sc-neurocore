@@ -11,7 +11,17 @@
 from __future__ import annotations
 
 
-from tests.test_quantum_cognition.gotm_brain_inline_support import *  # noqa: F403
+import numpy as np
+import pytest
+from pathlib import (
+    Path,
+)
+from sc_neurocore.quantum_cognition.content_indexer import (
+    ContentChunk,
+)
+from sc_neurocore.quantum_cognition.gotm_brain import (
+    GOTMBrain,
+)
 
 
 class TestGOTMBrainPersistence:

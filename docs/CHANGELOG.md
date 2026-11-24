@@ -1378,6 +1378,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The seven quantum-cognition test modules that took their names from
+  a suppressed star import (`tests/test_quantum_cognition`: hybrid
+  Fisher-Posner, GOTM brain and radical pair) import them explicitly.
+  The Fisher-Posner LIF module defines the spin-pool fixture it alone
+  uses, and the three support modules left without an importer are
+  deleted with their docstring-policy rows.
+
 - The 88 top-level test modules of the equilibrium-propagation,
   event-driven, ExpIF, explainability, extended-neuron, fault
   injection and tolerance, FIM symmetry and formal-verification suites

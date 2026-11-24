@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 4960
+expected_file_count = 4957
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -6786,18 +6786,6 @@ rationale = "Real module ownership, public pickle identity and bounded source/te
 [[file]]
 path = "tests/test_quantum_cognition/__init__.py"
 rationale = "The quantum cognition suite is a package under the collected tests root, so its support modules import by package path."
-
-[[file]]
-path = "tests/test_quantum_cognition/fisher_posner_support.py"
-rationale = "A real eight-site spin pool and the hybrid Fisher-Posner neuron coupled to it, shared by the neuron suites."
-
-[[file]]
-path = "tests/test_quantum_cognition/gotm_brain_inline_support.py"
-rationale = "Real GOTMBrain, content-chunk and learning-step types shared by the persistence, language-model fallback and CLI suites."
-
-[[file]]
-path = "tests/test_quantum_cognition/radical_pair_support.py"
-rationale = "Real radical-pair model and parameter types shared by the radical-pair suites."
 
 [[file]]
 path = "tests/test_quantum_cognition/test_dashboard.py"

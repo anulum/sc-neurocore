@@ -11,7 +11,11 @@
 from __future__ import annotations
 
 
-from tests.test_quantum_cognition.gotm_brain_inline_support import *  # noqa: F403
+import numpy as np
+from sc_neurocore.quantum_cognition.gotm_brain import (
+    GOTMBrain,
+    HAS_LLM,
+)
 
 
 class TestGOTMBrainLLM:

@@ -10,7 +10,12 @@
 
 from __future__ import annotations
 
-from tests.test_quantum_cognition.radical_pair_support import *  # noqa: F403
+import numpy as np
+import pytest
+from sc_neurocore.quantum_cognition.radical_pair import (
+    RadicalPairModel,
+    RadicalPairParams,
+)
 
 
 class TestRadicalPairModel:

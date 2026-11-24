@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5586
+    "test_files": 5583
   },
   "documentation": {
     "public_pages": [
@@ -7211,9 +7211,6 @@
       "tests/test_quantum_bridge.py",
       "tests/test_quantum_codec_coverage_closure.py",
       "tests/test_quantum_cognition/__init__.py",
-      "tests/test_quantum_cognition/fisher_posner_support.py",
-      "tests/test_quantum_cognition/gotm_brain_inline_support.py",
-      "tests/test_quantum_cognition/radical_pair_support.py",
       "tests/test_quantum_cognition/test_dashboard.py",
       "tests/test_quantum_cognition/test_fisher_posner_hybrid_fisher_posner_lif.py",
       "tests/test_quantum_cognition/test_fisher_posner_hybrid_fisher_posner_lif_neuron.py",

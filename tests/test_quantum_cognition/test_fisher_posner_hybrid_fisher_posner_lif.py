@@ -12,7 +12,23 @@ from __future__ import annotations
 
 from typing import cast
 
-from tests.test_quantum_cognition.fisher_posner_support import *  # noqa: F403
+import pytest
+from sc_neurocore.quantum_cognition.fisher_posner import (
+    HybridFisherPosnerLIF,
+)
+from sc_neurocore.quantum_cognition.spin_pool import (
+    SpinPoolMPS,
+)
+
+PoolAndNeuron = tuple[SpinPoolMPS, HybridFisherPosnerLIF]
+
+
+@pytest.fixture
+def pool_and_neuron() -> PoolAndNeuron:
+    """Return an eight-site spin pool and the neuron coupled to its first site."""
+    pool = SpinPoolMPS(n_sites=8)
+    neuron = HybridFisherPosnerLIF(neuron_id=0, spin_pool=pool)
+    return pool, neuron
 
 
 class TestHybridFisherPosnerLIF:
