@@ -752,6 +752,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The documentation site's navigation lists each section and page once.
+  It had two top-level Benchmarks tabs, two tutorials titled Reservoir
+  Computing, and thirteen API pages listed both in their topical section
+  and again under Domain Modules. The Benchmarks pages are now one
+  section, the auto-critical reservoir tutorial carries its page title,
+  and Domain Modules keeps only the modules no other section lists. A
+  new test refuses a repeated sibling title at any level of the
+  navigation and a page listed twice.
+
 - Notebooks and documentation no longer name Python 3.10, which the
   package stopped supporting in 4.0.0. Two notebooks, the Colab quickstart
   and the NIR bridge, carried Python 3.10.0 kernel metadata; that unused

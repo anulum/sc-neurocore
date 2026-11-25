@@ -267,7 +267,7 @@ nav:
       - Symbolic Reasoning: tutorials/71_symbolic_reasoning.md
       - Energy Accounting: tutorials/72_energy_accounting.md
       - Spike GNN: tutorials/73_spike_gnn.md
-      - Reservoir Computing: tutorials/74_reservoir.md
+      - Auto-Critical Reservoir Computing: tutorials/74_reservoir.md
       - Spike Normalization: tutorials/75_spike_norm.md
       - Knowledge Distillation: tutorials/76_distillation.md
       - Quantization-Aware Training: tutorials/77_qat.md
@@ -280,6 +280,10 @@ nav:
       - Few-Shot Learning: tutorials/84_few_shot.md
   - Benchmarks:
       - Cross-Framework Comparison: benchmarks/cross_framework.md
+      - Comparison: benchmarks/comparison.md
+      - Training Benchmarks: benchmarks/training.md
+      - Summary: benchmarks/BENCHMARKS.md
+      - Detailed Report: benchmarks/BENCHMARK_REPORT.md
   - Architecture:
       - Overview: architecture/architecture.md
       - Evidence: architecture/evidence.md
@@ -442,14 +446,8 @@ nav:
           - Audio: api/audio.md
           - Bio: api/bio.md
           - Chaos: api/chaos.md
-          - Contrastive SSL: api/contrastive.md
-          - Continual Learning: api/continual.md
           - Core Modules: api/core.md
           - Dashboard: api/dashboard.md
-          - Digital Twin: api/digital_twin.md
-          - Distillation: api/distillation.md
-          - Few-Shot: api/few_shot.md
-          - Fusion: api/fusion.md
           - Generative: api/generative.md
           - Graphs: api/graphs.md
           - HDC: api/hdc.md
@@ -463,19 +461,12 @@ nav:
           - Optics: api/optics.md
           - Physics: api/physics.md
           - Pipeline: api/pipeline.md
-          - Privacy: api/privacy.md
-          - QAT: api/qat.md
           - Quantum: api/quantum.md
-          - Resilience: api/resilience.md
-          - Reservoir: api/reservoir.md
           - Robotics: api/robotics.md
           - SCPN Layers: api/scpn.md
           - SCPN NeuroCore Bridge: api/scpn_neurocore.md
           - Sleep: api/sleep.md
           - Spatial: api/spatial.md
-          - Spike GNN: api/spike_gnn.md
-          - Symbolic: api/symbolic.md
-          - Temporal Hierarchy: api/temporal_hierarchy.md
           - World Model:
               - Overview: api/world_model.md
               - Predictive Model (LGSSM): api/world_model/predictive_model.md
@@ -527,11 +518,6 @@ nav:
           - Visualization: api/viz.md
       - Speculative (research/):
           - "See research/README.md": api/research-speculative.md
-  - Benchmarks:
-      - Comparison: benchmarks/comparison.md
-      - Training Benchmarks: benchmarks/training.md
-      - Summary: benchmarks/BENCHMARKS.md
-      - Detailed Report: benchmarks/BENCHMARK_REPORT.md
   - Research:
       - "JOSS Paper (Preprint)": research/paper.md
       - Neuromorphic Primer: research/NEUROMORPHIC_COMPUTING_PRIMER.md
