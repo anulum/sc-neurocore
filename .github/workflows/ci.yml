@@ -138,6 +138,11 @@ jobs:
       - name: ruff check
         run: ruff check src/ tests/ benchmarks/ tools/capability_manifest.py
 
+      - name: No star imports, suppressed or not
+        # --isolated also covers research/, which the ruff configuration excludes;
+        # --ignore-noqa keeps a new `# noqa: F403` from hiding a star import.
+        run: ruff check --isolated --no-cache --ignore-noqa --select F403,F405 .
+
       - name: ruff format
         run: ruff format --check src/ tests/ benchmarks/ tools/capability_manifest.py
 

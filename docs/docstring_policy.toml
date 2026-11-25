@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5104
+expected_file_count = 5105
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20460,3 +20460,7 @@ rationale = "Public edge power and thermal report built on the energy estimator.
 [[file]]
 path = "tests/test_energy_estimator_bram_and_fit.py"
 rationale = "Exercise SC-NeuroCore: FPGA estimator block-RAM units, the full target fit and input checks."
+
+[[file]]
+path = "tests/test_star_import_gate.py"
+rationale = "Exercise SC-NeuroCore: the whole-tree star-import gate in CI and pre-commit."

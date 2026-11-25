@@ -1488,6 +1488,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- No star import may come back, suppressed or not. Every
+  `from …support import *` in the tests has been replaced with an
+  explicit import, so the ruff exemptions of F403 and F405 for
+  `tests/**/*.py` and `crates/**/test_*.py` are removed. CI and
+  pre-commit now run
+  `ruff check --isolated --ignore-noqa --select F403,F405` over the
+  whole tree: `--isolated` also covers `research/`, which the project
+  configuration excludes, and `--ignore-noqa` keeps a `# noqa: F403`
+  from hiding a new star import. A contract test holds the three
+  settings and shows that the gate catches a suppressed star import that
+  an ordinary check lets through.
+
 - The 17 test modules in the interfaces, sources, test_layers and
   test_optics directories that star-imported their supports import
   their names explicitly, replace their 37 type-ignore comments with

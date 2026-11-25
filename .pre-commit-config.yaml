@@ -28,6 +28,10 @@ repos:
     hooks:
       - id: ruff
         exclude: '^data/'
+      - id: ruff
+        name: ruff (no star imports, suppressed or not)
+        args: [--isolated, --ignore-noqa, --select, 'F403,F405']
+        exclude: '^data/'
       - id: ruff-format
         # Preserve the existing Python, stub, and notebook formatting scope.
         types_or: [python, pyi, jupyter]
