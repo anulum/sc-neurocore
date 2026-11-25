@@ -44878,30 +44878,32 @@ Streaming SNN inference server.
 
 Parameters
 ----------
-network : SCNetwork or Network
-    The SNN to run: an object with ``step``, or a population network without projections.
-host : str
-    Bind address (default '127.0.0.1').
-port : int
-    Listen port (default 8001).
-max_body_bytes : int
+network : Any
+    The SNN to run: an object with ``step``, or a population network without projections
+    whose populations carry unique non-empty string labels.
+host : str, default='127.0.0.1'
+    Bind address.
+port : int, default=8001
+    Listen port.
+max_body_bytes : int, default=DEFAULT_MAX_BODY_BYTES
     The largest ``/step`` request body read; a longer one is refused with 413 unread.
 
 Raises
 ------
 ServeRefusal
-    If the network has projections but no ``step``: stepping only its populations would ignore
-    every projection, so the server refuses it instead of answering wrongly.
+    If the network has projections without ``step``, if any served population lacks a unique
+    non-empty string label, or if ``max_body_bytes`` is not a positive integer.
 
 - **__init__**(network, host, port, \*, max_body_bytes)
+  - Validate the served network and configure the HTTP listener state.
 - **reset**()
   - Reset the network and the timestep, under the same lock as :meth:`step`.
 - **step**(inputs)
-  - Run one network timestep and return output spikes.
+  - Validate all population inputs before stepping any population and return output spikes.
 - **start**(blocking)
   - Start the HTTP server.
 - **stop**()
-  - Shut down the server.
+  - Shut down the HTTP server if running.
 
 ---
 

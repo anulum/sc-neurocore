@@ -776,6 +776,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `SpikeServer` now refuses unlabelled or duplicate-label population networks at construction and validates all population inputs (names, finite real numeric scalars rejecting booleans and complex numbers, and exact `pop.n` vector lengths) before any population steps, answering malformed population drives with HTTP 400 `ServeRefusal` instead of advancing earlier populations or raising HTTP 500 `IndexError`/`TypeError`.
+
 - `StateDecoder.extract_attractor_states` now partitions functional connectivity graphs into disjoint sorted connected components invariant to neuron ordering and rejects boolean or non-finite thresholds, and `sc_neurocore.spike_train_statistics` validates finite real spike trains and parameter domains (`dt`, `window_ms`, `bin_size`, `order`, `delay`) before division or array reshaping.
 
 - `cross_correlation` now guards non-overlapping lags (`|lag| >= n`) so

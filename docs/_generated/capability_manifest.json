@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5599
+    "test_files": 5600
   },
   "documentation": {
     "public_pages": [
@@ -7739,6 +7739,7 @@
       "tests/test_spike_profiler_pathology_detection.py",
       "tests/test_spike_profiler_profile_report.py",
       "tests/test_spike_profiler_spike_profiler_basic.py",
+      "tests/test_spike_server_atomic_input_validation.py",
       "tests/test_spike_stats_dimensionality_canonical_sign.py",
       "tests/test_spike_stats_dimensionality_demixed_pca.py",
       "tests/test_spike_stats_dimensionality_factor_analysis.py",
