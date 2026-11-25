@@ -738,6 +738,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The CI job that holds the GPU encoder's refusal of a software adapter
+  installs the hash-locked CPU torch before the development extras and
+  checks the CPU build afterwards, like every other job that runs
+  `tools/ci_install_dev.py`. It installed the extras without the lock,
+  so pip would resolve the CUDA torch build and its NVIDIA wheels on
+  the hosted runner, and the dependency-profile guard test failed on
+  the workflow.
+
 - The Rust engine's `AstrocyteModel` now follows the Python Li-Rinzel
   reference: the ER leak uses `leak` (0.01 per second) rather than the
   SERCA half-activation `k_er`, IP3 is a third ODE, and the input drives

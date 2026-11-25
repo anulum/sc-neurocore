@@ -542,6 +542,7 @@ jobs:
         env:
           SC_NEUROCORE_CI_ENGINE_WHEEL_DIR: ${{ runner.temp }}/engine-wheel-gpu
         run: |
+          python -m pip install --require-hashes --only-binary :all: -r requirements/ci-torch-cpu.txt
           python tools/ci_install_dev.py
           python - "$RUNNER_TEMP/test-tool-pins.txt" <<'PY'
           import re
@@ -562,6 +563,7 @@ jobs:
           Path(sys.argv[1]).write_text("\n".join(blocks) + "\n", encoding="utf-8")
           PY
           python -m pip install --require-hashes --no-deps -r "$RUNNER_TEMP/test-tool-pins.txt"
+          python -c "import torch; assert torch.__version__ == '2.15.0+cpu'; assert torch.version.cuda is None"
       - name: Record the software adapter the engine refuses
         env:
           SC_GPU_ADAPTER: llvmpipe
