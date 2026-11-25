@@ -111,6 +111,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- StochasticIFNeuron takes an explicit `seed`. It drew every noise
+  sample from NumPy's process-wide generator, so its spike train
+  depended on everything else that drew random numbers and two neurons
+  could not have independent reproducible streams. With `seed` set the
+  neuron owns a `numpy.random.Generator` seeded with it and does not
+  touch the global generator, and `reset` restarts that stream; a
+  negative, boolean or non-integer seed is refused. Without a seed it
+  still draws from `np.random.randn`, so `np.random.seed` governs
+  existing code exactly as before. The engine's StochasticIFNeuron keeps
+  its own seeded Xoshiro256++ stream, which is a different generator.
+
 - `sc_neurocore.accel.contrastive_ssl` runs the contrastive SSL kernels (the
   InfoNCE loss, one CSDP phase and the goodness score) on a chosen lane:
   Python, the original and the floor; Julia (`accel/julia/contrastive/ssl.jl`,

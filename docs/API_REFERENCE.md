@@ -37479,12 +37479,18 @@ Brunel & Hakim 1999 — Ornstein-Uhlenbeck driven IF.
 
 Reference: Tuckwell, H.C. (1988). Introduction to Theoretical Neurobiology, Vol. 2. Cambridge Univ. Press.
 
+With ``seed`` set, the noise comes from the neuron's own ``numpy.random.Generator``
+seeded with it, so two neurons with the same seed give the same spike train whatever
+else draws random numbers, and ``reset`` restarts the stream. Without a seed the noise
+comes from NumPy's process-wide generator (``np.random.randn``), as before, so
+``np.random.seed`` still governs it.
+
 - **__post_init__**()
-  - Refuse non-finite voltages and drift, non-positive time constants and negative sigma.
+  - Refuse non-finite voltages and drift, non-positive time constants, negative sigma and a bad seed.
 - **step**(current)
-  - Advance one Euler-Maruyama step with one ``np.random.randn()`` draw; return the spike.
+  - Advance one Euler-Maruyama step with one standard-normal draw; return the spike.
 - **reset**()
-  - Return the membrane voltage to ``v_rest``.
+  - Return the membrane voltage to ``v_rest``; a seeded neuron also restarts its noise stream.
 
 ---
 

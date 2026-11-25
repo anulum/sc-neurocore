@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5595
+    "test_files": 5596
   },
   "documentation": {
     "public_pages": [
@@ -7898,6 +7898,7 @@
       "tests/test_stochastic_doctor/test_diagnostics_stochastic_doctor.py",
       "tests/test_stochastic_doctor_diagnostics_fallback.py",
       "tests/test_stochastic_graph_engine_binding_runtime.py",
+      "tests/test_stochastic_if_seed.py",
       "tests/test_stochastic_lif.py",
       "tests/test_stochastic_lif_descriptor.py",
       "tests/test_streaming_spike_codec_streaming_spike_codec_compression.py",

@@ -30,7 +30,8 @@ $$V \geq V_{threshold}: \quad V \leftarrow V_{reset}, \quad \text{return } 1$$
 def step(self, current: float) -> int:
     if not math.isfinite(current):
         raise ValueError("current must be finite")
-    noise = self.sigma * np.sqrt(self.dt / self.tau_m) * np.random.randn()
+    draw = np.random.randn() if self._rng is None else self._rng.standard_normal()
+    noise = self.sigma * np.sqrt(self.dt / self.tau_m) * draw
     self.v += (-(self.v - self.v_rest) + self.mu + current) / self.tau_m * self.dt + noise
     if self.v >= self.v_threshold:
         self.v = self.v_reset
@@ -38,8 +39,10 @@ def step(self, current: float) -> int:
     return 0
 ```
 
-Forward Euler-Maruyama, single step per call. The noise term uses
-`np.random.randn()` — global numpy RNG.
+Forward Euler-Maruyama, single step per call. With `seed` set, the noise
+comes from the neuron's own `numpy.random.Generator` seeded with it;
+without a seed it comes from `np.random.randn()`, NumPy's global
+generator.
 
 ---
 
@@ -55,6 +58,7 @@ Forward Euler-Maruyama, single step per call. The noise term uses
 | `mu` | 0.0 | mV | Constant mean drive (DC offset) |
 | `sigma` | 3.0 | mV | Noise amplitude (diffusion coefficient) |
 | `dt` | 1.0 | ms | Integration timestep |
+| `seed` | None | — | Seed of the neuron's own noise generator; `None` uses NumPy's global generator |
 
 ### Validation contract
 
@@ -130,11 +134,14 @@ produces spikes (noise-driven).
 
 ### Stochastic: non-deterministic spike trains
 
-Two runs with the same parameters produce **different** spike trains
-because `np.random.randn()` uses the global RNG. This is by design —
-the model represents a single noisy neuron.
+Without a seed, two runs with the same parameters produce **different**
+spike trains, because the noise comes from NumPy's global generator;
+`np.random.seed()` makes them reproducible, as before.
 
-To reproduce results: seed the global numpy RNG with `np.random.seed()`.
+With `seed` set, the neuron draws from its own generator: two neurons
+with the same seed spike identically whatever else draws random numbers,
+the global generator is not advanced, and `reset()` restarts the
+stream.
 
 ### Sigma = 0 reduces to deterministic LIF
 
