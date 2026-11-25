@@ -90,106 +90,10 @@ plugins:
 
 nav:
   - Home: index.md
-  - Product Overview: product_overview.md
-  - Group and Project Map: ecosystem.md
-  - Applications and Market: applications_and_market.md
-  - Learning Path: LEARNING_PATH.md
-  - Competitive Landscape: COMPETITIVE_LANDSCAPE.md
-  - Guides:
-      - For Research Labs: guides/FOR_RESEARCH_LABS.md
-      - Getting Started: guides/getting-started.md
-      - Install Profiles: guides/install_profiles.md
-      - Supported Workflows: guides/supported_workflows.md
-      - Optional Dependency Matrix: guides/optional_dependency_matrix.md
-      - User Manual: guides/USER_MANUAL.md
-      - Technical Manual: guides/TECHNICAL_MANUAL.md
-      - Layer-by-Layer Guide: guides/LAYER_BY_LAYER_GUIDE.md
-      - Advanced Usage: guides/ADVANCED_USAGE_PATTERNS.md
-      - Performance Tuning: guides/PERFORMANCE_TUNING.md
-      - Performance Gates: guides/performance_gates.md
-      - Integration Guide: guides/INTEGRATION_GUIDE.md
-      - Examples: guides/EXAMPLES.md
-      - SC for Neuroscientists: guides/SC_FOR_NEUROSCIENTISTS.md
-      - SC for Hardware Engineers: guides/SC_FOR_HARDWARE_ENGINEERS.md
-      - SC for ML Engineers: guides/SC_FOR_ML_ENGINEERS.md
-      - Stochastic Backpropagation: guides/stochastic_backprop.md
-      - Spike Codec Library: guides/bci_codec.md
-      - Recording Codec Commands: guides/spike_codec_cli.md
-      - FAQ: guides/faq.md
-      - Glossary: guides/glossary.md
-      - API Cheatsheet: guides/cheatsheet.md
-      - Notebook Guide: guides/notebook_guide.md
-      - NIR Integration: guides/nir_integration.md
-      - Visual Studio: guides/studio.md
-      - Encoding Guide: guides/encoding_guide.md
-      - Side-Channel Encoding: guides/side_channel_encoding.md
-      - NeuroML Import: guides/neuroml_import.md
-      - NAS Guide: guides/nas_guide.md
-  - Validation:
-      - Reference Trace Harness: validation/reference_traces.md
-      - Runtime State Conformance: validation/runtime_state_conformance.md
-      - COBA-LIF Fidelity: validation/coba_lif_cosim_fidelity.md
-      - EscapeRate Stochastic Fidelity: validation/escape_rate_stochastic_fidelity.md
-      - Poisson Stochastic Fidelity: validation/poisson_stochastic_fidelity.md
-      - Transcendental Table Error (lut-v1): validation/lut_accuracy_v1.md
-      - Function Unit Error (v2): validation/function_units_v2_accuracy.md
-      - Circular CORDIC Accuracy: validation/cordic_accuracy.md
-      - IQIF Source Fidelity: validation/iqif_source_fidelity.md
-      - McCulloch-Pitts Source Fidelity: validation/mcculloch_pitts_source_fidelity.md
-      - Sigmoid Rate Source Fidelity: validation/sigmoid_rate_source_fidelity.md
-      - Threshold-linear Rate Source Fidelity: validation/threshold_linear_rate_source_fidelity.md
-      - Wilson-Cowan Source Fidelity: validation/wilson_cowan_source_fidelity.md
-      - Jansen–Rit Source Fidelity: validation/jansen_rit_source_fidelity.md
-      - MPR Source Fidelity: validation/ermentrout_kopell_pop_source_fidelity.md
-      - Wong-Wang Source Fidelity: validation/wong_wang_source_fidelity.md
-      - Resonate-and-Fire Source Fidelity: validation/resonate_and_fire_source_fidelity.md
-      - Adaptive-Threshold IF Source Fidelity: validation/adaptive_threshold_if_source_fidelity.md
-      - Alpha-Synapse LIF Source Fidelity: validation/alpha_source_fidelity.md
-      - Conductance Oscillator Co-Simulation Fidelity: validation/conductance_oscillator_cosim_fidelity.md
-      - LIF f-I Curve: validation/lif_fi_curve.md
-      - Izhikevich 20 Patterns: validation/izhikevich_patterns.md
-      - Hodgkin-Huxley 1952: validation/hodgkin_huxley.md
-      - Brian2 Parity: validation/cross_framework_brian2.md
-      - NeuroBench SHD: validation/neurobench_shd.md
-  - Studio (Experimental):
-      - User Manual:
-          - Start Here: studio/manual/index.md
-          - Install and Launch: studio/manual/installation.md
-          - First Experiment: studio/manual/first-experiment.md
-          - Experiments and Analysis: studio/manual/experiments.md
-          - Networks and Training: studio/manual/networks-and-training.md
-          - Projects, Recovery and Evidence: studio/manual/projects-and-evidence.md
-          - Hardware and Target Catalogue: studio/manual/hardware.md
-          - Troubleshooting: studio/manual/troubleshooting.md
-          - Glossary: studio/manual/glossary.md
-      - Overview: studio/index.md
-      - Compiler Inspector: studio/compiler-inspector.md
-      - Hardware Numeric Contract: studio/numeric-contract.md
-      - Model Readiness Labels: studio/model-readiness.md
-      - Synthesis Dashboard: studio/synthesis-dashboard.md
-      - Training Monitor: studio/training-monitor.md
-      - Performance Measurement: studio/performance-measurement.md
-      - Event Dataset Training: studio/event-training.md
-      - Network Canvas: studio/network-canvas.md
-      - Integration & Projects: studio/integration.md
-      - WebSocket Progress: studio/websocket-progress.md
-      - ODE Equation Editor: studio/ode-editor.md
-      - Candidate Models: studio/candidate-models.md
-      - Parameter Fitting: studio/parameter-fitting.md
-      - SVG Vector Export: studio/svg-export.md
-      - Replay & Code Export: studio/replay-and-export.md
-      - Evidence Verification: studio/evidence-verification.md
-      - Job Ledger & Recovery: studio/job-ledger.md
-      - Workspaces & Recovery: studio/workspaces.md
-      - Reviewing & Sharing: studio/collaboration.md
-      - Onboarding Tour: studio/onboarding.md
-      - Measured Behaviour Facet: studio/behaviour-facet.md
-      - Catalogue Health: studio/catalogue-health.md
-      - Model Discovery Provider: studio/model-provider.md
-      - HDL Identifier Contract: studio/hdl-identifiers.md
-      - Admin Identity & Audit: studio/admin-identity.md
-      - OpenAPI Contract: api/studio_openapi.md
   - Tutorials:
+      - Getting Started: guides/getting-started.md
+      - Learning Path: LEARNING_PATH.md
+      - Notebook Guide: guides/notebook_guide.md
       - Studio Quickstart: tutorials/studio_quickstart.md
       - SC Training Pipeline: tutorials/sc_training_pipeline.md
       - SC Fundamentals: tutorials/01_stochastic_computing_fundamentals.md
@@ -278,273 +182,375 @@ nav:
       - Spiking Neural ODEs: tutorials/82_spike_ode.md
       - Topology Analysis: tutorials/83_topology.md
       - Few-Shot Learning: tutorials/84_few_shot.md
-  - Benchmarks:
-      - Cross-Framework Comparison: benchmarks/cross_framework.md
-      - Comparison: benchmarks/comparison.md
-      - Training Benchmarks: benchmarks/training.md
-      - Summary: benchmarks/BENCHMARKS.md
-      - Detailed Report: benchmarks/BENCHMARK_REPORT.md
-  - Architecture:
-      - Overview: architecture/architecture.md
-      - Evidence: architecture/evidence.md
-      - System Map: architecture/SYSTEM_MAP.md
-      - Package Boundary Decision: architecture/package_boundary_decision.md
-      - Component Inventory: architecture/COMPONENT_INVENTORY.md
-  - Hardware:
-      - Timing-Aware Formal Properties: formal/timing_aware_properties.md
-      - External Formal Evidence: formal/external_results.md
-      - Hardware Guide: hardware/HARDWARE_GUIDE.md
-      - Hardware Experiment Protocol: hardware/experiment_protocol.md
-      - AER Priority Queue: hardware/aer_priority_queue.md
-      - ADC-to-Spike Quantiser: hardware/adc_to_spike_quantiser.md
-      - CORDIV State Machine: hardware/sc_cordiv.md
-      - DCLS RTL Contract: compiler/dcls_rtl.md
-      - Zynq UltraScale+ Target: hardware/ultrascale_plus.md
-      - Vivado CI Gates: hardware/vivado_ci_gates.md
-      - FPGA Toolchain Guide: hardware/FPGA_TOOLCHAIN_GUIDE.md
-      - Hardware Manual: hardware/SC_NEUROCORE_HARDWARE_MANUAL.md
-      - Implementation Summary: hardware/HARDWARE_IMPLEMENTATION_SUMMARY.md
-      - Synthesis Results: hardware/SYNTHESIS_RESULTS.md
-  - API Reference:
-      - Full Reference: api/API_REFERENCE.md
-      - Command-Line Interface: api/cli.md
-      - Self-Hosted Hub: api/hub.md
-      - Studio Federation: api/federation.md
-      - Network Simulation Engine: api/network.md
-      - Monitors &amp; Stimulus Sources: api/monitor.md
-      - MPI Distributed Runner: api/mpi_runner.md
-      - Cortical Column Microcircuit: api/cortical_column.md
-      - Gamma Oscillation (PING): api/gamma_oscillation.md
-      - Neuromorphic Swarm Control: api/swarm.md
-      - Neuromorphic Datasets: api/datasets.md
-      - Hardware Drivers: api/drivers.md
-      - Framework Integrations (Lava/Loihi): api/integrations.md
-      - Exception Hierarchy: api/exceptions.md
-      - Named Constants: api/constants.md
-      - Speculative Bridges:
-          - DNA Mapper: api/bridges/dna_mapper.md
-          - Photonic NoC: api/bridges/photonic_noc.md
-          - Stochastic Photonic Co-Design: api/bridges/photonic_codesign.md
-          - Quantum Annealing: api/bridges/quantum_annealing.md
-      - Core:
-          - Neuron Model Catalogue: api/neuron_models.md
-          - Model Fidelity &amp; Polyglot Status: api/model_fidelity_status.md
-          - Readiness Evidence: api/readiness_evidence.md
-          - Model Profiles: api/model_profiles.md
-          - SC Compte Working-Memory Network: api/sc_compte_wm_network.md
-          - Neurons: api/neurons.md
-          - Synapses: api/synapses.md
-          - Layers: api/layers.md
-          - Sources: api/sources.md
-          - Recorders: api/recorders.md
-          - Spike Train Analysis: api/analysis.md
-          - Spike-Train Statistics Core: api/spike_train_statistics.md
-          - GPFA (deterministic init + polyglot EM): api/gpfa.md
-          - Utilities: api/utils.md
-          - Acceleration: api/accel.md
-          - Ensembles: api/ensembles.md
-          - Solvers: api/solvers.md
-          - Transformers: api/transformers.md
-      - Decoders & Bio:
-          - Neural Decoders (POYO+/POSSM/NDT3/CEBRA): api/neural_decoders.md
-          - Transcriptomic (scKGBERT/Geneformer): api/transcriptomic.md
-          - GPU Backend (wgpu): api/gpu.md
-          - Dopamine STDP Synapse: api/dopamine_stdp.md
-          - Short-Term Plasticity Synapse: api/short_term_plasticity.md
-      - Compiler & Export:
-          - Compiler: api/compiler.md
-          - Compiler Surface Policy: api/compiler_surface.md
-          - Standalone Function Units: compiler/standalone_function_units.md
-          - Function Synthesis Diagnostics: compiler/function_synthesis.md
-          - Adaptive Precision: api/adaptive_precision.md
-          - Export: api/export.md
-          - HDL Generation: api/hdl_gen.md
-      - Training:
-          - Training API: api/training.md
-          - Delay Training: api/delay_training.md
-          - ANN-to-SNN Conversion: api/conversion.md
-      - Identity & AI:
-          - Identity Substrate: api/identity.md
-          - AI-Optimized Neurons: api/ai_neurons.md
-      - Tools:
-          - Energy Estimator: api/energy.md
-          - Spike Debugger: api/debug.md
-          - Streaming Server: api/serve.md
-          - Platform Profiler: api/profiler.md
-          - Model Compression: api/compression.md
-          - Resource Optimizer: api/optimizer.md
-          - Auto-Fit: api/autofit.md
-          - Digital Twin: api/digital_twin.md
-          - Multimodal Fusion: api/fusion.md
-          - NeuroBench: api/benchmarks.md
-      - Training & Profiling:
-          - Spike Profiler: api/spike_profiler.md
-          - O(1) Online Learning: api/online_learning.md
-          - Architecture Doctor: api/doctor.md
-          - Spike Augmentation: api/augmentation.md
-          - Continual Learning: api/continual.md
-      - Explainability:
-          - SNN XAI: api/explain.md
-      - Privacy & Safety:
-          - Differential Privacy: api/privacy.md
-          - Fault Resilience: api/resilience.md
-      - Encoding:
-          - Encoding Zoo + Optimizer: api/encoding_zoo.md
-      - Simulation:
-          - Event-Driven: api/event_driven.md
-      - Optimization:
-          - SNN Optimizer: api/snn_optimizer.md
-      - Signal Processing:
-          - Spike DSP: api/spike_dsp.md
-      - Data:
-          - Spike Codec: api/spike_codec.md
-          - Spike Codec Wire Formats: reference/spike_codec_wire_formats.md
-          - Spike GNN: api/spike_gnn.md
-      - Symbolic:
-          - Symbolic Reasoning: api/symbolic.md
-      - Energy:
-          - Energy Accounting: api/energy_accounting.md
-      - Reservoir:
-          - Auto-Critical: api/reservoir.md
-      - Training Trifecta:
-          - Spike Normalization: api/spike_norm.md
-          - Knowledge Distillation: api/distillation.md
-          - QAT: api/qat.md
-          - Residual Blocks: api/residual.md
-          - Contrastive SSL: api/contrastive.md
-      - Transfer:
-          - Transfer Learning: api/transfer.md
-      - Continuous:
-          - Spiking Neural ODEs: api/spike_ode.md
-      - Analysis:
-          - Graph Topology: api/graph_topology.md
-      - Few-Shot:
-          - Meta-Learning: api/few_shot.md
-      - Control:
-          - Neuromorphic Control: api/control.md
-      - Stability:
-          - Homeostasis: api/homeostasis.md
-          - Multi-Timescale: api/temporal_hierarchy.md
-      - Verification:
-          - Temporal Properties: api/temporal_properties.md
-      - Hardware Compilation:
-          - Chip Compiler: api/chip_compiler.md
-          - SC Intermediate Representation: api/sc-ir.md
-          - Equation Native IR: api/equation-native-ir.md
-      - Transformers & SSM:
-          - Spiking Transformers: api/spikformer.md
-      - Architecture Search:
-          - Hardware-Aware NAS: api/nas.md
-      - Sensors & Communication:
-          - DVS Pipeline: api/sensors.md
-          - AER-over-UDP: api/comm.md
-      - Interoperability:
-          - NIR Bridge: api/nir_bridge.md
-          - SC-NIR Metadata: api/scnir.md
-      - Domain Modules:
-          - Adapters: api/adapters.md
-          - Audio: api/audio.md
-          - Bio: api/bio.md
-          - Chaos: api/chaos.md
-          - Core Modules: api/core.md
-          - Dashboard: api/dashboard.md
-          - Generative: api/generative.md
-          - Graphs: api/graphs.md
-          - HDC: api/hdc.md
-          - HDC Semantic Contract: api/hdc_contract.md
-          - Interfaces: api/interfaces.md
-          - Learning: api/learning.md
-          - Math: api/math.md
-          - Models: api/models.md
-          - Model Pages:
-              - SCIzhikevichNeuron: api/models/izhikevich.md
-          - Optics: api/optics.md
-          - Physics: api/physics.md
-          - Pipeline: api/pipeline.md
-          - Quantum: api/quantum.md
-          - Robotics: api/robotics.md
-          - SCPN Layers: api/scpn.md
-          - SCPN NeuroCore Bridge: api/scpn_neurocore.md
-          - Sleep: api/sleep.md
-          - Spatial: api/spatial.md
-          - World Model:
-              - Overview: api/world_model.md
-              - Predictive Model (LGSSM): api/world_model/predictive_model.md
-      - Industrial:
-          - Industrial Applications: api/industrial_applications.md
-          - Safety Certification: api/safety_cert.md
-          - ASIC Flow: api/asic_flow.md
-          - Fault Injection: api/fault_injection.md
-          - UVM Generator: api/uvm_gen.md
-      - Substrates:
-          - Spintronic Mapper: api/spintronic.md
-          - Chiplet Generator: api/chiplet.md
-          - Memristor Mapper: api/memristor.md
-          - Analog Bridge: api/analog_bridge.md
-      - Exascale:
-          - Hypervisor: api/hypervisor.md
-          - Digital Twin Sync: api/twinsync.md
-      - Frontiers:
-          - Evolutionary Substrate: api/evo_substrate.md
-          - Meta-Plasticity: api/meta_plasticity.md
-          - ArcaneZenith Cognitive Core: api/arcane_zenith.md
-          - Bioware Interface: api/bioware.md
-          - Federated SC: api/federated.md
-          - BCI Studio: api/bci_studio.md
-      - Acceleration:
-          - Mojo SIMD Kernels: api/mojo_accel.md
-          - Julia ODE Solvers: api/julia_solvers.md
-          - Native FFI Array Guards: api/array_guards.md
-      - Formal + Safety:
-          - Lean 4 Safety Proofs: api/formal.md
-          - Network Formal Verification: api/formal_network_verification.md
-          - Machine-Checked RTL Equivalence: api/formal_equivalence.md
-      - Edge + Wire Protocol:
-          - AER Interconnect Router: api/edge.md
-          - Protobuf Schemas: api/proto.md
-      - Unification:
-          - Explainability: api/explainability.md
-          - Neuro-Symbolic: api/neuro_symbolic.md
-          - Stochastic Doctor: api/stochastic_doctor.md
-          - Model Zoo (V2): api/model_zoo_v2.md
-      - Integration Reference: MODULE_INTEGRATION.md
-      - Safety:
-          - FMEA: safety/FMEA_SNN_COMPILER.md
-          - Traceability: safety/TRACEABILITY_MATRIX.md
-      - Infrastructure:
-          - Hardware: api/hardware.md
-          - Security: api/security.md
-          - Verification: api/verification.md
-          - Visualization: api/viz.md
-      - Speculative (research/):
-          - "See research/README.md": api/research-speculative.md
-  - Research:
-      - "JOSS Paper (Preprint)": research/paper.md
-      - Neuromorphic Primer: research/NEUROMORPHIC_COMPUTING_PRIMER.md
-      - V3.7 Adaptive Runtime Engine: research/SC_NEUROCORE_V3.7_ADAPTIVE_RUNTIME_ENGINE_STUDY.md
-  - Reports:
-      - Capability Report: reports/SC_NEUROCORE_CAPABILITY_REPORT_v3.13.md
-      - State Report: reports/SC_NEUROCORE_COMPREHENSIVE_STATE_REPORT_2026-02-01.md
-      - Remediation Plan: reports/SC_NEUROCORE_DISCREPANCY_REMEDIATION_PLAN_2026-02-11.md
-      - Driver Manual: reports/SC_NEUROCORE_DRIVER_MANUAL.md
-  - Development:
-      - Audit Cadence: development/audit_cadence.md
-      - Maintenance Tools: development/maintenance_tools.md
-      - Native Go MAT Statement Gate: development/native_go_coverage.md
-      - Security Hardening: development/security_hardening.md
-      - Licensing: development/licensing.md
-      - Security Scanner CI Packet: development/security_scanner_ci.md
-      - Dependency Audits: development/dependency_audits.md
-      - V3 Migration: development/v3_migration.md
-      - Release Notes v4.2.0: development/RELEASE_NOTES_v4.2.0.md
-      - Release Notes v4.1.0: development/RELEASE_NOTES_v4.1.0.md
-      - Release Notes v4.0.0: development/RELEASE_NOTES_v4.0.0.md
-      - Release Rollback: development/release_rollback.md
-      - Desktop Runtime Assembly: development/studio_desktop_assembly.md
-      - Release Notes v2.0.0: development/RELEASE_NOTES_v2.0.0.md
-  - Changelog: CHANGELOG.md
-  - Pricing: pricing.md
-  - Rust Engine API: api/rust-engine.md
+  - How-to Guides:
+      - For Research Labs: guides/FOR_RESEARCH_LABS.md
+      - Install Profiles: guides/install_profiles.md
+      - Supported Workflows: guides/supported_workflows.md
+      - Examples: guides/EXAMPLES.md
+      - Advanced Usage: guides/ADVANCED_USAGE_PATTERNS.md
+      - Performance Tuning: guides/PERFORMANCE_TUNING.md
+      - Integration Guide: guides/INTEGRATION_GUIDE.md
+      - NIR Integration: guides/nir_integration.md
+      - NeuroML Import: guides/neuroml_import.md
+      - Recording Codec Commands: guides/spike_codec_cli.md
+      - NAS Guide: guides/nas_guide.md
+      - Hardware:
+          - Hardware Guide: hardware/HARDWARE_GUIDE.md
+          - Hardware Experiment Protocol: hardware/experiment_protocol.md
+          - FPGA Toolchain Guide: hardware/FPGA_TOOLCHAIN_GUIDE.md
+  - Reference:
+      - API Reference:
+          - Full Reference: api/API_REFERENCE.md
+          - Command-Line Interface: api/cli.md
+          - Self-Hosted Hub: api/hub.md
+          - Studio Federation: api/federation.md
+          - Network Simulation Engine: api/network.md
+          - Monitors &amp; Stimulus Sources: api/monitor.md
+          - MPI Distributed Runner: api/mpi_runner.md
+          - Cortical Column Microcircuit: api/cortical_column.md
+          - Gamma Oscillation (PING): api/gamma_oscillation.md
+          - Neuromorphic Swarm Control: api/swarm.md
+          - Neuromorphic Datasets: api/datasets.md
+          - Hardware Drivers: api/drivers.md
+          - Framework Integrations (Lava/Loihi): api/integrations.md
+          - Exception Hierarchy: api/exceptions.md
+          - Named Constants: api/constants.md
+          - Speculative Bridges:
+              - DNA Mapper: api/bridges/dna_mapper.md
+              - Photonic NoC: api/bridges/photonic_noc.md
+              - Stochastic Photonic Co-Design: api/bridges/photonic_codesign.md
+              - Quantum Annealing: api/bridges/quantum_annealing.md
+          - Core:
+              - Neuron Model Catalogue: api/neuron_models.md
+              - Model Fidelity &amp; Polyglot Status: api/model_fidelity_status.md
+              - Readiness Evidence: api/readiness_evidence.md
+              - Model Profiles: api/model_profiles.md
+              - SC Compte Working-Memory Network: api/sc_compte_wm_network.md
+              - Neurons: api/neurons.md
+              - Synapses: api/synapses.md
+              - Layers: api/layers.md
+              - Sources: api/sources.md
+              - Recorders: api/recorders.md
+              - Spike Train Analysis: api/analysis.md
+              - Spike-Train Statistics Core: api/spike_train_statistics.md
+              - GPFA (deterministic init + polyglot EM): api/gpfa.md
+              - Utilities: api/utils.md
+              - Acceleration: api/accel.md
+              - Ensembles: api/ensembles.md
+              - Solvers: api/solvers.md
+              - Transformers: api/transformers.md
+          - Decoders & Bio:
+              - Neural Decoders (POYO+/POSSM/NDT3/CEBRA): api/neural_decoders.md
+              - Transcriptomic (scKGBERT/Geneformer): api/transcriptomic.md
+              - GPU Backend (wgpu): api/gpu.md
+              - Dopamine STDP Synapse: api/dopamine_stdp.md
+              - Short-Term Plasticity Synapse: api/short_term_plasticity.md
+          - Compiler & Export:
+              - Compiler: api/compiler.md
+              - Compiler Surface Policy: api/compiler_surface.md
+              - Standalone Function Units: compiler/standalone_function_units.md
+              - Function Synthesis Diagnostics: compiler/function_synthesis.md
+              - Adaptive Precision: api/adaptive_precision.md
+              - Export: api/export.md
+              - HDL Generation: api/hdl_gen.md
+          - Training:
+              - Training API: api/training.md
+              - Delay Training: api/delay_training.md
+              - ANN-to-SNN Conversion: api/conversion.md
+          - Identity & AI:
+              - Identity Substrate: api/identity.md
+              - AI-Optimized Neurons: api/ai_neurons.md
+          - Tools:
+              - Energy Estimator: api/energy.md
+              - Spike Debugger: api/debug.md
+              - Streaming Server: api/serve.md
+              - Platform Profiler: api/profiler.md
+              - Model Compression: api/compression.md
+              - Resource Optimizer: api/optimizer.md
+              - Auto-Fit: api/autofit.md
+              - Digital Twin: api/digital_twin.md
+              - Multimodal Fusion: api/fusion.md
+              - NeuroBench: api/benchmarks.md
+          - Training & Profiling:
+              - Spike Profiler: api/spike_profiler.md
+              - O(1) Online Learning: api/online_learning.md
+              - Architecture Doctor: api/doctor.md
+              - Spike Augmentation: api/augmentation.md
+              - Continual Learning: api/continual.md
+          - Explainability:
+              - SNN XAI: api/explain.md
+          - Privacy & Safety:
+              - Differential Privacy: api/privacy.md
+              - Fault Resilience: api/resilience.md
+          - Encoding:
+              - Encoding Zoo + Optimizer: api/encoding_zoo.md
+          - Simulation:
+              - Event-Driven: api/event_driven.md
+          - Optimization:
+              - SNN Optimizer: api/snn_optimizer.md
+          - Signal Processing:
+              - Spike DSP: api/spike_dsp.md
+          - Data:
+              - Spike Codec: api/spike_codec.md
+              - Spike Codec Wire Formats: reference/spike_codec_wire_formats.md
+              - Spike GNN: api/spike_gnn.md
+          - Symbolic:
+              - Symbolic Reasoning: api/symbolic.md
+          - Energy:
+              - Energy Accounting: api/energy_accounting.md
+          - Reservoir:
+              - Auto-Critical: api/reservoir.md
+          - Training Trifecta:
+              - Spike Normalization: api/spike_norm.md
+              - Knowledge Distillation: api/distillation.md
+              - QAT: api/qat.md
+              - Residual Blocks: api/residual.md
+              - Contrastive SSL: api/contrastive.md
+          - Transfer:
+              - Transfer Learning: api/transfer.md
+          - Continuous:
+              - Spiking Neural ODEs: api/spike_ode.md
+          - Analysis:
+              - Graph Topology: api/graph_topology.md
+          - Few-Shot:
+              - Meta-Learning: api/few_shot.md
+          - Control:
+              - Neuromorphic Control: api/control.md
+          - Stability:
+              - Homeostasis: api/homeostasis.md
+              - Multi-Timescale: api/temporal_hierarchy.md
+          - Verification:
+              - Temporal Properties: api/temporal_properties.md
+          - Hardware Compilation:
+              - Chip Compiler: api/chip_compiler.md
+              - SC Intermediate Representation: api/sc-ir.md
+              - Equation Native IR: api/equation-native-ir.md
+          - Transformers & SSM:
+              - Spiking Transformers: api/spikformer.md
+          - Architecture Search:
+              - Hardware-Aware NAS: api/nas.md
+          - Sensors & Communication:
+              - DVS Pipeline: api/sensors.md
+              - AER-over-UDP: api/comm.md
+          - Interoperability:
+              - NIR Bridge: api/nir_bridge.md
+              - SC-NIR Metadata: api/scnir.md
+          - Domain Modules:
+              - Adapters: api/adapters.md
+              - Audio: api/audio.md
+              - Bio: api/bio.md
+              - Chaos: api/chaos.md
+              - Core Modules: api/core.md
+              - Dashboard: api/dashboard.md
+              - Generative: api/generative.md
+              - Graphs: api/graphs.md
+              - HDC: api/hdc.md
+              - HDC Semantic Contract: api/hdc_contract.md
+              - Interfaces: api/interfaces.md
+              - Learning: api/learning.md
+              - Math: api/math.md
+              - Models: api/models.md
+              - Model Pages:
+                  - SCIzhikevichNeuron: api/models/izhikevich.md
+              - Optics: api/optics.md
+              - Physics: api/physics.md
+              - Pipeline: api/pipeline.md
+              - Quantum: api/quantum.md
+              - Robotics: api/robotics.md
+              - SCPN Layers: api/scpn.md
+              - SCPN NeuroCore Bridge: api/scpn_neurocore.md
+              - Sleep: api/sleep.md
+              - Spatial: api/spatial.md
+              - World Model:
+                  - Overview: api/world_model.md
+                  - Predictive Model (LGSSM): api/world_model/predictive_model.md
+          - Industrial:
+              - Industrial Applications: api/industrial_applications.md
+              - Safety Certification: api/safety_cert.md
+              - ASIC Flow: api/asic_flow.md
+              - Fault Injection: api/fault_injection.md
+              - UVM Generator: api/uvm_gen.md
+          - Substrates:
+              - Spintronic Mapper: api/spintronic.md
+              - Chiplet Generator: api/chiplet.md
+              - Memristor Mapper: api/memristor.md
+              - Analog Bridge: api/analog_bridge.md
+          - Exascale:
+              - Hypervisor: api/hypervisor.md
+              - Digital Twin Sync: api/twinsync.md
+          - Frontiers:
+              - Evolutionary Substrate: api/evo_substrate.md
+              - Meta-Plasticity: api/meta_plasticity.md
+              - ArcaneZenith Cognitive Core: api/arcane_zenith.md
+              - Bioware Interface: api/bioware.md
+              - Federated SC: api/federated.md
+              - BCI Studio: api/bci_studio.md
+          - Acceleration:
+              - Mojo SIMD Kernels: api/mojo_accel.md
+              - Julia ODE Solvers: api/julia_solvers.md
+              - Native FFI Array Guards: api/array_guards.md
+          - Formal + Safety:
+              - Lean 4 Safety Proofs: api/formal.md
+              - Network Formal Verification: api/formal_network_verification.md
+              - Machine-Checked RTL Equivalence: api/formal_equivalence.md
+          - Edge + Wire Protocol:
+              - AER Interconnect Router: api/edge.md
+              - Protobuf Schemas: api/proto.md
+          - Unification:
+              - Explainability: api/explainability.md
+              - Neuro-Symbolic: api/neuro_symbolic.md
+              - Stochastic Doctor: api/stochastic_doctor.md
+              - Model Zoo (V2): api/model_zoo_v2.md
+          - Integration Reference: MODULE_INTEGRATION.md
+          - Safety:
+              - FMEA: safety/FMEA_SNN_COMPILER.md
+              - Traceability: safety/TRACEABILITY_MATRIX.md
+          - Infrastructure:
+              - Hardware: api/hardware.md
+              - Security: api/security.md
+              - Verification: api/verification.md
+              - Visualization: api/viz.md
+          - Speculative (research/):
+              - "See research/README.md": api/research-speculative.md
+      - Rust Engine API: api/rust-engine.md
+      - API Cheatsheet: guides/cheatsheet.md
+      - Glossary: guides/glossary.md
+      - FAQ: guides/faq.md
+      - Technical Manual: guides/TECHNICAL_MANUAL.md
+      - Optional Dependency Matrix: guides/optional_dependency_matrix.md
+      - Performance Gates: guides/performance_gates.md
+      - Hardware:
+          - Hardware Manual: hardware/SC_NEUROCORE_HARDWARE_MANUAL.md
+          - AER Priority Queue: hardware/aer_priority_queue.md
+          - ADC-to-Spike Quantiser: hardware/adc_to_spike_quantiser.md
+          - CORDIV State Machine: hardware/sc_cordiv.md
+          - DCLS RTL Contract: compiler/dcls_rtl.md
+          - Zynq UltraScale+ Target: hardware/ultrascale_plus.md
+          - Vivado CI Gates: hardware/vivado_ci_gates.md
+          - Timing-Aware Formal Properties: formal/timing_aware_properties.md
+  - Explanation:
+      - User Manual: guides/USER_MANUAL.md
+      - Layer-by-Layer Guide: guides/LAYER_BY_LAYER_GUIDE.md
+      - SC for Neuroscientists: guides/SC_FOR_NEUROSCIENTISTS.md
+      - SC for Hardware Engineers: guides/SC_FOR_HARDWARE_ENGINEERS.md
+      - SC for ML Engineers: guides/SC_FOR_ML_ENGINEERS.md
+      - Spike Codec Library: guides/bci_codec.md
+      - Encoding Guide: guides/encoding_guide.md
+      - Stochastic Backpropagation: guides/stochastic_backprop.md
+      - Side-Channel Encoding: guides/side_channel_encoding.md
+      - Architecture:
+          - Overview: architecture/architecture.md
+          - Evidence: architecture/evidence.md
+          - System Map: architecture/SYSTEM_MAP.md
+          - Package Boundary Decision: architecture/package_boundary_decision.md
+          - Component Inventory: architecture/COMPONENT_INVENTORY.md
+      - Research:
+          - "JOSS Paper (Preprint)": research/paper.md
+          - Neuromorphic Primer: research/NEUROMORPHIC_COMPUTING_PRIMER.md
+          - V3.7 Adaptive Runtime Engine: research/SC_NEUROCORE_V3.7_ADAPTIVE_RUNTIME_ENGINE_STUDY.md
+  - Evidence:
+      - Validation:
+          - Reference Trace Harness: validation/reference_traces.md
+          - Runtime State Conformance: validation/runtime_state_conformance.md
+          - COBA-LIF Fidelity: validation/coba_lif_cosim_fidelity.md
+          - EscapeRate Stochastic Fidelity: validation/escape_rate_stochastic_fidelity.md
+          - Poisson Stochastic Fidelity: validation/poisson_stochastic_fidelity.md
+          - Transcendental Table Error (lut-v1): validation/lut_accuracy_v1.md
+          - Function Unit Error (v2): validation/function_units_v2_accuracy.md
+          - Circular CORDIC Accuracy: validation/cordic_accuracy.md
+          - IQIF Source Fidelity: validation/iqif_source_fidelity.md
+          - McCulloch-Pitts Source Fidelity: validation/mcculloch_pitts_source_fidelity.md
+          - Sigmoid Rate Source Fidelity: validation/sigmoid_rate_source_fidelity.md
+          - Threshold-linear Rate Source Fidelity: validation/threshold_linear_rate_source_fidelity.md
+          - Wilson-Cowan Source Fidelity: validation/wilson_cowan_source_fidelity.md
+          - Jansen–Rit Source Fidelity: validation/jansen_rit_source_fidelity.md
+          - MPR Source Fidelity: validation/ermentrout_kopell_pop_source_fidelity.md
+          - Wong-Wang Source Fidelity: validation/wong_wang_source_fidelity.md
+          - Resonate-and-Fire Source Fidelity: validation/resonate_and_fire_source_fidelity.md
+          - Adaptive-Threshold IF Source Fidelity: validation/adaptive_threshold_if_source_fidelity.md
+          - Alpha-Synapse LIF Source Fidelity: validation/alpha_source_fidelity.md
+          - Conductance Oscillator Co-Simulation Fidelity: validation/conductance_oscillator_cosim_fidelity.md
+          - LIF f-I Curve: validation/lif_fi_curve.md
+          - Izhikevich 20 Patterns: validation/izhikevich_patterns.md
+          - Hodgkin-Huxley 1952: validation/hodgkin_huxley.md
+          - Brian2 Parity: validation/cross_framework_brian2.md
+          - NeuroBench SHD: validation/neurobench_shd.md
+      - Benchmarks:
+          - Cross-Framework Comparison: benchmarks/cross_framework.md
+          - Comparison: benchmarks/comparison.md
+          - Training Benchmarks: benchmarks/training.md
+          - Summary: benchmarks/BENCHMARKS.md
+          - Detailed Report: benchmarks/BENCHMARK_REPORT.md
+      - Hardware:
+          - External Formal Evidence: formal/external_results.md
+          - Implementation Summary: hardware/HARDWARE_IMPLEMENTATION_SUMMARY.md
+          - Synthesis Results: hardware/SYNTHESIS_RESULTS.md
+      - Reports:
+          - Capability Report: reports/SC_NEUROCORE_CAPABILITY_REPORT_v3.13.md
+          - State Report: reports/SC_NEUROCORE_COMPREHENSIVE_STATE_REPORT_2026-02-01.md
+          - Remediation Plan: reports/SC_NEUROCORE_DISCREPANCY_REMEDIATION_PLAN_2026-02-11.md
+          - Driver Manual: reports/SC_NEUROCORE_DRIVER_MANUAL.md
+  - Studio (Experimental):
+      - Visual Studio: guides/studio.md
+      - User Manual:
+          - Start Here: studio/manual/index.md
+          - Install and Launch: studio/manual/installation.md
+          - First Experiment: studio/manual/first-experiment.md
+          - Experiments and Analysis: studio/manual/experiments.md
+          - Networks and Training: studio/manual/networks-and-training.md
+          - Projects, Recovery and Evidence: studio/manual/projects-and-evidence.md
+          - Hardware and Target Catalogue: studio/manual/hardware.md
+          - Troubleshooting: studio/manual/troubleshooting.md
+          - Glossary: studio/manual/glossary.md
+      - Overview: studio/index.md
+      - Compiler Inspector: studio/compiler-inspector.md
+      - Hardware Numeric Contract: studio/numeric-contract.md
+      - Model Readiness Labels: studio/model-readiness.md
+      - Synthesis Dashboard: studio/synthesis-dashboard.md
+      - Training Monitor: studio/training-monitor.md
+      - Performance Measurement: studio/performance-measurement.md
+      - Event Dataset Training: studio/event-training.md
+      - Network Canvas: studio/network-canvas.md
+      - Integration & Projects: studio/integration.md
+      - WebSocket Progress: studio/websocket-progress.md
+      - ODE Equation Editor: studio/ode-editor.md
+      - Candidate Models: studio/candidate-models.md
+      - Parameter Fitting: studio/parameter-fitting.md
+      - SVG Vector Export: studio/svg-export.md
+      - Replay & Code Export: studio/replay-and-export.md
+      - Evidence Verification: studio/evidence-verification.md
+      - Job Ledger & Recovery: studio/job-ledger.md
+      - Workspaces & Recovery: studio/workspaces.md
+      - Reviewing & Sharing: studio/collaboration.md
+      - Onboarding Tour: studio/onboarding.md
+      - Measured Behaviour Facet: studio/behaviour-facet.md
+      - Catalogue Health: studio/catalogue-health.md
+      - Model Discovery Provider: studio/model-provider.md
+      - HDL Identifier Contract: studio/hdl-identifiers.md
+      - Admin Identity & Audit: studio/admin-identity.md
+      - OpenAPI Contract: api/studio_openapi.md
+  - Project:
+      - Product Overview: product_overview.md
+      - Group and Project Map: ecosystem.md
+      - Applications and Market: applications_and_market.md
+      - Competitive Landscape: COMPETITIVE_LANDSCAPE.md
+      - Pricing: pricing.md
+      - Development:
+          - Audit Cadence: development/audit_cadence.md
+          - Maintenance Tools: development/maintenance_tools.md
+          - Native Go MAT Statement Gate: development/native_go_coverage.md
+          - Security Hardening: development/security_hardening.md
+          - Licensing: development/licensing.md
+          - Security Scanner CI Packet: development/security_scanner_ci.md
+          - Dependency Audits: development/dependency_audits.md
+          - V3 Migration: development/v3_migration.md
+          - Release Notes v4.2.0: development/RELEASE_NOTES_v4.2.0.md
+          - Release Notes v4.1.0: development/RELEASE_NOTES_v4.1.0.md
+          - Release Notes v4.0.0: development/RELEASE_NOTES_v4.0.0.md
+          - Release Rollback: development/release_rollback.md
+          - Desktop Runtime Assembly: development/studio_desktop_assembly.md
+          - Release Notes v2.0.0: development/RELEASE_NOTES_v2.0.0.md
+      - Changelog: CHANGELOG.md
 
 extra:
   social:

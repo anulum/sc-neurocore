@@ -776,6 +776,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The documentation site's navigation is organised by what a reader came
+  to do. Twenty top-level entries, which mixed tutorials, task guides,
+  reference, background, evidence and product pages, are now eight:
+  Home, Tutorials, How-to Guides, Reference, Explanation, Evidence, the
+  experimental Studio and Project. The twenty-nine pages of the former
+  Guides section and the fourteen of the former Hardware section are placed by
+  what each page is, and every page stays listed exactly once. A new
+  test keeps the eight sections and keeps tutorials, evidence,
+  explanation, project, Studio and API pages in their sections.
+
 - The five neuromorphic-chip integer neuron models (`SpiNNaker2Neuron`,
   `Loihi2Neuron`, `LoihiCUBANeuron`, `TrueNorthNeuron` and `AkidaNeuron`) now
   validate inputs, constructor domains and candidate state transitions before

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5118
+expected_file_count = 5119
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20516,3 +20516,7 @@ rationale = "Verify finiteness, domain, overflow and parity guards on neuromorph
 [[file]]
 path = "tests/test_stochastic_if_seed.py"
 rationale = "Exercise SC-NeuroCore: an explicit seed gives each StochasticIFNeuron its own noise stream."
+
+[[file]]
+path = "tests/test_docs_navigation_diataxis.py"
+rationale = "Exercise SC-NeuroCore: the site navigation is organised by what a reader came to do."
