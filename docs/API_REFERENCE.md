@@ -28434,22 +28434,33 @@ dt : float
 ## Module `layers.recurrent`
 
 ### Class `SCRecurrentLayer`
-SC recurrent / reservoir layer (echo state network).
+Stochastic-computing recurrent reservoir layer (echo state network).
 
-Spectral radius bound follows Jaeger, GMD Report 148, 2001.
+Spectral radius scaling follows Jaeger, GMD Report 148, 2001.
 
-Example
--------
->>> import numpy as np
->>> res = SCRecurrentLayer(n_inputs=3, n_neurons=10, seed=0)
->>> state = res.step(np.array(&#91;0.5, 0.3, 0.8&#93;))
->>> state.shape
-(10,)
+Parameters
+----------
+n_inputs : int
+    Number of input channels (at least 1).
+n_neurons : int
+    Number of reservoir neurons (at least 1).
+feedback_strength : float, default=RESERVOIR_FEEDBACK_STRENGTH
+    Finite recurrent feedback gain.
+input_strength : float, default=RESERVOIR_INPUT_STRENGTH
+    Finite input drive gain.
+spectral_radius : float, default=RESERVOIR_SPECTRAL_RADIUS
+    Finite reservoir spectral radius target.
+length : int, default=LAYER_DEFAULT_LENGTH
+    Positive stochastic bitstream length.
+seed : int, optional
+    Optional PRNG seed.
 
 - **__post_init__**()
+  - Validate configuration parameters and initialise reservoir weights and encoders.
 - **step**(input_vector)
-  - Process one time step (e.g., one frame of audio).
+  - Advance the reservoir by one timestep on a validated finite input vector.
 - **reset**()
+  - Reset the reservoir state vector to zeros.
 
 ---
 
@@ -28502,7 +28513,7 @@ Example
 (4, 100)
 
 - **__post_init__**()
-  - Validate weight shapes and construct current sources, neurons and recorders.
+  - Validate weight shapes, finite scalars, and construct sources, neurons and recorders.
 - **reset**()
   - Rewind current cursors and clear membrane, refractory and recording state.
 - **run**(T)
@@ -64161,19 +64172,26 @@ Manages Progressive Precision / Early Exit for SC.
 ## Module `utils.bitstreams`
 
 ### Class `BitstreamEncoder`
-Encode continuous scalar values into SC bitstreams using linear mapping.
+Encode continuous finite scalar values into stochastic bitstreams.
 
-Example
--------
-encoder = BitstreamEncoder(x_min=0.0, x_max=0.1, length=1024, seed=123)
-bitstream = encoder.encode(0.06)  # 60% ones
-p_hat = bitstream_to_probability(bitstream)
-x_rec = encoder.decode(bitstream)
+Parameters
+----------
+x_min : float, default=0.0
+    Finite lower bound of the scalar input domain.
+x_max : float, default=1.0
+    Finite upper bound of the scalar input domain (``x_min < x_max``).
+length : int, default=256
+    Positive number of bits per encoded stream.
+seed : int, optional
+    Optional PRNG seed.
+mode : str, default='bernoulli'
+    Encoding backend: ``"bernoulli"``, ``"sobol"``, ``"bipolar"``, or
+    ``"chaotic"``.
 
 - **__post_init__**()
-  - Create the RNG required by the selected mode or reject an unknown mode.
+  - Validate domain bounds and length, and create the mode-specific RNG.
 - **encode**(x)
-  - Encode one scalar into a stochastic bitstream.
+  - Encode one finite scalar into a stochastic bitstream.
 - **decode**(bitstream)
   - Decode a stochastic bitstream back into the configured value range.
 
@@ -64192,17 +64210,6 @@ SCEncodingError
 MemoryError
     If storage for the window cannot be allocated.
 
-Example
--------
->>> avg = BitstreamAverager(window=100)
->>> for _ in range(100):
-...     avg.push(1)
->>> avg.estimate()
-1.0
->>> avg.push(0)
->>> avg.estimate() < 1.0
-True
-
 - **__post_init__**()
   - Validate the window and allocate its initially empty sample storage.
 - **push**(bit)
@@ -64213,15 +64220,12 @@ True
   - Clear all buffered samples and reset the estimator state.
 
 ### Function `generate_bernoulli_bitstream(p, length, rng)`
-Generate a Bernoulli bitstream with probability p of a one.
-
-This is the core SC primitive: a sequence of 0/1 bits where the
-proportion of 1s ~ p.
+Generate a Bernoulli bitstream with probability ``p`` of a one.
 
 Parameters
 ----------
 p : float
-    Probability of 1 (unipolar encoding, 0 <= p <= 1).
+    Probability of 1 (unipolar encoding, ``0 <= p <= 1``).
 length : int
     Number of bits in the stream.
 rng : RNG, optional
@@ -64229,18 +64233,25 @@ rng : RNG, optional
 
 Returns
 -------
-np.ndarray
-    Array of shape (length,) with dtype=uint8, values in {0,1}.
+numpy.ndarray
+    Array of shape ``(length,)`` with ``dtype=uint8`` and values in ``{0, 1}``.
+
+Raises
+------
+SCEncodingError
+    If ``p`` is boolean, non-finite, or outside ``&#91;0, 1&#93;``, or if ``length``
+    is negative or boolean.
 
 ### Function `generate_sobol_bitstream(p, length, seed)`
-Generate a bitstream using a Sobol sequence (Low Discrepancy Sequence).
+Generate a bitstream using a Sobol low-discrepancy sequence.
 
-LDS provides faster convergence than random Bernoulli sequences (O(1/N) vs O(1/sqrt(N))).
+Low-discrepancy sequences provide faster convergence than random Bernoulli
+sequences (``O(1/N)`` vs ``O(1/sqrt(N))``).
 
 Parameters
 ----------
 p : float
-    Target probability.
+    Target probability in ``&#91;0, 1&#93;``.
 length : int
     Length of the bitstream.
 seed : int, optional
@@ -64248,70 +64259,177 @@ seed : int, optional
 
 Returns
 -------
-np.ndarray
-    Array of shape (length,) with dtype=uint8, values in {0,1}.
+numpy.ndarray
+    Array of shape ``(length,)`` with ``dtype=uint8`` and values in ``{0, 1}``.
+
+Raises
+------
+SCEncodingError
+    If ``p`` is boolean, non-finite, or outside ``&#91;0, 1&#93;``, or if ``length``
+    is negative or boolean.
 
 ### Function `bitstream_to_probability(bitstream)`
 Decode a unipolar bitstream back into a probability estimate.
 
-p_hat = (# of ones) / length
+Parameters
+----------
+bitstream : numpy.ndarray
+    Non-empty finite binary stream.
+
+Returns
+-------
+float
+    Sample mean ``(# of ones) / length``.
+
+Raises
+------
+SCEncodingError
+    If ``bitstream`` is empty or contains non-finite values.
 
 ### Function `generate_bipolar_bitstream(x, length, rng)`
-Generate a bipolar SC bitstream encoding a value in &#91;-1, +1&#93;.
+Generate a bipolar stochastic bitstream encoding a value in ``&#91;-1, +1&#93;``.
 
-Bipolar encoding: value x in &#91;-1, 1&#93; maps to probability p = (x + 1) / 2.
-Bit=1 with probability p, bit=0 with probability 1-p.
-Decoding: x = 2 * mean(bits) - 1.
+Bipolar encoding maps ``x`` in ``&#91;-1, 1&#93;`` to probability ``p = (x + 1) / 2``;
+decoding recovers ``x = 2 * mean(bits) - 1``.
 
-Bipolar multiplication uses XNOR: P(A XNOR B) encodes A*B in bipolar.
+Parameters
+----------
+x : float
+    Bipolar value in ``&#91;-1, 1&#93;``.
+length : int
+    Number of bits in the stream.
+rng : RNG, optional
+    RNG instance.
+
+Returns
+-------
+numpy.ndarray
+    Array of shape ``(length,)`` with ``dtype=uint8``.
+
+Raises
+------
+SCEncodingError
+    If ``x`` is boolean, non-finite, or outside ``&#91;-1, 1&#93;``, or if ``length``
+    is negative or boolean.
 
 ### Function `bipolar_to_value(bitstream)`
-Decode a bipolar bitstream to a value in &#91;-1, +1&#93;.
+Decode a bipolar bitstream to a value in ``&#91;-1, +1&#93;``.
 
-x = 2 * mean(bits) - 1
+Parameters
+----------
+bitstream : numpy.ndarray
+    Non-empty finite binary stream.
+
+Returns
+-------
+float
+    Decoded bipolar estimate ``2 * mean(bits) - 1``.
+
+Raises
+------
+SCEncodingError
+    If ``bitstream`` is empty or contains non-finite values.
 
 ### Function `value_to_bipolar_prob(x)`
-Map a value in &#91;-1, 1&#93; to the unipolar probability used in bipolar encoding.
+Map a value in ``&#91;-1, 1&#93;`` to its unipolar bipolar-encoding probability.
 
-p = (x + 1) / 2. This p is then used with standard Bernoulli generation.
+Parameters
+----------
+x : float
+    Bipolar value in ``&#91;-1, 1&#93;``.
+
+Returns
+-------
+float
+    Probability ``(x + 1) / 2``.
+
+Raises
+------
+SCEncodingError
+    If ``x`` is boolean, non-finite, or outside ``&#91;-1, 1&#93;``.
 
 ### Function `value_to_unipolar_prob(x, x_min, x_max, clip)`
-Map a scalar x from &#91;x_min, x_max&#93; into a unipolar probability &#91;0,1&#93;.
+Map a finite scalar ``x`` from ``&#91;x_min, x_max&#93;`` into ``&#91;0, 1&#93;``.
 
-Linear mapping:
-    p = (x - x_min) / (x_max - x_min)
-If clip=True, x is clipped into &#91;x_min, x_max&#93;.
+Parameters
+----------
+x : float
+    Finite input scalar.
+x_min : float
+    Finite lower domain bound.
+x_max : float
+    Finite upper domain bound (``x_min < x_max``).
+clip : bool, default=True
+    When True, clamp finite ``x`` outside ``&#91;x_min, x_max&#93;`` to the domain
+    endpoints; non-finite values are always rejected.
+
+Returns
+-------
+float
+    Linearly mapped probability ``(x - x_min) / (x_max - x_min)``.
+
+Raises
+------
+SCEncodingError
+    If ``x``, ``x_min``, or ``x_max`` is boolean or non-finite, if
+    ``x_min >= x_max``, or if ``clip=False`` and ``x`` lies outside
+    ``&#91;x_min, x_max&#93;``.
 
 ### Function `unipolar_prob_to_value(p, x_min, x_max)`
-Map a unipolar probability p in &#91;0,1&#93; back to a scalar in &#91;x_min, x_max&#93;.
-
-Inverse of value_to_unipolar_prob.
-
-### Function `adaptive_length(p, epsilon, confidence, method, min_length, max_length)`
-Compute minimum bitstream length for target precision.
-
-Given probability p and error tolerance epsilon, returns the smallest L
-such that |p_hat - p| < epsilon with the given confidence.
+Map a unipolar probability ``p`` in ``&#91;0, 1&#93;`` back to ``&#91;x_min, x_max&#93;``.
 
 Parameters
 ----------
 p : float
-    Encoded probability in &#91;0, 1&#93;.
-epsilon : float
-    Maximum acceptable absolute error.
-confidence : float
-    Confidence level (e.g. 0.95 for 95%).
-method : str
-    Bound type: "hoeffding" (tighter), "chebyshev", or "variance" (no confidence).
-min_length : int
+    Unipolar probability in ``&#91;0, 1&#93;``.
+x_min : float
+    Finite lower domain bound.
+x_max : float
+    Finite upper domain bound (``x_min < x_max``).
+
+Returns
+-------
+float
+    Reconstructed scalar ``x_min + p * (x_max - x_min)``.
+
+Raises
+------
+SCEncodingError
+    If ``p``, ``x_min``, or ``x_max`` is boolean or non-finite, if
+    ``x_min >= x_max``, or if ``p`` lies outside ``&#91;0, 1&#93;``.
+
+### Function `adaptive_length(p, epsilon, confidence, method, min_length, max_length)`
+Compute minimum bitstream length for target precision.
+
+Given probability ``p`` and error tolerance ``epsilon``, returns the smallest
+power-of-two length ``L`` within ``&#91;min_length, max_length&#93;`` satisfying
+``|p_hat - p| < epsilon`` at the requested confidence.
+
+Parameters
+----------
+p : float
+    Encoded probability in ``&#91;0, 1&#93;``.
+epsilon : float, default=0.01
+    Maximum acceptable absolute error (strictly positive).
+confidence : float, default=0.95
+    Confidence level in ``(0, 1)``.
+method : str, default='hoeffding'
+    Bound type: ``"hoeffding"``, ``"chebyshev"``, or ``"variance"``.
+min_length : int, default=64
     Minimum returned length.
-max_length : int
+max_length : int, default=65536
     Maximum returned length (hardware cap).
 
 Returns
 -------
 int
-    Minimum bitstream length (rounded up to nearest power of 2 for Sobol compatibility).
+    Minimum bitstream length rounded up to the nearest power of two.
+
+Raises
+------
+ValueError
+    If ``p``, ``epsilon``, or ``confidence`` is boolean, non-finite, or
+    outside its valid domain, or if ``method`` is unknown.
 
 ### Function `sc_divide(numerator, denominator)`
 Stochastic computing division via the CORDIV circuit.
@@ -64319,33 +64437,23 @@ Stochastic computing division via the CORDIV circuit.
 T.-H. Chen and J. P. Hayes, "Design of division circuits for stochastic
 computing", IEEE ISVLSI 2016, doi:10.1109/ISVLSI.2016.48.
 
-Sequential circuit: at each bit position t,
-  - x&#91;t&#93;=1         → z&#91;t&#93; = 1
-  - x&#91;t&#93;=0, y&#91;t&#93;=1 → z&#91;t&#93; = 0
-  - x&#91;t&#93;=0, y&#91;t&#93;=0 → z&#91;t&#93; = z&#91;t-1&#93; (hold)
-
-The quotient needs correlated inputs. When both streams are compared
-against one shared random sequence with P(x) ≤ P(y), every 1 of x falls on
-a 1 of y, and z holds the value of x at the last bit where y was 1. If
-the sequence's successive values are independent, P(z=1) converges to
-P(x=1 | y=1) = P(x=1) / P(y=1); a 16-bit LFSR read every clock is not
-such a sequence, and with it z misses the quotient (z equals x whenever
-2·P(x) ≤ P(y)). For independent streams the circuit converges to
-P(x) / (P(x) + P(y) − P(x)·P(y)), which is not the quotient: 0.3 and 0.6
-give about 0.417 instead of 0.5.
+Sequential circuit: at each bit position ``t``,
+  - ``x&#91;t&#93;=1``         -> ``z&#91;t&#93; = 1``
+  - ``x&#91;t&#93;=0, y&#91;t&#93;=1`` -> ``z&#91;t&#93; = 0``
+  - ``x&#91;t&#93;=0, y&#91;t&#93;=0`` -> ``z&#91;t&#93; = z&#91;t-1&#93;`` (hold)
 
 Parameters
 ----------
-numerator : np.ndarray
-    Bitstream (uint8, {0,1}) of length L.
-denominator : np.ndarray
-    Bitstream (uint8, {0,1}) of length L, generated from the same random
-    sequence as the numerator, with higher or equal density.
+numerator : numpy.ndarray
+    Bitstream (``uint8``, ``{0, 1}``) of length ``L``.
+denominator : numpy.ndarray
+    Bitstream (``uint8``, ``{0, 1}``) of length ``L``, generated from the same
+    random sequence as ``numerator`` with higher or equal density.
 
 Returns
 -------
-np.ndarray
-    Quotient bitstream of length L.
+numpy.ndarray
+    Quotient bitstream of length ``L``.
 
 ---
 

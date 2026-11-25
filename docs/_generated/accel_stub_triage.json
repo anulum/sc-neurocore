@@ -10914,7 +10914,7 @@
           "lane": "mojo",
           "path": "src/sc_neurocore/accel/mojo/kernels/bitstreams.mojo",
           "rule": "header_stem",
-          "verbatim_line_share": "94/147",
+          "verbatim_line_share": "53/147",
           "loaders": [],
           "named_by": [],
           "declared": "mirror"

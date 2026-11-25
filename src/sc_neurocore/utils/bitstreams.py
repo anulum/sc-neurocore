@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Any, Optional, SupportsInt
 
@@ -21,21 +22,45 @@ from sc_neurocore.exceptions import SCEncodingError
 from .rng import RNG
 
 
+def _require_finite_encoding_scalar(value: float, name: str) -> float:
+    """Validate that ``value`` is a finite real scalar (not ``bool`` or complex)."""
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float, np.integer, np.floating))
+        or not math.isfinite(float(value))
+    ):
+        raise SCEncodingError(f"{name} must be a finite real number, got {value!r}.")
+    return float(value)
+
+
+def _require_non_negative_length(length: int) -> int:
+    """Validate that ``length`` is a non-negative integer (not ``bool``)."""
+    if isinstance(length, bool) or not isinstance(length, (int, np.integer)) or int(length) < 0:
+        raise SCEncodingError(f"Bitstream length must be a non-negative integer, got {length!r}.")
+    return int(length)
+
+
+def _require_finite_bitstream(bitstream: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    """Validate that ``bitstream`` is non-empty and contains only finite numeric values."""
+    arr = np.asarray(bitstream)
+    if arr.size == 0:
+        raise SCEncodingError("Bitstream is empty.")
+    if arr.dtype == np.object_ or np.iscomplexobj(arr) or not np.all(np.isfinite(arr)):
+        raise SCEncodingError("Bitstream must contain only finite numeric values.")
+    return arr
+
+
 def generate_bernoulli_bitstream(
     p: float,
     length: int,
     rng: Optional[RNG] = None,
 ) -> np.ndarray[Any, Any]:
-    """
-    Generate a Bernoulli bitstream with probability p of a one.
-
-    This is the core SC primitive: a sequence of 0/1 bits where the
-    proportion of 1s ~ p.
+    """Generate a Bernoulli bitstream with probability ``p`` of a one.
 
     Parameters
     ----------
     p : float
-        Probability of 1 (unipolar encoding, 0 <= p <= 1).
+        Probability of 1 (unipolar encoding, ``0 <= p <= 1``).
     length : int
         Number of bits in the stream.
     rng : RNG, optional
@@ -43,14 +68,22 @@ def generate_bernoulli_bitstream(
 
     Returns
     -------
-    np.ndarray
-        Array of shape (length,) with dtype=uint8, values in {0,1}.
+    numpy.ndarray
+        Array of shape ``(length,)`` with ``dtype=uint8`` and values in ``{0, 1}``.
+
+    Raises
+    ------
+    SCEncodingError
+        If ``p`` is boolean, non-finite, or outside ``[0, 1]``, or if ``length``
+        is negative or boolean.
     """
-    if not 0.0 <= p <= 1.0:
-        raise SCEncodingError(f"Probability p must be in [0,1], got {p}.")
+    p_val = _require_finite_encoding_scalar(p, "Probability p")
+    n_bits = _require_non_negative_length(length)
+    if not 0.0 <= p_val <= 1.0:
+        raise SCEncodingError(f"Probability p must be in [0,1], got {p_val}.")
     if rng is None:
         rng = RNG()
-    encoded: np.ndarray[Any, Any] = np.asarray(rng.bernoulli(p, size=length), dtype=np.uint8)
+    encoded: np.ndarray[Any, Any] = np.asarray(rng.bernoulli(p_val, size=n_bits), dtype=np.uint8)
     return encoded
 
 
@@ -59,15 +92,15 @@ def generate_sobol_bitstream(
     length: int,
     seed: Optional[int] = None,
 ) -> np.ndarray[Any, Any]:
-    """
-    Generate a bitstream using a Sobol sequence (Low Discrepancy Sequence).
+    """Generate a bitstream using a Sobol low-discrepancy sequence.
 
-    LDS provides faster convergence than random Bernoulli sequences (O(1/N) vs O(1/sqrt(N))).
+    Low-discrepancy sequences provide faster convergence than random Bernoulli
+    sequences (``O(1/N)`` vs ``O(1/sqrt(N))``).
 
     Parameters
     ----------
     p : float
-        Target probability.
+        Target probability in ``[0, 1]``.
     length : int
         Length of the bitstream.
     seed : int, optional
@@ -75,47 +108,48 @@ def generate_sobol_bitstream(
 
     Returns
     -------
-    np.ndarray
-        Array of shape (length,) with dtype=uint8, values in {0,1}.
-    """
-    if not 0.0 <= p <= 1.0:
-        raise SCEncodingError(f"Probability p must be in [0,1], got {p}.")
+    numpy.ndarray
+        Array of shape ``(length,)`` with ``dtype=uint8`` and values in ``{0, 1}``.
 
-    # Create Sobol engine (1 dimension)
+    Raises
+    ------
+    SCEncodingError
+        If ``p`` is boolean, non-finite, or outside ``[0, 1]``, or if ``length``
+        is negative or boolean.
+    """
+    p_val = _require_finite_encoding_scalar(p, "Probability p")
+    n_bits = _require_non_negative_length(length)
+    if not 0.0 <= p_val <= 1.0:
+        raise SCEncodingError(f"Probability p must be in [0,1], got {p_val}.")
+
     import scipy.stats.qmc as qmc
 
     sampler = qmc.Sobol(d=1, seed=seed)
-
-    # Generate samples. Sobol works best with powers of 2,
-    # but we can take 'length' samples.
-    # Note: For strict determinism, one should manage the sampler state,
-    # but here we create a fresh one or seek could be used if persisting.
-    # To avoid 'scramble' creating randomness if not desired, we set scramble=False by default in Sobol,
-    # but scramble=True usually gives better results for integration-like tasks.
-    # We'll use scramble=True with the seed.
-
-    # Optimally, length should be power of 2 for Sobol balance properties.
-    # We allow any length but warn or just proceed.
-
-    samples = sampler.random(n=length)  # Shape (length, 1)
-    samples = samples.flatten()
-
-    # Thresholding: The standard way to convert a U[0,1] sample 's' to a bit with prob 'p'
-    # is: bit = 1 if s < p else 0
-    bits: np.ndarray[Any, Any] = (samples < p).astype(np.uint8)
-
+    samples = sampler.random(n=n_bits).flatten()
+    bits: np.ndarray[Any, Any] = (samples < p_val).astype(np.uint8)
     return bits
 
 
 def bitstream_to_probability(bitstream: np.ndarray[Any, Any]) -> float:
-    """
-    Decode a unipolar bitstream back into a probability estimate.
+    """Decode a unipolar bitstream back into a probability estimate.
 
-    p_hat = (# of ones) / length
+    Parameters
+    ----------
+    bitstream : numpy.ndarray
+        Non-empty finite binary stream.
+
+    Returns
+    -------
+    float
+        Sample mean ``(# of ones) / length``.
+
+    Raises
+    ------
+    SCEncodingError
+        If ``bitstream`` is empty or contains non-finite values.
     """
-    if bitstream.size == 0:
-        raise SCEncodingError("Bitstream is empty.")
-    return float(bitstream.mean())
+    arr = _require_finite_bitstream(bitstream)
+    return float(arr.mean())
 
 
 def generate_bipolar_bitstream(
@@ -123,38 +157,82 @@ def generate_bipolar_bitstream(
     length: int,
     rng: Optional[RNG] = None,
 ) -> np.ndarray[Any, Any]:
-    """Generate a bipolar SC bitstream encoding a value in [-1, +1].
+    """Generate a bipolar stochastic bitstream encoding a value in ``[-1, +1]``.
 
-    Bipolar encoding: value x in [-1, 1] maps to probability p = (x + 1) / 2.
-    Bit=1 with probability p, bit=0 with probability 1-p.
-    Decoding: x = 2 * mean(bits) - 1.
+    Bipolar encoding maps ``x`` in ``[-1, 1]`` to probability ``p = (x + 1) / 2``;
+    decoding recovers ``x = 2 * mean(bits) - 1``.
 
-    Bipolar multiplication uses XNOR: P(A XNOR B) encodes A*B in bipolar.
+    Parameters
+    ----------
+    x : float
+        Bipolar value in ``[-1, 1]``.
+    length : int
+        Number of bits in the stream.
+    rng : RNG, optional
+        RNG instance.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of shape ``(length,)`` with ``dtype=uint8``.
+
+    Raises
+    ------
+    SCEncodingError
+        If ``x`` is boolean, non-finite, or outside ``[-1, 1]``, or if ``length``
+        is negative or boolean.
     """
-    if not -1.0 <= x <= 1.0:
-        raise SCEncodingError(f"Bipolar value must be in [-1,1], got {x}.")
-    p = (x + 1.0) / 2.0
+    x_val = _require_finite_encoding_scalar(x, "Bipolar value")
+    if not -1.0 <= x_val <= 1.0:
+        raise SCEncodingError(f"Bipolar value must be in [-1,1], got {x_val}.")
+    p = (x_val + 1.0) / 2.0
     return generate_bernoulli_bitstream(p, length, rng)
 
 
 def bipolar_to_value(bitstream: np.ndarray[Any, Any]) -> float:
-    """Decode a bipolar bitstream to a value in [-1, +1].
+    """Decode a bipolar bitstream to a value in ``[-1, +1]``.
 
-    x = 2 * mean(bits) - 1
+    Parameters
+    ----------
+    bitstream : numpy.ndarray
+        Non-empty finite binary stream.
+
+    Returns
+    -------
+    float
+        Decoded bipolar estimate ``2 * mean(bits) - 1``.
+
+    Raises
+    ------
+    SCEncodingError
+        If ``bitstream`` is empty or contains non-finite values.
     """
-    if bitstream.size == 0:
-        raise SCEncodingError("Bitstream is empty.")
-    return float(2.0 * bitstream.mean() - 1.0)
+    arr = _require_finite_bitstream(bitstream)
+    return float(2.0 * arr.mean() - 1.0)
 
 
 def value_to_bipolar_prob(x: float) -> float:
-    """Map a value in [-1, 1] to the unipolar probability used in bipolar encoding.
+    """Map a value in ``[-1, 1]`` to its unipolar bipolar-encoding probability.
 
-    p = (x + 1) / 2. This p is then used with standard Bernoulli generation.
+    Parameters
+    ----------
+    x : float
+        Bipolar value in ``[-1, 1]``.
+
+    Returns
+    -------
+    float
+        Probability ``(x + 1) / 2``.
+
+    Raises
+    ------
+    SCEncodingError
+        If ``x`` is boolean, non-finite, or outside ``[-1, 1]``.
     """
-    if not -1.0 <= x <= 1.0:
-        raise SCEncodingError(f"Bipolar value must be in [-1,1], got {x}.")
-    return (x + 1.0) / 2.0
+    x_val = _require_finite_encoding_scalar(x, "Bipolar value")
+    if not -1.0 <= x_val <= 1.0:
+        raise SCEncodingError(f"Bipolar value must be in [-1,1], got {x_val}.")
+    return (x_val + 1.0) / 2.0
 
 
 def value_to_unipolar_prob(
@@ -163,19 +241,42 @@ def value_to_unipolar_prob(
     x_max: float,
     clip: bool = True,
 ) -> float:
-    """
-    Map a scalar x from [x_min, x_max] into a unipolar probability [0,1].
+    """Map a finite scalar ``x`` from ``[x_min, x_max]`` into ``[0, 1]``.
 
-    Linear mapping:
-        p = (x - x_min) / (x_max - x_min)
-    If clip=True, x is clipped into [x_min, x_max].
+    Parameters
+    ----------
+    x : float
+        Finite input scalar.
+    x_min : float
+        Finite lower domain bound.
+    x_max : float
+        Finite upper domain bound (``x_min < x_max``).
+    clip : bool, default=True
+        When True, clamp finite ``x`` outside ``[x_min, x_max]`` to the domain
+        endpoints; non-finite values are always rejected.
+
+    Returns
+    -------
+    float
+        Linearly mapped probability ``(x - x_min) / (x_max - x_min)``.
+
+    Raises
+    ------
+    SCEncodingError
+        If ``x``, ``x_min``, or ``x_max`` is boolean or non-finite, if
+        ``x_min >= x_max``, or if ``clip=False`` and ``x`` lies outside
+        ``[x_min, x_max]``.
     """
-    if x_min >= x_max:
+    x_val = _require_finite_encoding_scalar(x, "Input x")
+    lo = _require_finite_encoding_scalar(x_min, "x_min")
+    hi = _require_finite_encoding_scalar(x_max, "x_max")
+    if lo >= hi:
         raise SCEncodingError("x_min must be < x_max.")
     if clip:
-        x = max(min(x, x_max), x_min)
-    p = (x - x_min) / (x_max - x_min)
-    return float(p)
+        x_val = max(min(x_val, hi), lo)
+    elif not lo <= x_val <= hi:
+        raise SCEncodingError(f"Input x must be in [{lo}, {hi}] when clip=False, got {x_val}.")
+    return float((x_val - lo) / (hi - lo))
 
 
 def unipolar_prob_to_value(
@@ -183,14 +284,36 @@ def unipolar_prob_to_value(
     x_min: float,
     x_max: float,
 ) -> float:
-    """
-    Map a unipolar probability p in [0,1] back to a scalar in [x_min, x_max].
+    """Map a unipolar probability ``p`` in ``[0, 1]`` back to ``[x_min, x_max]``.
 
-    Inverse of value_to_unipolar_prob.
+    Parameters
+    ----------
+    p : float
+        Unipolar probability in ``[0, 1]``.
+    x_min : float
+        Finite lower domain bound.
+    x_max : float
+        Finite upper domain bound (``x_min < x_max``).
+
+    Returns
+    -------
+    float
+        Reconstructed scalar ``x_min + p * (x_max - x_min)``.
+
+    Raises
+    ------
+    SCEncodingError
+        If ``p``, ``x_min``, or ``x_max`` is boolean or non-finite, if
+        ``x_min >= x_max``, or if ``p`` lies outside ``[0, 1]``.
     """
-    if not 0.0 <= p <= 1.0:
-        raise SCEncodingError(f"Probability p must be in [0,1], got {p}.")
-    return float(x_min + p * (x_max - x_min))
+    p_val = _require_finite_encoding_scalar(p, "Probability p")
+    lo = _require_finite_encoding_scalar(x_min, "x_min")
+    hi = _require_finite_encoding_scalar(x_max, "x_max")
+    if lo >= hi:
+        raise SCEncodingError("x_min must be < x_max.")
+    if not 0.0 <= p_val <= 1.0:
+        raise SCEncodingError(f"Probability p must be in [0,1], got {p_val}.")
+    return float(lo + p_val * (hi - lo))
 
 
 def adaptive_length(
@@ -203,57 +326,78 @@ def adaptive_length(
 ) -> int:
     """Compute minimum bitstream length for target precision.
 
-    Given probability p and error tolerance epsilon, returns the smallest L
-    such that |p_hat - p| < epsilon with the given confidence.
+    Given probability ``p`` and error tolerance ``epsilon``, returns the smallest
+    power-of-two length ``L`` within ``[min_length, max_length]`` satisfying
+    ``|p_hat - p| < epsilon`` at the requested confidence.
 
     Parameters
     ----------
     p : float
-        Encoded probability in [0, 1].
-    epsilon : float
-        Maximum acceptable absolute error.
-    confidence : float
-        Confidence level (e.g. 0.95 for 95%).
-    method : str
-        Bound type: "hoeffding" (tighter), "chebyshev", or "variance" (no confidence).
-    min_length : int
+        Encoded probability in ``[0, 1]``.
+    epsilon : float, default=0.01
+        Maximum acceptable absolute error (strictly positive).
+    confidence : float, default=0.95
+        Confidence level in ``(0, 1)``.
+    method : str, default='hoeffding'
+        Bound type: ``"hoeffding"``, ``"chebyshev"``, or ``"variance"``.
+    min_length : int, default=64
         Minimum returned length.
-    max_length : int
+    max_length : int, default=65536
         Maximum returned length (hardware cap).
 
     Returns
     -------
     int
-        Minimum bitstream length (rounded up to nearest power of 2 for Sobol compatibility).
+        Minimum bitstream length rounded up to the nearest power of two.
+
+    Raises
+    ------
+    ValueError
+        If ``p``, ``epsilon``, or ``confidence`` is boolean, non-finite, or
+        outside its valid domain, or if ``method`` is unknown.
     """
-    if epsilon <= 0:
-        raise ValueError(f"epsilon must be positive, got {epsilon}")
+    if (
+        isinstance(p, bool)
+        or not isinstance(p, (int, float, np.integer, np.floating))
+        or not math.isfinite(float(p))
+        or not 0.0 <= float(p) <= 1.0
+    ):
+        raise ValueError(f"p must be a finite probability in [0, 1], got {p!r}")
+    if (
+        isinstance(epsilon, bool)
+        or not isinstance(epsilon, (int, float, np.integer, np.floating))
+        or not math.isfinite(float(epsilon))
+        or float(epsilon) <= 0.0
+    ):
+        raise ValueError(f"epsilon must be finite and positive, got {epsilon!r}")
+    if (
+        isinstance(confidence, bool)
+        or not isinstance(confidence, (int, float, np.integer, np.floating))
+        or not math.isfinite(float(confidence))
+    ):
+        raise ValueError(f"confidence must be a finite real number, got {confidence!r}")
+
+    p_val = float(p)
+    eps_val = float(epsilon)
+    conf_val = float(confidence)
 
     if method == "variance":
-        # Var(p_hat) = p(1-p)/L < epsilon^2 → L > p(1-p)/epsilon^2
-        var_factor = p * (1.0 - p)
-        L = var_factor / (epsilon**2)
+        var_factor = p_val * (1.0 - p_val)
+        L = var_factor / (eps_val**2)
     elif method == "chebyshev":
-        # P(|p_hat - p| >= epsilon) <= Var/epsilon^2 <= (1-confidence)
-        # L >= p(1-p) / (epsilon^2 * (1-confidence))
-        delta = 1.0 - confidence
-        if delta <= 0:
-            raise ValueError("confidence must be < 1.0")
-        L = p * (1.0 - p) / (epsilon**2 * delta)
+        delta = 1.0 - conf_val
+        if delta <= 0.0 or conf_val <= 0.0:
+            raise ValueError("confidence must be in (0.0, 1.0)")
+        L = p_val * (1.0 - p_val) / (eps_val**2 * delta)
     elif method == "hoeffding":
-        # P(|p_hat - p| >= epsilon) <= 2*exp(-2*L*epsilon^2) <= (1-confidence)
-        # L >= -ln((1-confidence)/2) / (2*epsilon^2)
-        delta = 1.0 - confidence
-        if delta <= 0:
-            raise ValueError("confidence must be < 1.0")
-        import math
-
-        L = -math.log(delta / 2.0) / (2.0 * epsilon**2)
+        delta = 1.0 - conf_val
+        if delta <= 0.0 or conf_val <= 0.0:
+            raise ValueError("confidence must be in (0.0, 1.0)")
+        L = -math.log(delta / 2.0) / (2.0 * eps_val**2)
     else:
         raise ValueError(f"Unknown method: {method}. Use 'hoeffding', 'chebyshev', or 'variance'.")
 
-    L_int = max(min_length, int(np.ceil(L)))
-    # Round up to next power of 2 for Sobol compatibility
+    L_int = max(min_length, int(math.ceil(L)))
     L_pow2 = 1
     while L_pow2 < L_int:
         L_pow2 *= 2
@@ -269,33 +413,23 @@ def sc_divide(
     T.-H. Chen and J. P. Hayes, "Design of division circuits for stochastic
     computing", IEEE ISVLSI 2016, doi:10.1109/ISVLSI.2016.48.
 
-    Sequential circuit: at each bit position t,
-      - x[t]=1         → z[t] = 1
-      - x[t]=0, y[t]=1 → z[t] = 0
-      - x[t]=0, y[t]=0 → z[t] = z[t-1] (hold)
-
-    The quotient needs correlated inputs. When both streams are compared
-    against one shared random sequence with P(x) ≤ P(y), every 1 of x falls on
-    a 1 of y, and z holds the value of x at the last bit where y was 1. If
-    the sequence's successive values are independent, P(z=1) converges to
-    P(x=1 | y=1) = P(x=1) / P(y=1); a 16-bit LFSR read every clock is not
-    such a sequence, and with it z misses the quotient (z equals x whenever
-    2·P(x) ≤ P(y)). For independent streams the circuit converges to
-    P(x) / (P(x) + P(y) − P(x)·P(y)), which is not the quotient: 0.3 and 0.6
-    give about 0.417 instead of 0.5.
+    Sequential circuit: at each bit position ``t``,
+      - ``x[t]=1``         -> ``z[t] = 1``
+      - ``x[t]=0, y[t]=1`` -> ``z[t] = 0``
+      - ``x[t]=0, y[t]=0`` -> ``z[t] = z[t-1]`` (hold)
 
     Parameters
     ----------
-    numerator : np.ndarray
-        Bitstream (uint8, {0,1}) of length L.
-    denominator : np.ndarray
-        Bitstream (uint8, {0,1}) of length L, generated from the same random
-        sequence as the numerator, with higher or equal density.
+    numerator : numpy.ndarray
+        Bitstream (``uint8``, ``{0, 1}``) of length ``L``.
+    denominator : numpy.ndarray
+        Bitstream (``uint8``, ``{0, 1}``) of length ``L``, generated from the same
+        random sequence as ``numerator`` with higher or equal density.
 
     Returns
     -------
-    np.ndarray
-        Quotient bitstream of length L.
+    numpy.ndarray
+        Quotient bitstream of length ``L``.
     """
     numerator = np.asarray(numerator, dtype=np.uint8)
     denominator = np.asarray(denominator, dtype=np.uint8)
@@ -317,32 +451,45 @@ def sc_divide(
 
 @dataclass
 class BitstreamEncoder:
-    """
-    Encode continuous scalar values into SC bitstreams using linear mapping.
+    """Encode continuous finite scalar values into stochastic bitstreams.
 
-    Example
-    -------
-    encoder = BitstreamEncoder(x_min=0.0, x_max=0.1, length=1024, seed=123)
-    bitstream = encoder.encode(0.06)  # 60% ones
-    p_hat = bitstream_to_probability(bitstream)
-    x_rec = encoder.decode(bitstream)
+    Parameters
+    ----------
+    x_min : float, default=0.0
+        Finite lower bound of the scalar input domain.
+    x_max : float, default=1.0
+        Finite upper bound of the scalar input domain (``x_min < x_max``).
+    length : int, default=256
+        Positive number of bits per encoded stream.
+    seed : int, optional
+        Optional PRNG seed.
+    mode : str, default='bernoulli'
+        Encoding backend: ``"bernoulli"``, ``"sobol"``, ``"bipolar"``, or
+        ``"chaotic"``.
     """
 
-    # x_min/x_max default to the unipolar probability domain [0, 1] so callers
-    # that only set length/seed (e.g. the SCPN-CONTROL compiler) construct a valid
-    # encoder; explicit ranges remain supported positionally and by keyword.
     x_min: float = 0.0
     x_max: float = 1.0
     length: int = 256
     seed: Optional[int] = None
-    mode: str = "bernoulli"  # "bernoulli", "sobol", "bipolar", or "chaotic"
+    mode: str = "bernoulli"
 
     def __post_init__(self) -> None:
-        """Create the RNG required by the selected mode or reject an unknown mode."""
+        """Validate domain bounds and length, and create the mode-specific RNG."""
+        lo = _require_finite_encoding_scalar(self.x_min, "x_min")
+        hi = _require_finite_encoding_scalar(self.x_max, "x_max")
+        if lo >= hi:
+            raise SCEncodingError("x_min must be < x_max.")
+        if (
+            isinstance(self.length, bool)
+            or not isinstance(self.length, (int, np.integer))
+            or int(self.length) <= 0
+        ):
+            raise SCEncodingError(f"length must be a positive integer, got {self.length!r}.")
+
         if self.mode in ("bernoulli", "bipolar"):
             self._rng = RNG(self.seed)
         elif self.mode == "chaotic":
-            # sc_neurocore.chaos ships only in a source checkout.
             require_source_checkout_package(
                 "sc_neurocore.chaos.rng", "BitstreamEncoder(mode='chaotic')"
             )
@@ -354,15 +501,36 @@ class BitstreamEncoder:
             raise SCEncodingError(f"Unknown mode: {self.mode}")
 
     def encode(self, x: float) -> np.ndarray[Any, Any]:
-        """Encode one scalar into a stochastic bitstream."""
+        """Encode one finite scalar into a stochastic bitstream.
+
+        Parameters
+        ----------
+        x : float
+            Finite scalar to encode; finite values outside ``[x_min, x_max]``
+            are clamped to the domain endpoints, whereas ``NaN``, ``±Inf``, and
+            booleans raise :class:`SCEncodingError` without advancing RNG state.
+
+        Returns
+        -------
+        numpy.ndarray
+            Binary ``uint8`` bitstream of shape ``(length,)``.
+
+        Raises
+        ------
+        SCEncodingError
+            If ``x`` or the configured domain bounds are boolean or non-finite,
+            or if ``x_min >= x_max``.
+        """
+        x_val = _require_finite_encoding_scalar(x, "Input x")
+        lo = _require_finite_encoding_scalar(self.x_min, "x_min")
+        hi = _require_finite_encoding_scalar(self.x_max, "x_max")
+        if lo >= hi:
+            raise SCEncodingError("x_min must be < x_max.")
         if self.mode == "bipolar":
-            # Map x from [x_min, x_max] to [-1, 1], then bipolar encode
-            if self.x_min >= self.x_max:
-                raise SCEncodingError("x_min must be < x_max.")
-            x_clipped = max(min(x, self.x_max), self.x_min)
-            bipolar_val = 2.0 * (x_clipped - self.x_min) / (self.x_max - self.x_min) - 1.0
+            x_clipped = max(min(x_val, hi), lo)
+            bipolar_val = 2.0 * (x_clipped - lo) / (hi - lo) - 1.0
             return generate_bipolar_bitstream(bipolar_val, self.length, rng=self._rng)
-        p = value_to_unipolar_prob(x, self.x_min, self.x_max, clip=True)
+        p = value_to_unipolar_prob(x_val, lo, hi, clip=True)
         if self.mode == "sobol":
             return generate_sobol_bitstream(p, self.length, seed=self.seed)
         if self.mode == "chaotic":
@@ -370,19 +538,32 @@ class BitstreamEncoder:
         return generate_bernoulli_bitstream(p, self.length, rng=self._rng)
 
     def decode(self, bitstream: np.ndarray[Any, Any]) -> float:
-        """Decode a stochastic bitstream back into the configured value range."""
+        """Decode a stochastic bitstream back into the configured value range.
+
+        Parameters
+        ----------
+        bitstream : numpy.ndarray
+            Non-empty finite binary stream.
+
+        Returns
+        -------
+        float
+            Decoded scalar in ``[x_min, x_max]``.
+        """
+        lo = _require_finite_encoding_scalar(self.x_min, "x_min")
+        hi = _require_finite_encoding_scalar(self.x_max, "x_max")
+        if lo >= hi:
+            raise SCEncodingError("x_min must be < x_max.")
         if self.mode == "bipolar":
             bipolar_val = bipolar_to_value(bitstream)
-            # Map [-1, 1] back to [x_min, x_max]
-            return float(self.x_min + (bipolar_val + 1.0) / 2.0 * (self.x_max - self.x_min))
+            return float(lo + (bipolar_val + 1.0) / 2.0 * (hi - lo))
         p_hat = bitstream_to_probability(bitstream)
-        return unipolar_prob_to_value(p_hat, self.x_min, self.x_max)
+        return unipolar_prob_to_value(p_hat, lo, hi)
 
 
 @dataclass
 class BitstreamAverager:
-    """
-    Sliding-window probability estimator for bitstreams.
+    """Sliding-window probability estimator for bitstreams.
 
     Parameters
     ----------
@@ -395,17 +576,6 @@ class BitstreamAverager:
         If the window is zero or negative.
     MemoryError
         If storage for the window cannot be allocated.
-
-    Example
-    -------
-    >>> avg = BitstreamAverager(window=100)
-    >>> for _ in range(100):
-    ...     avg.push(1)
-    >>> avg.estimate()
-    1.0
-    >>> avg.push(0)
-    >>> avg.estimate() < 1.0
-    True
     """
 
     window: int
@@ -437,12 +607,11 @@ class BitstreamAverager:
         SCEncodingError
             If the sample is not zero or one; buffered observations are unchanged.
         """
-        if bit not in (0, 1):
+        if isinstance(bit, bool) or bit not in (0, 1):
             raise SCEncodingError("Bit must be 0 or 1.")
         sample = int(bit)
 
         assert self._buffer is not None
-        # Remove old bit from sum if buffer is wrapping around
         old_bit = int(self._buffer[self._index])
         self._buffer[self._index] = sample
 
@@ -458,7 +627,6 @@ class BitstreamAverager:
     def estimate(self) -> float:
         """Return the current sliding-window probability estimate."""
         if not self._filled:
-            # Estimate over the filled portion only
             count = self._index
             if count == 0:
                 return 0.0

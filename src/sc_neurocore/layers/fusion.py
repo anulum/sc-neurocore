@@ -64,6 +64,9 @@ class SCFusionLayer:
         if missing_dims:
             missing = ", ".join(sorted(missing_dims))
             raise ValueError(f"fusion_weights reference undeclared modalities: {missing}")
+        for modality, raw_weight in self.fusion_weights.items():
+            if isinstance(raw_weight, bool) or not np.isfinite(float(raw_weight)):
+                raise ValueError(f"fusion weight for {modality!r} must be finite")
 
         total = sum(self.fusion_weights.values())
         if total > 0.0:
@@ -108,6 +111,8 @@ class SCFusionLayer:
                 raise ValueError(
                     f"input for {modality!r} has length {values.shape[0]}, expected {expected}"
                 )
+            if not np.all(np.isfinite(values)):
+                raise ValueError(f"input for {modality!r} must contain only finite values")
             weight = self.norm_weights[modality]
             active.append((modality, values, weight))
 

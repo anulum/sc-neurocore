@@ -73,9 +73,25 @@ class SCDenseLayer:
     sc_mode: str = "unipolar"
 
     def __post_init__(self) -> None:
-        """Validate weight shapes and construct current sources, neurons and recorders."""
+        """Validate weight shapes, finite scalars, and construct sources, neurons and recorders."""
         if self.n_neurons < 0:
             raise ValueError("n_neurons must be non-negative.")
+        x_arr = np.asarray(self.x_inputs, dtype=np.float64)
+        if x_arr.ndim != 1 or not np.all(np.isfinite(x_arr)):
+            raise ValueError("x_inputs must be a 1-D sequence of finite real values.")
+        for name, val in (
+            ("x_min", self.x_min),
+            ("x_max", self.x_max),
+            ("w_min", self.w_min),
+            ("w_max", self.w_max),
+            ("y_min", self.y_min),
+            ("y_max", self.y_max),
+            ("dt_ms", self.dt_ms),
+        ):
+            if isinstance(val, bool) or not np.isfinite(float(val)):
+                raise ValueError(f"{name} must be finite, got {val!r}.")
+        if self.dt_ms <= 0.0:
+            raise ValueError(f"dt_ms must be positive, got {self.dt_ms!r}.")
         self._weight_matrix, self._shared_source = self._normalise_weight_values()
 
         self.source = BitstreamCurrentSource(

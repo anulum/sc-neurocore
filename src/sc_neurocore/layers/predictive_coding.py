@@ -86,7 +86,10 @@ class PredictiveCodingSCLayer:
             'predictions': ndarray shape (n_neurons, n_inputs) — predicted probs
         """
         inputs = np.asarray(inputs, dtype=np.float64)
-        rng = np.random.RandomState(None)
+        if inputs.shape != (self.n_inputs,):
+            raise ValueError(f"inputs must have shape ({self.n_inputs},), got {inputs.shape}")
+        if not np.all(np.isfinite(inputs)):
+            raise ValueError("inputs must contain only finite values")
 
         # Generate actual input bitstreams
         actual_streams = np.array(

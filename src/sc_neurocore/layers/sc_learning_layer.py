@@ -81,9 +81,17 @@ class SCLearningLayer:
 
     def run_epoch(self, input_values: Sequence[float]) -> np.ndarray[Any, Any]:
         """Run one bitstream epoch of duration ``length`` and return the spikes."""
+        arr = np.asarray(input_values, dtype=np.float64)
+        if arr.shape != (self.n_inputs,):
+            raise ValueError(
+                f"input_values must have length n_inputs={self.n_inputs}, got shape {arr.shape}."
+            )
+        if not np.all(np.isfinite(arr)):
+            raise ValueError("input_values must contain only finite real values.")
+
         # 1. Encode inputs
         input_bitstreams = [
-            self.input_encoders[i].encode(input_values[i]) for i in range(self.n_inputs)
+            self.input_encoders[i].encode(float(arr[i])) for i in range(self.n_inputs)
         ]
 
         # 2. Process time steps
