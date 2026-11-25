@@ -10,13 +10,18 @@
 
 Auto-dispatch
 -------------
+Every class in ``sc_neurocore.neurons.models.__all__`` is importable here.
 When the Rust engine (``sc_neurocore_engine``) is available,
-``from sc_neurocore.neurons import X`` transparently returns the Rust
-implementation.  ``from sc_neurocore.neurons.models import X`` always
-returns the pure-Python version.
+``from sc_neurocore.neurons import X`` returns the Rust class only for the
+names in ``_RUST_DISPATCH_NAMES``: those whose Rust class accepts every
+Python constructor field and reproduces the Python trajectory, as
+``tests/test_neuron_facade_completeness.py`` checks. Every other name
+returns the Python class. ``from sc_neurocore.neurons.models import X``
+always returns the Python class, and the Rust classes stay importable from
+``sc_neurocore_engine`` directly.
 
 Set the environment variable ``SC_NEUROCORE_NO_RUST=1`` to force the
-pure-Python path even when the Rust engine is present.
+pure-Python path even for the listed names.
 
 Lazy loading
 ------------
@@ -58,47 +63,57 @@ _CORE_NAMES = {
 }
 
 _MODEL_NAMES = {
-    "ArcaneNeuron",
+    "ATypeKNeuron",
     "AdExNeuron",
     "AdaptiveThresholdIFNeuron",
-    "AttentionGatedNeuron",
+    "AdaptiveThresholdMoENeuron",
+    "AiharaMapNeuron",
     "AkidaNeuron",
+    "AlphaMotorNeuron",
     "AlphaNeuron",
     "AmariNeuralField",
+    "ArcaneNeuron",
+    "AstrocyteLIFNeuron",
     "AstrocyteModel",
+    "AstrocyteNeuron",
+    "AttentionGatedNeuron",
     "AvRonCardiacNeuron",
+    "BKNeuron",
     "BalancedResonateAndFireNeuron",
     "BendaHerzNeuron",
-    "SCStochasticRateAdaptationNeuron",
     "BertramPhantomBurster",
-    "SCThreeStatePhantomBurster",
     "BoothRinzelNeuron",
     "BrainScaleSAdExNeuron",
+    "BrunelWangNeuron",
     "ButeraRespiratoryNeuron",
-    "SCUnitCapacitanceRespiratoryNeuron",
     "COBALIFNeuron",
     "CazellesMapNeuron",
-    "SCClippedLogisticBurstingMapNeuron",
-    "SCClippedRationalRecoveryMapNeuron",
+    "CerebellarBasketNeuron",
+    "ChandelierNeuron",
+    "ChayKeizerMinimalNeuron",
     "ChayKeizerNeuron",
     "ChayNeuron",
     "ChialvoMapNeuron",
     "ClosedFormContinuousNeuron",
+    "CochlearHairCell",
     "ComplementaryLIFNeuron",
     "CompositionalBindingNeuron",
     "CompteWMNeuron",
-    "ContinuousAttractorNeuron",
     "ConnorStevensNeuron",
+    "ContinuousAttractorNeuron",
     "CourageNekorkinMapNeuron",
+    "DCNNeuron",
     "DPINeuron",
     "DeSchutterPurkinjeNeuron",
     "DendrifyNeuron",
+    "DendriticNMDANeuron",
     "DestexheThalamicNeuron",
     "DifferentiableSurrogateNeuron",
+    "DirectionSelectiveRGC",
     "DurstewitzDopamineNeuron",
     "EPropALIFNeuron",
     "EnergyLIFNeuron",
-    "SCNormalizedEnergyLIFNeuron",
+    "ErmentroutKopellMapNeuron",
     "ErmentroutKopellPopulation",
     "EscapeRateNeuron",
     "ExpIFNeuron",
@@ -107,58 +122,62 @@ _MODEL_NAMES = {
     "FractionalLIFNeuron",
     "GIFPopulationNeuron",
     "GLIFNeuron",
-    "SCFourStateGLIFNeuron",
     "GLMNeuron",
     "GalvesLocherbachNeuron",
+    "GammaMotorNeuron",
     "GammaRenewalNeuron",
     "GatedLIFNeuron",
+    "GolgiCell",
     "GolombFSNeuron",
+    "GranuleCell",
     "GutkinErmentroutNeuron",
     "HayL5PyramidalNeuron",
     "HillTononiNeuron",
-    "SCSixStateThalamocorticalNeuron",
     "HindmarshRoseNeuron",
     "HodgkinHuxleyNeuron",
     "HuberBraunNeuron",
+    "HybridFisherPosnerLIFNeuron",
+    "HybridLinearAttentionNeuron",
     "IbarzTanakaMapNeuron",
-    "Izhikevich2007Neuron",
+    "IhNeuron",
     "InhibitoryLIFNeuron",
     "InhomogeneousPoissonNeuron",
     "IntegerQIFNeuron",
+    "Izhikevich2007Neuron",
     "JansenRitUnit",
     "KLIFNeuron",
     "LapicqueNeuron",
-    "SCLapicqueLIFNeuron",
     "LarterBreakspearNeuron",
-    "SCDecoupledAdaptationIonMassNeuron",
     "LeakyCompeteFireNeuron",
     "LearnableNeuronModel",
     "LiquidTimeConstantNeuron",
     "Loihi2Neuron",
     "LoihiCUBANeuron",
+    "LugaroCell",
     "MATNeuron",
-    "SCResettingMATNeuron",
     "MainenSejnowskiNeuron",
     "MarderSTGNeuron",
+    "MartinottiNeuron",
     "McCullochPittsNeuron",
     "McKeanNeuron",
-    "SCTriangularMcKeanNeuron",
     "MedvedevMapNeuron",
     "MetaPlasticNeuron",
     "MihalasNieburNeuron",
-    "SCScaledResetAdaptiveIFNeuron",
     "MorrisLecarNeuron",
+    "MotorUnit",
     "MultiTimescaleNeuron",
+    "MulticompartmentMCNNeuron",
+    "NMDANeuron",
+    "NagumoSatoMapNeuron",
     "NeuroGridNeuron",
     "NonResettingLIFNeuron",
-    "SCNonResettingAdaptiveLIFNeuron",
-    "SCSigmaDeltaAccumulatorNeuron",
     "NonlinearLIFNeuron",
+    "PVFastSpikingNeuron",
     "ParallelSpikingNeuron",
     "ParametricLIFNeuron",
     "PerfectIntegratorNeuron",
-    "SCInclusivePerfectIntegratorNeuron",
     "PernarowskiNeuron",
+    "PersistentNaNeuron",
     "PinskyRinzelNeuron",
     "PlantR15Neuron",
     "PoissonNeuron",
@@ -166,12 +185,40 @@ _MODEL_NAMES = {
     "PredictiveCodingNeuron",
     "PrescottNeuron",
     "QuadraticIFNeuron",
-    "SCSymmetricQuadraticIFNeuron",
+    "QuantumInspiredLIFNeuron",
     "RallCableNeuron",
+    "RenshawCell",
     "ResonateAndFireNeuron",
     "RulkovMapNeuron",
+    "SCAdaptiveThresholdMapNeuron",
+    "SCChaoticMapNeuron",
+    "SCClippedLogisticBurstingMapNeuron",
+    "SCClippedRationalRecoveryMapNeuron",
+    "SCDecoupledAdaptationIonMassNeuron",
+    "SCExponentialTwoCompartmentLIFNeuron",
+    "SCFourStateGLIFNeuron",
+    "SCInclusivePerfectIntegratorNeuron",
+    "SCLapicqueLIFNeuron",
+    "SCLeakyTwoCompartmentLIFNeuron",
+    "SCNonResettingAdaptiveLIFNeuron",
+    "SCNormalizedEnergyLIFNeuron",
+    "SCResettingMATNeuron",
+    "SCResettingParallelSpikingNeuron",
+    "SCResettingWilsonHRNeuron",
+    "SCScaledResetAdaptiveIFNeuron",
+    "SCSigmaDeltaAccumulatorNeuron",
+    "SCSixStateThalamocorticalNeuron",
+    "SCStochasticRateAdaptationNeuron",
+    "SCSymmetricQuadraticIFNeuron",
+    "SCThreeStatePhantomBurster",
+    "SCTriangularMcKeanNeuron",
+    "SCUnitCapacitanceRespiratoryNeuron",
     "SCUpwardCrossingRulkovMapNeuron",
+    "SCWBNMDAMagnesiumBlockNeuron",
     "SFANeuron",
+    "SKNeuron",
+    "SRM0Neuron",
+    "SSTNeuron",
     "SelfReferentialNeuron",
     "ShermanRinzelKeizerNeuron",
     "SiegertTransferFunction",
@@ -180,8 +227,10 @@ _MODEL_NAMES = {
     "SpiNNaker2Neuron",
     "SpiNNakerLIFNeuron",
     "SpikeResponseNeuron",
+    "StellateCell",
     "StochasticIFNeuron",
     "SuperSpikeNeuron",
+    "TTypeCaNeuron",
     "TermanWangOscillator",
     "ThetaNeuron",
     "ThresholdLinearRateNeuron",
@@ -189,16 +238,43 @@ _MODEL_NAMES = {
     "TrueNorthNeuron",
     "TsodyksMarkramNeuron",
     "TwoCompartmentLIFNeuron",
+    "UnipolarBrushCell",
+    "UpperMotorNeuron",
+    "VIPNeuron",
     "WangBuzsakiNeuron",
     "WendlingNeuron",
     "WilsonCowanUnit",
     "WilsonHRNeuron",
-    "SCResettingWilsonHRNeuron",
     "WongWangUnit",
     "YamadaNeuron",
 }
 
 __all__ = sorted(_CORE_NAMES | _MODEL_NAMES)
+
+# Names whose Rust class accepts every Python constructor field and reproduces the Python
+# trajectory (tests/test_neuron_facade_completeness.py). Only these auto-dispatch to Rust; a class
+# joins in the same unit as its parity proof.
+_RUST_DISPATCH_NAMES = frozenset(
+    {
+        "AmariNeuralField",
+        "COBALIFNeuron",
+        "CompteWMNeuron",
+        "EnergyLIFNeuron",
+        "IntegerQIFNeuron",
+        "JansenRitUnit",
+        "MATNeuron",
+        "McCullochPittsNeuron",
+        "McKeanNeuron",
+        "NonResettingLIFNeuron",
+        "SCNonResettingAdaptiveLIFNeuron",
+        "SCNormalizedEnergyLIFNeuron",
+        "SCResettingMATNeuron",
+        "SCSigmaDeltaAccumulatorNeuron",
+        "SigmaDeltaNeuron",
+        "SigmoidRateNeuron",
+        "ThresholdLinearRateNeuron",
+    }
+)
 
 # -- Rust auto-dispatch cache --
 _rust_map: dict[str, type] | None = None
@@ -216,7 +292,11 @@ def _load_rust_map() -> None:
         try:  # pragma: no cover
             from sc_neurocore_engine import sc_neurocore_engine as _eng
 
-            _rust_map = {name: getattr(_eng, name) for name in __all__ if hasattr(_eng, name)}
+            _rust_map = {
+                name: getattr(_eng, name)
+                for name in sorted(_RUST_DISPATCH_NAMES)
+                if hasattr(_eng, name)
+            }
         except ImportError:
             pass
 

@@ -463,6 +463,61 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- `sc_neurocore.neurons` now exports every class in
+  `neurons.models.__all__` (46 were missing, among them ATypeKNeuron,
+  IhNeuron and UpperMotorNeuron), and its Rust auto-dispatch is an
+  explicit allow-list, `_RUST_DISPATCH_NAMES` (17 names), of the
+  classes whose Rust constructor accepts every Python constructor
+  field and whose output matches the Python class step for step over
+  the parity stimulus (tests/test_neuron_facade_completeness.py). The
+  facade had handed callers the Rust class for every name the engine
+  exposes, many of which reject the Python keyword arguments
+  (`AdExNeuron(dt=0.05)` raised TypeError) or compute another
+  recurrence. These 116 names therefore resolve to their Python class
+  again: AdExNeuron, AdaptiveThresholdIFNeuron, AkidaNeuron,
+  AlphaNeuron, ArcaneNeuron, AstrocyteModel, AttentionGatedNeuron,
+  AvRonCardiacNeuron, BalancedResonateAndFireNeuron, BendaHerzNeuron,
+  BertramPhantomBurster, BoothRinzelNeuron, BrainScaleSAdExNeuron,
+  ButeraRespiratoryNeuron, CazellesMapNeuron, ChayKeizerNeuron,
+  ChayNeuron, ChialvoMapNeuron, ClosedFormContinuousNeuron,
+  ComplementaryLIFNeuron, CompositionalBindingNeuron,
+  ConnorStevensNeuron, CourageNekorkinMapNeuron, DPINeuron,
+  DeSchutterPurkinjeNeuron, DendrifyNeuron, DestexheThalamicNeuron,
+  DifferentiableSurrogateNeuron, DurstewitzDopamineNeuron,
+  EPropALIFNeuron, ErmentroutKopellPopulation, EscapeRateNeuron,
+  ExpIFNeuron, FitzHughNagumoNeuron, FitzHughRinzelNeuron,
+  FractionalLIFNeuron, GIFPopulationNeuron, GLIFNeuron, GLMNeuron,
+  GalvesLocherbachNeuron, GammaRenewalNeuron, GatedLIFNeuron,
+  GolombFSNeuron, GutkinErmentroutNeuron, HayL5PyramidalNeuron,
+  HillTononiNeuron, HindmarshRoseNeuron, HodgkinHuxleyNeuron,
+  HuberBraunNeuron, IbarzTanakaMapNeuron, InhibitoryLIFNeuron,
+  InhomogeneousPoissonNeuron, KLIFNeuron, LapicqueNeuron,
+  LarterBreakspearNeuron, LeakyCompeteFireNeuron,
+  LearnableNeuronModel, LiquidTimeConstantNeuron, Loihi2Neuron,
+  LoihiCUBANeuron, MainenSejnowskiNeuron, MarderSTGNeuron,
+  MedvedevMapNeuron, MetaPlasticNeuron, MihalasNieburNeuron,
+  MorrisLecarNeuron, MultiTimescaleNeuron, NeuroGridNeuron,
+  NonlinearLIFNeuron, ParallelSpikingNeuron, ParametricLIFNeuron,
+  PerfectIntegratorNeuron, PernarowskiNeuron, PinskyRinzelNeuron,
+  PlantR15Neuron, PoissonNeuron, PospischilNeuron,
+  PredictiveCodingNeuron, PrescottNeuron, QuadraticIFNeuron,
+  RallCableNeuron, ResonateAndFireNeuron, RulkovMapNeuron,
+  SCClippedLogisticBurstingMapNeuron,
+  SCClippedRationalRecoveryMapNeuron,
+  SCDecoupledAdaptationIonMassNeuron, SCFourStateGLIFNeuron,
+  SCResettingWilsonHRNeuron, SCScaledResetAdaptiveIFNeuron,
+  SCSixStateThalamocorticalNeuron, SCStochasticRateAdaptationNeuron,
+  SCThreeStatePhantomBurster, SCTriangularMcKeanNeuron,
+  SCUnitCapacitanceRespiratoryNeuron, SCUpwardCrossingRulkovMapNeuron,
+  SFANeuron, SelfReferentialNeuron, ShermanRinzelKeizerNeuron,
+  SiegertTransferFunction, SpiNNaker2Neuron, SpiNNakerLIFNeuron,
+  SpikeResponseNeuron, StochasticIFNeuron, SuperSpikeNeuron,
+  TermanWangOscillator, ThetaNeuron, TraubMilesNeuron,
+  TrueNorthNeuron, TsodyksMarkramNeuron, TwoCompartmentLIFNeuron,
+  WangBuzsakiNeuron, WendlingNeuron, WilsonCowanUnit, WilsonHRNeuron,
+  WongWangUnit, YamadaNeuron. Their Rust classes stay importable from
+  `sc_neurocore_engine`, and SC_NEUROCORE_NO_RUST keeps its meaning.
+
 - The docstring scope guard lets an enrolled file's policy row leave in
   the commit that deletes the file from the index. A file removed only
   from the working tree still counts as present, a rename is a deletion

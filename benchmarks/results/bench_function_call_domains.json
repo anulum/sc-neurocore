@@ -1,17 +1,368 @@
 {
+  "schema_version": "sc-neurocore.function-call-domain-benchmark.v1",
+  "generated_at": "2026-11-24T19:29:13.269360+00:00",
+  "evidence_class": "local_regression",
+  "production_speed_claimed": false,
+  "language": "Python",
+  "configuration": {
+    "calls": 100,
+    "repeats": 7,
+    "data_width": 8,
+    "fraction": 4
+  },
+  "protocol": {
+    "first_call": "First collector invocation in a fresh interpreter for each model.",
+    "cached": "Later calls in that same process; numerical accuracy caches may be reused.",
+    "timed_region": "function_call_contracts only; imports, model creation and JSON excluded.",
+    "comparison": "Repeated results checked for exact serialised equality outside timing.",
+    "limits": "Shared host; no isolated throughput, hardware speed or native counterpart claim."
+  },
+  "measurement_context": {
+    "architecture": "x86_64",
+    "cpu_model": "Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz",
+    "logical_cpu_count": 24,
+    "ram_bytes": 270423326720,
+    "operating_system": "Linux-6.8.0-149-generic-x86_64-with-glibc2.39",
+    "python_version": "3.12.16",
+    "numpy_version": "2.5.4",
+    "host_load": "workstation under concurrent load during capture",
+    "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
+    "cpu_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "load_average_before": [
+      16.626953125,
+      18.7041015625,
+      19.5185546875
+    ],
+    "load_average_after": [
+      17.1533203125,
+      18.71923828125,
+      19.509765625
+    ],
+    "cpu_governor": [
+      "schedutil"
+    ],
+    "cpu_frequency_mhz": {
+      "min_observed_mhz": 1200.0,
+      "max_observed_mhz": 2794.31,
+      "sampled_cpu_count": 24.0
+    },
+    "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
+    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims",
+    "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims"
+  },
+  "reference_dependency_versions": {
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "sympy": "1.14.0"
+  },
+  "source_head_at_capture": "f154619a391a23316034b96d2b6af19692e9d34a",
+  "source_worktree_dirty": false,
+  "source_sha256": {
+    "benchmarks/_benchmark_context.py": "0efcfdb16171cbdc0915ddde5f50dd4067f3bbab70195fb5440fb3b7b27680cf",
+    "benchmarks/bench_function_call_domains.py": "a5cf1111dd1d7031481a9b98ca3f8f27aa364260bd42f142401a4cc300333bf6",
+    "src/sc_neurocore/compiler/__init__.py": "c438a4c6db49cb6afbacb1ac2d7d8651c6fc066b8c5262fe1071110249acb7f2",
+    "src/sc_neurocore/compiler/_ir_equivalence_models.py": "9319c54b570c3e4df86aede088c80d50b94a565b00690f0f13c1f36cdce383d4",
+    "src/sc_neurocore/compiler/_ir_equivalence_reference.py": "05c73ab55c3a31cacc87bea466a3c27b1c75a1498846a6060fa0f4c90ba5fd07",
+    "src/sc_neurocore/compiler/_sby_runner.py": "4a5598dc098ff76fb51d7a4f8d833cb2407d98ba5ed0ceb2efa4115b299ef50f",
+    "src/sc_neurocore/compiler/_verilog_folded_datapath.py": "ceac657ad2b2d22968b89f43b5f838999f56d7a01dc44c9e96abefec2e1ce5ba",
+    "src/sc_neurocore/compiler/_verilog_integrators.py": "39d74be919d7e80e009ee32c0e6b3a6e534ee4b94c140e1d6d8373ad14ff4f2b",
+    "src/sc_neurocore/compiler/_verilog_neuron_core.py": "49ee375424f8cad7f050ba7eb4db7d77933c35e8851e64ae718e7bdb5460af7d",
+    "src/sc_neurocore/compiler/_verilog_registered_module.py": "83686edf6c575f71c2b7e6e707c09dc0e675bc2b19cf5211bd8e089c5c56f812",
+    "src/sc_neurocore/compiler/adaptive_precision.py": "cc30a86672df225fbbc9321b3060237b767e405d02dc326d70efac301654acb5",
+    "src/sc_neurocore/compiler/auto_tune.py": "b255846676d2145f9731553ad2db00de3c122b21db59dc02af48e133e04d9e9f",
+    "src/sc_neurocore/compiler/block_floating.py": "2a47cc28b8108156acb8395342a9c06b7735ac970d5033aa62fa0f711624d06f",
+    "src/sc_neurocore/compiler/block_floating_quantization.py": "13df1cad6a901931ac3a78f76a0f83b60ba78ba5881ffaaa8d1d9d3558109909",
+    "src/sc_neurocore/compiler/c_expr_emitter.py": "583074be6c52fda03f273b2b6100a28a1dc0da6fbbbb3c07d30aa4965ca75ae3",
+    "src/sc_neurocore/compiler/c_fixed_emitter.py": "533a4800e1b87481e6660f8002b253dc90d7736f1cfd4902fd79b4b01635a2e4",
+    "src/sc_neurocore/compiler/certification_gen.py": "bd896738ce5d8121a5e6d4ff0d0667761df2db21d30184e00e409e62a5c23b84",
+    "src/sc_neurocore/compiler/cocotb_gen.py": "c650c582b9bd6fa2924362d6f1c6d8d0ffed948202a2b6c7624c95146e5ec149",
+    "src/sc_neurocore/compiler/compiler_impl.py": "f0118df28c87c1973908cd5838e157b243c8cb4ba27d27da04880cc9635d46b1",
+    "src/sc_neurocore/compiler/constraint_gen.py": "4f7fc2afb5aa6ea19a5bdede15397a83f7f9fd67410664eb367ad67977e20204",
+    "src/sc_neurocore/compiler/cordic.py": "60369d25e31ec90b6395e3d8bdee2f486f78e870712b3e4c4366ee856da85034",
+    "src/sc_neurocore/compiler/cordic_native.py": "13a86bfc9ecc5891ea6673674eb8bb27ad8b254ff4c0d7e175d141105780cbbb",
+    "src/sc_neurocore/compiler/cordic_verilog.py": "c235dabacd251109389bd99a8185e55759a99112d8b2bfc6326c081546d65a70",
+    "src/sc_neurocore/compiler/deployment.py": "13afd40ed803f5d5ccae57b9d4b20a125b55faa9745c5557e0c4b47718afe0f7",
+    "src/sc_neurocore/compiler/diffusion_noise.py": "914cadd83c183ea49624cf4d97ff88d437f1484653605ffa47922b3cf5779c86",
+    "src/sc_neurocore/compiler/discrete_function_programs.py": "e3efab303c50eccb455c6fc077c8412f5e223acfea4fadbb0c316fa189a0481f",
+    "src/sc_neurocore/compiler/discrete_function_units.py": "1142cb671eee89091343e9fa22fb47749373fc91db64eeb641e211ebd3f0a952",
+    "src/sc_neurocore/compiler/equation_compiler.py": "ad79489e7a07648dcd9013711c6b08c165d1e1e72e46f89fab0f8d09a5b60318",
+    "src/sc_neurocore/compiler/equation_ir_compiler.py": "4dad9945cd546e57c3cee1a7c09c3168aedeec3be5251f22831618ad0765caad",
+    "src/sc_neurocore/compiler/equation_lowering.py": "7bf4659b3be9c4d793f237f5b70d6635806559d7ca0ab9dc63ad743359d51c4a",
+    "src/sc_neurocore/compiler/equation_state.py": "5958e8824f343c5f79cf1d7345d83fc211f9ee174645231b65f8fa1f370de69e",
+    "src/sc_neurocore/compiler/equivalence_check.py": "e572ade8e7c8ec89b90cb2cf694ef8a4e6eb25a78c5157fdd22b074e6001cc23",
+    "src/sc_neurocore/compiler/equivalence_miter.py": "769809f3aad0c83a12ad89aaf523ffa2fd5f3a773eb0967ad00c04bd10b0bdfd",
+    "src/sc_neurocore/compiler/exact_normal.py": "de63c2b07408e2c36479b24d8d4f0aaf56e32a70d4aa511dafd0ecfce0919752",
+    "src/sc_neurocore/compiler/expr_lut_tables.py": "a7af4505632bb7c891a3c183c37bcf5950c0fcb7ffc38a899ca8d0ae4a1ae66f",
+    "src/sc_neurocore/compiler/fixed_expression_ranges.py": "1df732250a01f78d671ef2d11fd7855f795a26bb44dcd44f0366cd3173656d41",
+    "src/sc_neurocore/compiler/fixed_point_quantization.py": "5f8722aabab9b3101a1500664f97af221f5e647634615aa9e872bcc3efa35c74",
+    "src/sc_neurocore/compiler/formal_evidence.py": "9a02bd242e669a6a132ca62dac0115f3290d39dfdd99494a5e9b05e78ef15f2d",
+    "src/sc_neurocore/compiler/formal_property_check.py": "ff364ce4b660848e9f66fe42be416c85a04adc520a8d92aac3f76dd8a7dded29",
+    "src/sc_neurocore/compiler/fpga_wrapper.py": "a82626138c56263c4058f6c81d72c470196a2942604065b6f89666b14ef2754f",
+    "src/sc_neurocore/compiler/function_call_accuracy.py": "eecccd0408591cb8b5cbffb744945efb0b8e2aa7edd646e37912af8cbff2a33f",
+    "src/sc_neurocore/compiler/function_call_domains.py": "c05a730c14577f07b28f0d6df2a011c439a73f02a1468ea8f529aecbed2aa848",
+    "src/sc_neurocore/compiler/function_unit_hardware.py": "a5108ae8d3c8273007fa71cb1b7381ee218d846181490762b6f4a4033953f6a4",
+    "src/sc_neurocore/compiler/function_unit_ir.py": "ff77cce3736f8ca59eb74ce67a31477ea95e62ac558e7994ca6a501e59b7979a",
+    "src/sc_neurocore/compiler/function_unit_programs.py": "384a12dec497b8694b73d203c3cff3a21a8b7b375f3205bb8ea60111752c234b",
+    "src/sc_neurocore/compiler/function_units.py": "ab1cc1105824276b889dd3d006237453f6e71df62c211b9def8c4b23c65e5af2",
+    "src/sc_neurocore/compiler/guarantee_summary.py": "e856d44e949a249cc1c194307f07276e65d7f9c9094712ac379b4c513a6af85d",
+    "src/sc_neurocore/compiler/guard_bits.py": "1ea2f2cbd146909b258bc6914510c61da5530c92eb06bc985bd870d30523438d",
+    "src/sc_neurocore/compiler/hardware_numeric_contract.py": "220efa51c8f29b64fa1dc6a70ce9c0f462559a4710ee644fc0bace8382b1f499",
+    "src/sc_neurocore/compiler/host_driver_gen.py": "05fd4dc67ec12c544d6b5a41d07d00a93c8f80989a9055c689f2622f3d4f3387",
+    "src/sc_neurocore/compiler/ir_equivalence.py": "bc2326c03d1f63631115daf700a2dacaec0fd503ab1a699305a1481317831e37",
+    "src/sc_neurocore/compiler/ir_type_checker.py": "0e85973c8cc15f4f2d10c8c6a7389c633f9afc15752df17ecade852904a3e186",
+    "src/sc_neurocore/compiler/layer_precision.py": "e7960db8ed6a70ddff6da6e8453fdd547dabbf0e9fc5e44f440ac110b52a731b",
+    "src/sc_neurocore/compiler/length_planner.py": "94019da1085715864b3c9308c2b70d5b52960db2d6ff0f1f74da7b0d47e91029",
+    "src/sc_neurocore/compiler/live_control.py": "941e58034f4312a7fefff9f28ef07528d7a90c12f666dce938639dc550ae5eb7",
+    "src/sc_neurocore/compiler/live_control_ops.py": "9a3a49d6b99e6495ba4a55d072d2ef1d98e4aadce42de936b42169b79f8f1b51",
+    "src/sc_neurocore/compiler/live_control_specs.py": "d9118b1189197fbd593f10d1985c0ac983ef100cbc4b4e1f77dfb378b40630c6",
+    "src/sc_neurocore/compiler/live_control_types.py": "510d40371f99fa5274583872dc1b7e718b5195474d191627fd80c532876e6231",
+    "src/sc_neurocore/compiler/lut_accuracy.py": "50bca6057ce3ec2d3fff68d3c3dcfb02f460f1129c6fefd2757745f7a3a9b057",
+    "src/sc_neurocore/compiler/magnitude_function_programs.py": "1131628925ee11c7f357dd897a315955f6215acdf6405f8a82ec82f6c8d8aa80",
+    "src/sc_neurocore/compiler/magnitude_function_units.py": "392cf4fcf645fda3c1f80989cc56783279d7e5c749261ff9751f69409e7b511e",
+    "src/sc_neurocore/compiler/manifest_gen.py": "cc8f667ada22411def5dffabdd37e7de92dd46c88bae6c0d22dfab1b7819f63a",
+    "src/sc_neurocore/compiler/mixed_dense_kernel.py": "d26d86ba9c6a99d4dc383bec7df6e0569f9ac18570e8c8ad51c066d37fe7b6e3",
+    "src/sc_neurocore/compiler/mixed_dense_quantization.py": "f08176966d70043f3c3647a0491386fa3b4844c424ff82498696e5a7c6dc1b3c",
+    "src/sc_neurocore/compiler/mixed_precision.py": "68b351f32e4b107183264ed56d543986388f680b11fd00df0d4b7f21f7e2c3a6",
+    "src/sc_neurocore/compiler/mixed_precision_spec.py": "dfd2961fca978b58b59deef66385adcc73bc0c6471612e5e54c758a6b4f30391",
+    "src/sc_neurocore/compiler/mlir_emitter.py": "70012768e830577eda9fbe14701c30ffb01b61f42ef5788604072cd0dfddd926",
+    "src/sc_neurocore/compiler/multi_target.py": "4b9ca9228250f173801cbb6b8b66be08b09df228c13530d9a5afbee9940820c5",
+    "src/sc_neurocore/compiler/native_program.py": "8cf927800261374e5963633f713bd16093f9b925659ef591556f12103dbceb3e",
+    "src/sc_neurocore/compiler/operator_abstraction.py": "2e6958b7688de2532243a30ed36a3c1d36bb98aa57146e1f81a63b5b9fd5960b",
+    "src/sc_neurocore/compiler/overflow_proof.py": "11faaa112afbb4418917d916ab32200c9f17316faa30b4f10616aa062e38fb7f",
+    "src/sc_neurocore/compiler/philox_threshold.py": "bbb3663589361be314b96092de5750abec63a49496d7a4f92b31aac283a7b448",
+    "src/sc_neurocore/compiler/pipeline.py": "7d6b3f7eeb4251b092a9aa147ca3d1d083a46ed98f1d2ed0dc99faf13cc4f941",
+    "src/sc_neurocore/compiler/pipeline_analysis.py": "babc674c5035c29e0e38d32f75f000e9dc3d8322844025a97034410300c03569",
+    "src/sc_neurocore/compiler/power_accuracy.py": "f978c09259ee44e2f2a0bdd470c2c9bdc8fea7099683830b0861ab69a75b74e5",
+    "src/sc_neurocore/compiler/power_estimator.py": "3307fbaa97d4c077d163fd076638f91a3a61a8bda59745765497ab33c4959fed",
+    "src/sc_neurocore/compiler/power_unit_programs.py": "4e132f8d3fd8182f7be09ba4ae785aac45ba570e0e406f1a5b938cf92a8346fa",
+    "src/sc_neurocore/compiler/power_units.py": "7df48c1e84df8b6e0fe8455327e0344f675d29d3aaf67c9186d9d41c62646900",
+    "src/sc_neurocore/compiler/precision_config.py": "1c658ab3e4791c3fb20f37c5a9cfb41579704dc09903c1a2f2d6be07a0cc985b",
+    "src/sc_neurocore/compiler/precision_pairs.py": "82af249989cfec4eaa66e19a733541966f621843ebf58d41a9db47020749b1cf",
+    "src/sc_neurocore/compiler/precision_presets.py": "192c88ac651a584d4debd37c48154f1c226023da4e0ace67904369e287802651",
+    "src/sc_neurocore/compiler/precision_solver.py": "4974a35cab119e0c2258faae575baf19d00986564b5aeced38172515a35afef5",
+    "src/sc_neurocore/compiler/proof_transforms.py": "808decbee8fdbe0e26431a3f596beea76c56ae97ab7ddfcab34b650ad5d542bc",
+    "src/sc_neurocore/compiler/q_format.py": "c069e20de19f77fe2f42be03d4099e2de8a27e58c3553a31d3301989b1cf9052",
+    "src/sc_neurocore/compiler/quantization_reports.py": "7e8dd051596582f154f564156629b6ced93168ac52c82dc819dd43fd27e47c57",
+    "src/sc_neurocore/compiler/quantize_core.py": "cfea1879af83675f436295e4360e486f03eb03ae44394b9815a09d828f060c01",
+    "src/sc_neurocore/compiler/quantizer.py": "a1c22cffdb1877bcb1ed7c8ec520e0b906ede6d09d1cb473adb3e13b9c7122c0",
+    "src/sc_neurocore/compiler/random_unit_programs.py": "4fd7dc2f4c3a24e9567e7bd0df8a86e75572e8be7e0db877ed56256a11d27a30",
+    "src/sc_neurocore/compiler/random_units.py": "c1f41d2ecf9d9f8c26db7d99d8d64c25972ae9f5c51eef9c21470354eb20e421",
+    "src/sc_neurocore/compiler/reciprocal_root_programs.py": "236c8c28e3c57935da2c312c63f27559ffcca60f2974ea628f7721b3676da34f",
+    "src/sc_neurocore/compiler/reciprocal_root_units.py": "c9a29bc80dc4f98aaf67a3cd18e03e6f89d9fb8bd3cc6fca61909265fbb52819",
+    "src/sc_neurocore/compiler/resource_estimator.py": "9c29c031f93dc37627611c0a285217f54508d37ad12f3ecd3f9891eb2dabd7c8",
+    "src/sc_neurocore/compiler/riscv_driver.py": "ba0a7722fe42d0d270cf3b8cb1f51ffd3ed7c7881c21e769360f47143990265b",
+    "src/sc_neurocore/compiler/rtl_refusals.py": "7d7b5054d2aba0521a5067175b54e8b3d7623ea287048d618218deecfb4f5666",
+    "src/sc_neurocore/compiler/sby_formal.py": "69ae2b5d7ec0110cac11305bd8e68d77599c421ff476a6330675cb45dc4b9332",
+    "src/sc_neurocore/compiler/sensitivity_analysis.py": "104dd137733397908f59135f4921960fb94cc6c605cc217f4609db1091922a2b",
+    "src/sc_neurocore/compiler/slr_placement.py": "42de08c4a7ff246f6ad35d51f8b326751e2c45c8a8e0ea430500e8c30f1ac3de",
+    "src/sc_neurocore/compiler/static_analysis.py": "490f7ebff6d9053272aa5aa136b89b2f4ccffa250c123a228ce794c994bd7e2f",
+    "src/sc_neurocore/compiler/sva_gen.py": "f9e0faffd6615e41bf67a1903fd924b448ffc27397e7a43c722845ae8fda5a52",
+    "src/sc_neurocore/compiler/synapse_planner.py": "742a0ea4af59ef3a101dcef35d0c763ce1b4f5936a1702b5beede59cc3e7b5ad",
+    "src/sc_neurocore/compiler/synapse_precision.py": "b6d1faddb76d7e159d5e84f5cdb01f1ef3ebd9097b2c890a00ad71706497d3d3",
+    "src/sc_neurocore/compiler/testbench_gen.py": "dafc6a3516a0d0c482a0763e62f0296394952663ef4c8a7ab1df6b906e267f28",
+    "src/sc_neurocore/compiler/validation.py": "092980a25363d3e31a088ef97fab0798dc51c460630b4914a758765266616897",
+    "src/sc_neurocore/compiler/verilog_compiler.py": "b57f59b6652cad794f56c0af12b497fa9b2e90c4458f6938a36d0c8bd08a74ae",
+    "src/sc_neurocore/compiler/verilog_compiler_config.py": "244058e4005081619932a2935778ab176f78dd0dd2b26681220be657be9b6957",
+    "src/sc_neurocore/compiler/verilog_expr_emitter.py": "519cc13b1b5dd42bd8f1fd392a23e893f5faee55d8e92557a75cbddad0724d04",
+    "src/sc_neurocore/compiler/whitebox_taps.py": "ad64821e20adeaba098962e44b0edf0a707b32d1629b13843f672ce08292f0e6",
+    "src/sc_neurocore/neurons/__init__.py": "7f0c6c96e68dc7ffae8508545d5f5b3adf41f50f7c3767c1ae5e06a49660b184",
+    "src/sc_neurocore/neurons/__main__.py": "7512aab0b175e42dba8b28b3826508f3202c1d30cb7ee663777a56feb64547ea",
+    "src/sc_neurocore/neurons/_stochastic_threshold.py": "e8197e9fb1a2127c9c1bd18c9b2bee902d6dcf3bd85c06dcdd56358d43f3475a",
+    "src/sc_neurocore/neurons/_units.py": "c04c063bbd229425f519794919c3f6af838150eda03f8af97c741099a8c95f42",
+    "src/sc_neurocore/neurons/base.py": "0cb339b37aaf52c3eb66b44ad186d432d76326c3ead5ef99bb9276bda22557b3",
+    "src/sc_neurocore/neurons/behavior_taxonomy.py": "63388c92861adde7ccbcba610e73ef999fd92284c34f168ab0af8465ece6640a",
+    "src/sc_neurocore/neurons/dendritic.py": "50f8906d90332a7df95314509652519f305ec517171880cd548523a45e548d2b",
+    "src/sc_neurocore/neurons/descriptor_generator.py": "e6f3718ba1c2fc1b240627483dc44ce34ef0a8785d1b5f7d22bbc89b37bec8b8",
+    "src/sc_neurocore/neurons/descriptor_tiers.py": "61574e62beae09896789da9fc904d31ac7c91487654c231d579ce87a95f1a5d5",
+    "src/sc_neurocore/neurons/dsl_cli.py": "cd21e37f2ac41b6bee831e259f4ad932c4e354fd3b1f497f709c963545be16a4",
+    "src/sc_neurocore/neurons/equation_builder.py": "cd4f9c2fe25895aa4cb91bb98a7ed050c575d6cc7c0fd16154de99320754f5bd",
+    "src/sc_neurocore/neurons/equation_evaluation.py": "80e47b4c07a1b8e4c0a9c20dbe82098aaba8ca5754b840fc2c7bca77aa227d06",
+    "src/sc_neurocore/neurons/equation_namespace.py": "39824cb51d49cf781fe7ce0209a13dbfb17c4a656200ebf9b91a72a5434e81d4",
+    "src/sc_neurocore/neurons/equation_program.py": "4064ae6a7b2d77586ea311f318947b2c918bc287f65cf502f1cfe0a53d6daeb8",
+    "src/sc_neurocore/neurons/equation_random.py": "c3b5befd17c9990d0ea1c2639fedc55671060ea7cd1f5848435b90610dd40202",
+    "src/sc_neurocore/neurons/equation_refusals.py": "5ebb46ecaaf66f8108c05bbb3207d5e6b82d70138c6ba11cc4c2848197156692",
+    "src/sc_neurocore/neurons/equation_safety.py": "2627e82d2be63efd7bbb33eba5248a37aed969c9eb67de2468d3e66f987d0386",
+    "src/sc_neurocore/neurons/equation_units_runtime.py": "15cd730c6222bd55891a7746c0de9c4b76d4217da049b7bfceff99a0c2479fb6",
+    "src/sc_neurocore/neurons/evidence_references.py": "033152ba8c881df43d0a45b324928364e950b0e72d223876cc722ba5fd027f12",
+    "src/sc_neurocore/neurons/expression_derivative.py": "d2a0b09f0710dd6c2a0f46960b1d792b99dae300d182440d931a86654e51b1e2",
+    "src/sc_neurocore/neurons/facet_receipts.py": "bf48981c63d5bf9ed56768a0b2df1a30d8137d13b5bf7440868ca43b80a92098",
+    "src/sc_neurocore/neurons/fixed_point_lif.py": "17205e50065d6e6115f3ef0bb1b07d1570b6bc6c45bcfb6ba6476cdd8dbd1be3",
+    "src/sc_neurocore/neurons/homeostatic_lif.py": "e222d2395d2411a1c3cdae2fa90ba14866e9c11e7c490510efc355c950a336aa",
+    "src/sc_neurocore/neurons/lane_runs.py": "64812ad1f29d5f6d51c77391e0798468d4c46ca84b77558050e3b57b717430a0",
+    "src/sc_neurocore/neurons/model_catalogue.py": "bdccedfe00872bb567b1be4c8f951e641dbdca38e82645394f32d7e8c5a008ea",
+    "src/sc_neurocore/neurons/model_descriptor.py": "92d7f6bd3154158575b53557cd4e407d0e02d0beb80fe3fc2930b974abf9894e",
+    "src/sc_neurocore/neurons/model_identity.py": "794dcf0aabbdd8509fb18bf7eee34ae73201f836a216100ec65b49ad32edba52",
+    "src/sc_neurocore/neurons/model_profile.py": "f218c52ef0533358b6dd152da9dc728aecc6e8e14c82f7a372232519ca1670ed",
+    "src/sc_neurocore/neurons/model_receipts.py": "894002e60353c5b86b3949a21ff78f793b1933f59e577f7b1cca92bcdf67fb26",
+    "src/sc_neurocore/neurons/model_registry.py": "c46738d783fc94275dc3e35600afc63a7bd071ffa4421281a650a9e616e32ee4",
+    "src/sc_neurocore/neurons/model_taxonomy.py": "b8b8e5bbed3deda0fe92136f01221744a6c8852bc102e87da4ec7cef84ce5bed",
+    "src/sc_neurocore/neurons/profile_registry.py": "de87535902d50a3f62abe71c6678f322d3ad5699e626c802b6982b641e191dc8",
+    "src/sc_neurocore/neurons/readiness.py": "9e0de77ac9143b45d6a1b76c9a607b816b26ed90bcb38bd5784ef51f842ad1da",
+    "src/sc_neurocore/neurons/receipt_execution.py": "214d129d90ac752d796d3ad0e666da745656e5c52a3818216996ca4308f2e4ba",
+    "src/sc_neurocore/neurons/reference_trace_contracts.py": "7238a0f0474042f2634ba337d2f804ca5fb53e63d43c578d2e89172ebd5d42c1",
+    "src/sc_neurocore/neurons/reference_trace_io.py": "8f47c9041470cb0fedd1b3c07a29519cc3c8ba4d0966b05f8f72d68cb3efb01a",
+    "src/sc_neurocore/neurons/reference_trace_mutations.py": "321e51f6a687772dd180f1992de7499afa88f877a7bf5e3ff660946fac9692df",
+    "src/sc_neurocore/neurons/reference_trace_provenance.py": "6796b3464bcda95842a2b5a604ac44efe514674def12b245457978b2927c5a92",
+    "src/sc_neurocore/neurons/reference_trace_runner.py": "5c75e5c218ded505269492964882b1d7fc57e301299e8c7c6efc2de9955003e1",
+    "src/sc_neurocore/neurons/reference_traces.py": "83d4b9de4747ffac66f527396b270eed55d0186ba7ac9b24a652566bf4b60da1",
+    "src/sc_neurocore/neurons/sc_izhikevich.py": "38ea55c80a886d9fd14fbe9261ca4b90c6199b9e5f3cfd8b1aec64819ac05db7",
+    "src/sc_neurocore/neurons/schema_contracts.py": "971ccd3e5a78cd11982cb07e41c763a633ee05e71a66be9f48b589878e30056c",
+    "src/sc_neurocore/neurons/schema_module_aliases.py": "f72b25ee74dfc6f9969d7e45e0506561eeac1ef71cb7133121bde4a43704edae",
+    "src/sc_neurocore/neurons/schema_validator.py": "21df7b0ea62e0674ff457188d970b20f65d0adc1802beebe2030e55aa3886893",
+    "src/sc_neurocore/neurons/seed_domain.py": "d34075555917bbcb11fb950f4056f61b4087dba83f102d7eaf0c4bf609bd0e00",
+    "src/sc_neurocore/neurons/stochastic_lif.py": "68cd375768b678990fe3d94f719c6c22d3167b47af0ec76423c6d12d424efe00",
+    "src/sc_neurocore/neurons/universal_dsl.py": "72a0ae374db13a4bfbab9982b4487c95b23ccdf2b6ff674ca091d259e14b9527"
+  },
+  "source_unchanged_during_capture": true,
   "cases": {
-    "clipped_hypot": {
-      "all_repeats_equal": true,
-      "cached_median_ns_per_call": 445446.73,
+    "paired_exponentials": {
+      "first_call_ns": 5086291,
       "cached_ns_per_call": [
-        444233.17,
-        432748.85,
-        513450.34,
-        445446.73,
-        450129.55,
-        451231.63,
-        435938.96
+        259208.99,
+        253600.44,
+        274249.96,
+        258278.48,
+        252440.37,
+        252882.45,
+        252248.62
       ],
+      "cached_median_ns_per_call": 253600.44,
+      "contract_sha256": "e71e2fa74244bedb3fac4ca8ce0c24cb58e2a70bbe149a5825bdc8717a632109",
+      "contracts": [
+        {
+          "accuracy": {
+            "codes_evaluated": 256,
+            "declared_error_bound": null,
+            "domain_cardinality": 256,
+            "excluded_domain_codes": 0,
+            "exhaustive": true,
+            "max_error": 0.03094892514116676,
+            "max_error_at_inputs": [
+              1.6875
+            ],
+            "max_error_lsb": 0.4951828022586682,
+            "reference": "Python model function, clipped to the signed word",
+            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
+            "valid_code_intervals": [
+              [
+                [
+                  -128,
+                  127
+                ]
+              ]
+            ]
+          },
+          "argument_ranges": [
+            {
+              "codes": [
+                -128,
+                127
+              ],
+              "notes": [],
+              "values": [
+                -8.0,
+                7.9375
+              ]
+            }
+          ],
+          "arguments": [
+            "I"
+          ],
+          "column": 0,
+          "expression": "exp(I)",
+          "function": "exp",
+          "implicit": false,
+          "line": 1,
+          "location": "equation v",
+          "refusal": ""
+        },
+        {
+          "accuracy": {
+            "codes_evaluated": 64,
+            "declared_error_bound": null,
+            "domain_cardinality": 64,
+            "excluded_domain_codes": 0,
+            "exhaustive": true,
+            "max_error": 0.03094892514116676,
+            "max_error_at_inputs": [
+              1.6875
+            ],
+            "max_error_lsb": 0.4951828022586682,
+            "reference": "Python model function, clipped to the signed word",
+            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
+            "valid_code_intervals": [
+              [
+                [
+                  -32,
+                  31
+                ]
+              ]
+            ]
+          },
+          "argument_ranges": [
+            {
+              "codes": [
+                -32,
+                31
+              ],
+              "notes": [],
+              "values": [
+                -2.0,
+                1.9375
+              ]
+            }
+          ],
+          "arguments": [
+            "I / 4"
+          ],
+          "column": 7,
+          "expression": "exp(I / 4)",
+          "function": "exp",
+          "implicit": false,
+          "line": 1,
+          "location": "equation v",
+          "refusal": ""
+        }
+      ],
+      "all_repeats_equal": true
+    },
+    "clipped_hypot": {
+      "first_call_ns": 218866939,
+      "cached_ns_per_call": [
+        377522.56,
+        364662.2,
+        513244.48,
+        658368.34,
+        653543.51,
+        656909.26,
+        626372.79
+      ],
+      "cached_median_ns_per_call": 626372.79,
       "contract_sha256": "d22bb710b6b05bbde156185a0b45160601eac7c2ac2ae836d4ed9756858ee3bc",
       "contracts": [
         {
@@ -81,20 +432,157 @@
           "refusal": ""
         }
       ],
-      "first_call_ns": 299455331
+      "all_repeats_equal": true
+    },
+    "literal_dynamic_powers": {
+      "first_call_ns": 2652118424,
+      "cached_ns_per_call": [
+        492294.38,
+        635776.06,
+        708487.26,
+        793657.91,
+        601456.7,
+        589800.09,
+        564515.35
+      ],
+      "cached_median_ns_per_call": 601456.7,
+      "contract_sha256": "9e860995cd851d22cc87477304bb11a7f3c1a348cede95c87d12e440f0c87129",
+      "contracts": [
+        {
+          "accuracy": {
+            "codes_evaluated": 128,
+            "declared_error_bound": 0.031250000000005475,
+            "domain_cardinality": 128,
+            "excluded_domain_codes": 128,
+            "exhaustive": true,
+            "max_error": 0.030779008515406936,
+            "max_error_at_inputs": [
+              2.6875
+            ],
+            "max_error_lsb": 0.492464136246511,
+            "reference": "96-digit Decimal real power, clipped to the signed word",
+            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
+            "valid_code_intervals": [
+              [
+                [
+                  0,
+                  127
+                ]
+              ]
+            ]
+          },
+          "argument_ranges": [
+            {
+              "codes": [
+                -128,
+                127
+              ],
+              "notes": [],
+              "values": [
+                -8.0,
+                7.9375
+              ]
+            }
+          ],
+          "arguments": [
+            "I"
+          ],
+          "column": 0,
+          "exponent": {
+            "kind": "literal",
+            "value": 1.5
+          },
+          "expression": "I ** 1.5",
+          "function": "power",
+          "implicit": false,
+          "line": 1,
+          "location": "equation v",
+          "refusal": ""
+        },
+        {
+          "accuracy": {
+            "codes_evaluated": 429,
+            "declared_error_bound": 0.03125000000001348,
+            "domain_cardinality": 429,
+            "excluded_domain_codes": 0,
+            "exhaustive": true,
+            "max_error": 0.03120516801422868,
+            "max_error_at_inputs": [
+              0.375,
+              -0.8125
+            ],
+            "max_error_lsb": 0.49928268822765887,
+            "reference": "96-digit Decimal real power, clipped to the signed word",
+            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
+            "valid_code_intervals": [
+              [
+                [
+                  4,
+                  16
+                ]
+              ],
+              [
+                [
+                  -16,
+                  16
+                ]
+              ]
+            ]
+          },
+          "argument_ranges": [
+            {
+              "codes": [
+                4,
+                16
+              ],
+              "notes": [],
+              "values": [
+                0.25,
+                1.0
+              ]
+            },
+            {
+              "codes": [
+                -16,
+                16
+              ],
+              "notes": [],
+              "values": [
+                -1.0,
+                1.0
+              ]
+            }
+          ],
+          "arguments": [
+            "clip(I, 0.25, 1)",
+            "clip(w, -1, 1)"
+          ],
+          "column": 7,
+          "exponent": {
+            "kind": "dynamic"
+          },
+          "expression": "clip(I, 0.25, 1) ** clip(w, -1, 1)",
+          "function": "power",
+          "implicit": false,
+          "line": 1,
+          "location": "equation v",
+          "refusal": ""
+        }
+      ],
+      "all_repeats_equal": true
     },
     "exponential_euler_events": {
-      "all_repeats_equal": true,
-      "cached_median_ns_per_call": 913251.9,
+      "first_call_ns": 16435195,
       "cached_ns_per_call": [
-        928387.99,
-        914893.81,
-        783866.78,
-        873662.14,
-        913251.9,
-        997336.25,
-        802633.59
+        656679.11,
+        660734.19,
+        644044.21,
+        687781.82,
+        671981.1,
+        714094.77,
+        682528.95
       ],
+      "cached_median_ns_per_call": 671981.1,
       "contract_sha256": "4f14282fbb2e1aca132316c0ee881b29599e2bfaf2fc3ca701a0cbbd03ae9637",
       "contracts": [
         {
@@ -333,497 +821,7 @@
           "refusal": ""
         }
       ],
-      "first_call_ns": 21083156
-    },
-    "literal_dynamic_powers": {
-      "all_repeats_equal": true,
-      "cached_median_ns_per_call": 725861.6,
-      "cached_ns_per_call": [
-        689721.43,
-        693275.26,
-        738838.99,
-        748617.7,
-        734411.75,
-        725861.6,
-        639753.16
-      ],
-      "contract_sha256": "9e860995cd851d22cc87477304bb11a7f3c1a348cede95c87d12e440f0c87129",
-      "contracts": [
-        {
-          "accuracy": {
-            "codes_evaluated": 128,
-            "declared_error_bound": 0.031250000000005475,
-            "domain_cardinality": 128,
-            "excluded_domain_codes": 128,
-            "exhaustive": true,
-            "max_error": 0.030779008515406936,
-            "max_error_at_inputs": [
-              2.6875
-            ],
-            "max_error_lsb": 0.492464136246511,
-            "reference": "96-digit Decimal real power, clipped to the signed word",
-            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
-            "valid_code_intervals": [
-              [
-                [
-                  0,
-                  127
-                ]
-              ]
-            ]
-          },
-          "argument_ranges": [
-            {
-              "codes": [
-                -128,
-                127
-              ],
-              "notes": [],
-              "values": [
-                -8.0,
-                7.9375
-              ]
-            }
-          ],
-          "arguments": [
-            "I"
-          ],
-          "column": 0,
-          "exponent": {
-            "kind": "literal",
-            "value": 1.5
-          },
-          "expression": "I ** 1.5",
-          "function": "power",
-          "implicit": false,
-          "line": 1,
-          "location": "equation v",
-          "refusal": ""
-        },
-        {
-          "accuracy": {
-            "codes_evaluated": 429,
-            "declared_error_bound": 0.03125000000001348,
-            "domain_cardinality": 429,
-            "excluded_domain_codes": 0,
-            "exhaustive": true,
-            "max_error": 0.03120516801422868,
-            "max_error_at_inputs": [
-              0.375,
-              -0.8125
-            ],
-            "max_error_lsb": 0.49928268822765887,
-            "reference": "96-digit Decimal real power, clipped to the signed word",
-            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
-            "valid_code_intervals": [
-              [
-                [
-                  4,
-                  16
-                ]
-              ],
-              [
-                [
-                  -16,
-                  16
-                ]
-              ]
-            ]
-          },
-          "argument_ranges": [
-            {
-              "codes": [
-                4,
-                16
-              ],
-              "notes": [],
-              "values": [
-                0.25,
-                1.0
-              ]
-            },
-            {
-              "codes": [
-                -16,
-                16
-              ],
-              "notes": [],
-              "values": [
-                -1.0,
-                1.0
-              ]
-            }
-          ],
-          "arguments": [
-            "clip(I, 0.25, 1)",
-            "clip(w, -1, 1)"
-          ],
-          "column": 7,
-          "exponent": {
-            "kind": "dynamic"
-          },
-          "expression": "clip(I, 0.25, 1) ** clip(w, -1, 1)",
-          "function": "power",
-          "implicit": false,
-          "line": 1,
-          "location": "equation v",
-          "refusal": ""
-        }
-      ],
-      "first_call_ns": 2302561788
-    },
-    "paired_exponentials": {
-      "all_repeats_equal": true,
-      "cached_median_ns_per_call": 314577.23,
-      "cached_ns_per_call": [
-        366099.26,
-        360964.92,
-        277592.4,
-        300722.79,
-        360111.61,
-        314577.23,
-        283012.46
-      ],
-      "contract_sha256": "e71e2fa74244bedb3fac4ca8ce0c24cb58e2a70bbe149a5825bdc8717a632109",
-      "contracts": [
-        {
-          "accuracy": {
-            "codes_evaluated": 256,
-            "declared_error_bound": null,
-            "domain_cardinality": 256,
-            "excluded_domain_codes": 0,
-            "exhaustive": true,
-            "max_error": 0.03094892514116676,
-            "max_error_at_inputs": [
-              1.6875
-            ],
-            "max_error_lsb": 0.4951828022586682,
-            "reference": "Python model function, clipped to the signed word",
-            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
-            "valid_code_intervals": [
-              [
-                [
-                  -128,
-                  127
-                ]
-              ]
-            ]
-          },
-          "argument_ranges": [
-            {
-              "codes": [
-                -128,
-                127
-              ],
-              "notes": [],
-              "values": [
-                -8.0,
-                7.9375
-              ]
-            }
-          ],
-          "arguments": [
-            "I"
-          ],
-          "column": 0,
-          "expression": "exp(I)",
-          "function": "exp",
-          "implicit": false,
-          "line": 1,
-          "location": "equation v",
-          "refusal": ""
-        },
-        {
-          "accuracy": {
-            "codes_evaluated": 64,
-            "declared_error_bound": null,
-            "domain_cardinality": 64,
-            "excluded_domain_codes": 0,
-            "exhaustive": true,
-            "max_error": 0.03094892514116676,
-            "max_error_at_inputs": [
-              1.6875
-            ],
-            "max_error_lsb": 0.4951828022586682,
-            "reference": "Python model function, clipped to the signed word",
-            "scope": "Cartesian interval hull; holes and operand correlations are not inferred",
-            "valid_code_intervals": [
-              [
-                [
-                  -32,
-                  31
-                ]
-              ]
-            ]
-          },
-          "argument_ranges": [
-            {
-              "codes": [
-                -32,
-                31
-              ],
-              "notes": [],
-              "values": [
-                -2.0,
-                1.9375
-              ]
-            }
-          ],
-          "arguments": [
-            "I / 4"
-          ],
-          "column": 7,
-          "expression": "exp(I / 4)",
-          "function": "exp",
-          "implicit": false,
-          "line": 1,
-          "location": "equation v",
-          "refusal": ""
-        }
-      ],
-      "first_call_ns": 5413323
+      "all_repeats_equal": true
     }
-  },
-  "configuration": {
-    "calls": 100,
-    "data_width": 8,
-    "fraction": 4,
-    "repeats": 7
-  },
-  "evidence_class": "local_regression",
-  "generated_at": "2026-11-20T17:43:51.863932+00:00",
-  "language": "Python",
-  "measurement_context": {
-    "architecture": "x86_64",
-    "concurrent_load_status": "non-exclusive workstation run; other heavy jobs may have been active",
-    "cpu_affinity": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23
-    ],
-    "cpu_frequency_mhz": {
-      "max_observed_mhz": 2793.112,
-      "min_observed_mhz": 2792.877,
-      "sampled_cpu_count": 24.0
-    },
-    "cpu_governor": [
-      "schedutil"
-    ],
-    "cpu_isolation": "taskset affinity only when launched with taskset; no kernel-reserved isolated cores were detected on this workstation",
-    "cpu_model": "Intel(R) Xeon(R) CPU E5-2640 0 @ 2.50GHz",
-    "host_load": "workstation under concurrent load during capture",
-    "load_average_after": [
-      27.52978515625,
-      24.78857421875,
-      20.2734375
-    ],
-    "load_average_before": [
-      30.51904296875,
-      25.18994140625,
-      20.32763671875
-    ],
-    "logical_cpu_count": 24,
-    "numpy_version": "2.5.4",
-    "operating_system": "Linux-6.8.0-149-generic-x86_64-with-glibc2.39",
-    "production_rerun_requirement": "rerun on reserved isolated cores with recorded affinity, governor, frequency, versions, and host-load evidence before publishing performance claims",
-    "python_version": "3.12.16",
-    "ram_bytes": 270423326720,
-    "timing_interpretation": "use timing medians as local regression context only, not final throughput claims"
-  },
-  "production_speed_claimed": false,
-  "protocol": {
-    "cached": "Later calls in that same process; numerical accuracy caches may be reused.",
-    "comparison": "Repeated results checked for exact serialised equality outside timing.",
-    "first_call": "First collector invocation in a fresh interpreter for each model.",
-    "limits": "Shared host; no isolated throughput, hardware speed or native counterpart claim.",
-    "timed_region": "function_call_contracts only; imports, model creation and JSON excluded."
-  },
-  "raw_report_sha256": "82894d3ff75d25d44d14f706d28c46a8201853868c2ea87cc1ae0f2fb572ef6e",
-  "reference_dependency_versions": {
-    "numpy": "2.5.4",
-    "scipy": "1.18.1",
-    "sympy": "1.14.0"
-  },
-  "schema_version": "sc-neurocore.function-call-domain-benchmark.v1",
-  "source_head_at_capture": "70e19d3c02fcd5b7e9c6f211f27ac0fbc63222a1",
-  "source_sha256": {
-    "benchmarks/_benchmark_context.py": "0efcfdb16171cbdc0915ddde5f50dd4067f3bbab70195fb5440fb3b7b27680cf",
-    "benchmarks/bench_function_call_domains.py": "a5cf1111dd1d7031481a9b98ca3f8f27aa364260bd42f142401a4cc300333bf6",
-    "src/sc_neurocore/compiler/__init__.py": "c438a4c6db49cb6afbacb1ac2d7d8651c6fc066b8c5262fe1071110249acb7f2",
-    "src/sc_neurocore/compiler/_ir_equivalence_models.py": "9319c54b570c3e4df86aede088c80d50b94a565b00690f0f13c1f36cdce383d4",
-    "src/sc_neurocore/compiler/_ir_equivalence_reference.py": "05c73ab55c3a31cacc87bea466a3c27b1c75a1498846a6060fa0f4c90ba5fd07",
-    "src/sc_neurocore/compiler/_sby_runner.py": "4a5598dc098ff76fb51d7a4f8d833cb2407d98ba5ed0ceb2efa4115b299ef50f",
-    "src/sc_neurocore/compiler/_verilog_folded_datapath.py": "ceac657ad2b2d22968b89f43b5f838999f56d7a01dc44c9e96abefec2e1ce5ba",
-    "src/sc_neurocore/compiler/_verilog_integrators.py": "39d74be919d7e80e009ee32c0e6b3a6e534ee4b94c140e1d6d8373ad14ff4f2b",
-    "src/sc_neurocore/compiler/_verilog_neuron_core.py": "49ee375424f8cad7f050ba7eb4db7d77933c35e8851e64ae718e7bdb5460af7d",
-    "src/sc_neurocore/compiler/_verilog_registered_module.py": "83686edf6c575f71c2b7e6e707c09dc0e675bc2b19cf5211bd8e089c5c56f812",
-    "src/sc_neurocore/compiler/adaptive_precision.py": "cc30a86672df225fbbc9321b3060237b767e405d02dc326d70efac301654acb5",
-    "src/sc_neurocore/compiler/auto_tune.py": "b255846676d2145f9731553ad2db00de3c122b21db59dc02af48e133e04d9e9f",
-    "src/sc_neurocore/compiler/block_floating.py": "2a47cc28b8108156acb8395342a9c06b7735ac970d5033aa62fa0f711624d06f",
-    "src/sc_neurocore/compiler/block_floating_quantization.py": "13df1cad6a901931ac3a78f76a0f83b60ba78ba5881ffaaa8d1d9d3558109909",
-    "src/sc_neurocore/compiler/c_expr_emitter.py": "583074be6c52fda03f273b2b6100a28a1dc0da6fbbbb3c07d30aa4965ca75ae3",
-    "src/sc_neurocore/compiler/c_fixed_emitter.py": "533a4800e1b87481e6660f8002b253dc90d7736f1cfd4902fd79b4b01635a2e4",
-    "src/sc_neurocore/compiler/certification_gen.py": "bd896738ce5d8121a5e6d4ff0d0667761df2db21d30184e00e409e62a5c23b84",
-    "src/sc_neurocore/compiler/cocotb_gen.py": "c650c582b9bd6fa2924362d6f1c6d8d0ffed948202a2b6c7624c95146e5ec149",
-    "src/sc_neurocore/compiler/compiler_impl.py": "f0118df28c87c1973908cd5838e157b243c8cb4ba27d27da04880cc9635d46b1",
-    "src/sc_neurocore/compiler/constraint_gen.py": "4f7fc2afb5aa6ea19a5bdede15397a83f7f9fd67410664eb367ad67977e20204",
-    "src/sc_neurocore/compiler/cordic.py": "60369d25e31ec90b6395e3d8bdee2f486f78e870712b3e4c4366ee856da85034",
-    "src/sc_neurocore/compiler/cordic_native.py": "13a86bfc9ecc5891ea6673674eb8bb27ad8b254ff4c0d7e175d141105780cbbb",
-    "src/sc_neurocore/compiler/cordic_verilog.py": "c235dabacd251109389bd99a8185e55759a99112d8b2bfc6326c081546d65a70",
-    "src/sc_neurocore/compiler/deployment.py": "13afd40ed803f5d5ccae57b9d4b20a125b55faa9745c5557e0c4b47718afe0f7",
-    "src/sc_neurocore/compiler/diffusion_noise.py": "914cadd83c183ea49624cf4d97ff88d437f1484653605ffa47922b3cf5779c86",
-    "src/sc_neurocore/compiler/discrete_function_programs.py": "e3efab303c50eccb455c6fc077c8412f5e223acfea4fadbb0c316fa189a0481f",
-    "src/sc_neurocore/compiler/discrete_function_units.py": "1142cb671eee89091343e9fa22fb47749373fc91db64eeb641e211ebd3f0a952",
-    "src/sc_neurocore/compiler/equation_compiler.py": "ad79489e7a07648dcd9013711c6b08c165d1e1e72e46f89fab0f8d09a5b60318",
-    "src/sc_neurocore/compiler/equation_ir_compiler.py": "4dad9945cd546e57c3cee1a7c09c3168aedeec3be5251f22831618ad0765caad",
-    "src/sc_neurocore/compiler/equation_lowering.py": "7bf4659b3be9c4d793f237f5b70d6635806559d7ca0ab9dc63ad743359d51c4a",
-    "src/sc_neurocore/compiler/equation_state.py": "5958e8824f343c5f79cf1d7345d83fc211f9ee174645231b65f8fa1f370de69e",
-    "src/sc_neurocore/compiler/equivalence_check.py": "e572ade8e7c8ec89b90cb2cf694ef8a4e6eb25a78c5157fdd22b074e6001cc23",
-    "src/sc_neurocore/compiler/equivalence_miter.py": "769809f3aad0c83a12ad89aaf523ffa2fd5f3a773eb0967ad00c04bd10b0bdfd",
-    "src/sc_neurocore/compiler/exact_normal.py": "de63c2b07408e2c36479b24d8d4f0aaf56e32a70d4aa511dafd0ecfce0919752",
-    "src/sc_neurocore/compiler/expr_lut_tables.py": "a7af4505632bb7c891a3c183c37bcf5950c0fcb7ffc38a899ca8d0ae4a1ae66f",
-    "src/sc_neurocore/compiler/fixed_expression_ranges.py": "1df732250a01f78d671ef2d11fd7855f795a26bb44dcd44f0366cd3173656d41",
-    "src/sc_neurocore/compiler/fixed_point_quantization.py": "5f8722aabab9b3101a1500664f97af221f5e647634615aa9e872bcc3efa35c74",
-    "src/sc_neurocore/compiler/formal_evidence.py": "9a02bd242e669a6a132ca62dac0115f3290d39dfdd99494a5e9b05e78ef15f2d",
-    "src/sc_neurocore/compiler/formal_property_check.py": "ff364ce4b660848e9f66fe42be416c85a04adc520a8d92aac3f76dd8a7dded29",
-    "src/sc_neurocore/compiler/fpga_wrapper.py": "a82626138c56263c4058f6c81d72c470196a2942604065b6f89666b14ef2754f",
-    "src/sc_neurocore/compiler/function_call_accuracy.py": "eecccd0408591cb8b5cbffb744945efb0b8e2aa7edd646e37912af8cbff2a33f",
-    "src/sc_neurocore/compiler/function_call_domains.py": "c05a730c14577f07b28f0d6df2a011c439a73f02a1468ea8f529aecbed2aa848",
-    "src/sc_neurocore/compiler/function_unit_hardware.py": "a5108ae8d3c8273007fa71cb1b7381ee218d846181490762b6f4a4033953f6a4",
-    "src/sc_neurocore/compiler/function_unit_ir.py": "ff77cce3736f8ca59eb74ce67a31477ea95e62ac558e7994ca6a501e59b7979a",
-    "src/sc_neurocore/compiler/function_unit_programs.py": "384a12dec497b8694b73d203c3cff3a21a8b7b375f3205bb8ea60111752c234b",
-    "src/sc_neurocore/compiler/function_units.py": "ab1cc1105824276b889dd3d006237453f6e71df62c211b9def8c4b23c65e5af2",
-    "src/sc_neurocore/compiler/guarantee_summary.py": "e856d44e949a249cc1c194307f07276e65d7f9c9094712ac379b4c513a6af85d",
-    "src/sc_neurocore/compiler/guard_bits.py": "1ea2f2cbd146909b258bc6914510c61da5530c92eb06bc985bd870d30523438d",
-    "src/sc_neurocore/compiler/hardware_numeric_contract.py": "220efa51c8f29b64fa1dc6a70ce9c0f462559a4710ee644fc0bace8382b1f499",
-    "src/sc_neurocore/compiler/host_driver_gen.py": "05fd4dc67ec12c544d6b5a41d07d00a93c8f80989a9055c689f2622f3d4f3387",
-    "src/sc_neurocore/compiler/ir_equivalence.py": "bc2326c03d1f63631115daf700a2dacaec0fd503ab1a699305a1481317831e37",
-    "src/sc_neurocore/compiler/ir_type_checker.py": "0e85973c8cc15f4f2d10c8c6a7389c633f9afc15752df17ecade852904a3e186",
-    "src/sc_neurocore/compiler/layer_precision.py": "e7960db8ed6a70ddff6da6e8453fdd547dabbf0e9fc5e44f440ac110b52a731b",
-    "src/sc_neurocore/compiler/length_planner.py": "94019da1085715864b3c9308c2b70d5b52960db2d6ff0f1f74da7b0d47e91029",
-    "src/sc_neurocore/compiler/live_control.py": "941e58034f4312a7fefff9f28ef07528d7a90c12f666dce938639dc550ae5eb7",
-    "src/sc_neurocore/compiler/live_control_ops.py": "9a3a49d6b99e6495ba4a55d072d2ef1d98e4aadce42de936b42169b79f8f1b51",
-    "src/sc_neurocore/compiler/live_control_specs.py": "d9118b1189197fbd593f10d1985c0ac983ef100cbc4b4e1f77dfb378b40630c6",
-    "src/sc_neurocore/compiler/live_control_types.py": "510d40371f99fa5274583872dc1b7e718b5195474d191627fd80c532876e6231",
-    "src/sc_neurocore/compiler/lut_accuracy.py": "50bca6057ce3ec2d3fff68d3c3dcfb02f460f1129c6fefd2757745f7a3a9b057",
-    "src/sc_neurocore/compiler/magnitude_function_programs.py": "1131628925ee11c7f357dd897a315955f6215acdf6405f8a82ec82f6c8d8aa80",
-    "src/sc_neurocore/compiler/magnitude_function_units.py": "392cf4fcf645fda3c1f80989cc56783279d7e5c749261ff9751f69409e7b511e",
-    "src/sc_neurocore/compiler/manifest_gen.py": "cc8f667ada22411def5dffabdd37e7de92dd46c88bae6c0d22dfab1b7819f63a",
-    "src/sc_neurocore/compiler/mixed_dense_kernel.py": "d26d86ba9c6a99d4dc383bec7df6e0569f9ac18570e8c8ad51c066d37fe7b6e3",
-    "src/sc_neurocore/compiler/mixed_dense_quantization.py": "f08176966d70043f3c3647a0491386fa3b4844c424ff82498696e5a7c6dc1b3c",
-    "src/sc_neurocore/compiler/mixed_precision.py": "68b351f32e4b107183264ed56d543986388f680b11fd00df0d4b7f21f7e2c3a6",
-    "src/sc_neurocore/compiler/mixed_precision_spec.py": "dfd2961fca978b58b59deef66385adcc73bc0c6471612e5e54c758a6b4f30391",
-    "src/sc_neurocore/compiler/mlir_emitter.py": "70012768e830577eda9fbe14701c30ffb01b61f42ef5788604072cd0dfddd926",
-    "src/sc_neurocore/compiler/multi_target.py": "4b9ca9228250f173801cbb6b8b66be08b09df228c13530d9a5afbee9940820c5",
-    "src/sc_neurocore/compiler/native_program.py": "8cf927800261374e5963633f713bd16093f9b925659ef591556f12103dbceb3e",
-    "src/sc_neurocore/compiler/operator_abstraction.py": "2e6958b7688de2532243a30ed36a3c1d36bb98aa57146e1f81a63b5b9fd5960b",
-    "src/sc_neurocore/compiler/overflow_proof.py": "11faaa112afbb4418917d916ab32200c9f17316faa30b4f10616aa062e38fb7f",
-    "src/sc_neurocore/compiler/philox_threshold.py": "bbb3663589361be314b96092de5750abec63a49496d7a4f92b31aac283a7b448",
-    "src/sc_neurocore/compiler/pipeline.py": "7d6b3f7eeb4251b092a9aa147ca3d1d083a46ed98f1d2ed0dc99faf13cc4f941",
-    "src/sc_neurocore/compiler/pipeline_analysis.py": "babc674c5035c29e0e38d32f75f000e9dc3d8322844025a97034410300c03569",
-    "src/sc_neurocore/compiler/power_accuracy.py": "f978c09259ee44e2f2a0bdd470c2c9bdc8fea7099683830b0861ab69a75b74e5",
-    "src/sc_neurocore/compiler/power_estimator.py": "3307fbaa97d4c077d163fd076638f91a3a61a8bda59745765497ab33c4959fed",
-    "src/sc_neurocore/compiler/power_unit_programs.py": "4e132f8d3fd8182f7be09ba4ae785aac45ba570e0e406f1a5b938cf92a8346fa",
-    "src/sc_neurocore/compiler/power_units.py": "7df48c1e84df8b6e0fe8455327e0344f675d29d3aaf67c9186d9d41c62646900",
-    "src/sc_neurocore/compiler/precision_config.py": "1c658ab3e4791c3fb20f37c5a9cfb41579704dc09903c1a2f2d6be07a0cc985b",
-    "src/sc_neurocore/compiler/precision_pairs.py": "82af249989cfec4eaa66e19a733541966f621843ebf58d41a9db47020749b1cf",
-    "src/sc_neurocore/compiler/precision_presets.py": "192c88ac651a584d4debd37c48154f1c226023da4e0ace67904369e287802651",
-    "src/sc_neurocore/compiler/precision_solver.py": "4974a35cab119e0c2258faae575baf19d00986564b5aeced38172515a35afef5",
-    "src/sc_neurocore/compiler/proof_transforms.py": "808decbee8fdbe0e26431a3f596beea76c56ae97ab7ddfcab34b650ad5d542bc",
-    "src/sc_neurocore/compiler/q_format.py": "c069e20de19f77fe2f42be03d4099e2de8a27e58c3553a31d3301989b1cf9052",
-    "src/sc_neurocore/compiler/quantization_reports.py": "7e8dd051596582f154f564156629b6ced93168ac52c82dc819dd43fd27e47c57",
-    "src/sc_neurocore/compiler/quantize_core.py": "cfea1879af83675f436295e4360e486f03eb03ae44394b9815a09d828f060c01",
-    "src/sc_neurocore/compiler/quantizer.py": "a1c22cffdb1877bcb1ed7c8ec520e0b906ede6d09d1cb473adb3e13b9c7122c0",
-    "src/sc_neurocore/compiler/random_unit_programs.py": "4fd7dc2f4c3a24e9567e7bd0df8a86e75572e8be7e0db877ed56256a11d27a30",
-    "src/sc_neurocore/compiler/random_units.py": "c1f41d2ecf9d9f8c26db7d99d8d64c25972ae9f5c51eef9c21470354eb20e421",
-    "src/sc_neurocore/compiler/reciprocal_root_programs.py": "236c8c28e3c57935da2c312c63f27559ffcca60f2974ea628f7721b3676da34f",
-    "src/sc_neurocore/compiler/reciprocal_root_units.py": "c9a29bc80dc4f98aaf67a3cd18e03e6f89d9fb8bd3cc6fca61909265fbb52819",
-    "src/sc_neurocore/compiler/resource_estimator.py": "9c29c031f93dc37627611c0a285217f54508d37ad12f3ecd3f9891eb2dabd7c8",
-    "src/sc_neurocore/compiler/riscv_driver.py": "ba0a7722fe42d0d270cf3b8cb1f51ffd3ed7c7881c21e769360f47143990265b",
-    "src/sc_neurocore/compiler/rtl_refusals.py": "7d7b5054d2aba0521a5067175b54e8b3d7623ea287048d618218deecfb4f5666",
-    "src/sc_neurocore/compiler/sby_formal.py": "69ae2b5d7ec0110cac11305bd8e68d77599c421ff476a6330675cb45dc4b9332",
-    "src/sc_neurocore/compiler/sensitivity_analysis.py": "104dd137733397908f59135f4921960fb94cc6c605cc217f4609db1091922a2b",
-    "src/sc_neurocore/compiler/slr_placement.py": "42de08c4a7ff246f6ad35d51f8b326751e2c45c8a8e0ea430500e8c30f1ac3de",
-    "src/sc_neurocore/compiler/static_analysis.py": "490f7ebff6d9053272aa5aa136b89b2f4ccffa250c123a228ce794c994bd7e2f",
-    "src/sc_neurocore/compiler/sva_gen.py": "f9e0faffd6615e41bf67a1903fd924b448ffc27397e7a43c722845ae8fda5a52",
-    "src/sc_neurocore/compiler/synapse_planner.py": "742a0ea4af59ef3a101dcef35d0c763ce1b4f5936a1702b5beede59cc3e7b5ad",
-    "src/sc_neurocore/compiler/synapse_precision.py": "b6d1faddb76d7e159d5e84f5cdb01f1ef3ebd9097b2c890a00ad71706497d3d3",
-    "src/sc_neurocore/compiler/testbench_gen.py": "dafc6a3516a0d0c482a0763e62f0296394952663ef4c8a7ab1df6b906e267f28",
-    "src/sc_neurocore/compiler/validation.py": "092980a25363d3e31a088ef97fab0798dc51c460630b4914a758765266616897",
-    "src/sc_neurocore/compiler/verilog_compiler.py": "b57f59b6652cad794f56c0af12b497fa9b2e90c4458f6938a36d0c8bd08a74ae",
-    "src/sc_neurocore/compiler/verilog_compiler_config.py": "244058e4005081619932a2935778ab176f78dd0dd2b26681220be657be9b6957",
-    "src/sc_neurocore/compiler/verilog_expr_emitter.py": "519cc13b1b5dd42bd8f1fd392a23e893f5faee55d8e92557a75cbddad0724d04",
-    "src/sc_neurocore/compiler/whitebox_taps.py": "ad64821e20adeaba098962e44b0edf0a707b32d1629b13843f672ce08292f0e6",
-    "src/sc_neurocore/neurons/__init__.py": "a27b960e16776ce16f9bd70d9441a92cb808bdcffc3ebb5df32018b0e7b66598",
-    "src/sc_neurocore/neurons/__main__.py": "7512aab0b175e42dba8b28b3826508f3202c1d30cb7ee663777a56feb64547ea",
-    "src/sc_neurocore/neurons/_stochastic_threshold.py": "e8197e9fb1a2127c9c1bd18c9b2bee902d6dcf3bd85c06dcdd56358d43f3475a",
-    "src/sc_neurocore/neurons/_units.py": "c04c063bbd229425f519794919c3f6af838150eda03f8af97c741099a8c95f42",
-    "src/sc_neurocore/neurons/base.py": "0cb339b37aaf52c3eb66b44ad186d432d76326c3ead5ef99bb9276bda22557b3",
-    "src/sc_neurocore/neurons/behavior_taxonomy.py": "63388c92861adde7ccbcba610e73ef999fd92284c34f168ab0af8465ece6640a",
-    "src/sc_neurocore/neurons/dendritic.py": "50f8906d90332a7df95314509652519f305ec517171880cd548523a45e548d2b",
-    "src/sc_neurocore/neurons/descriptor_generator.py": "e6f3718ba1c2fc1b240627483dc44ce34ef0a8785d1b5f7d22bbc89b37bec8b8",
-    "src/sc_neurocore/neurons/descriptor_tiers.py": "61574e62beae09896789da9fc904d31ac7c91487654c231d579ce87a95f1a5d5",
-    "src/sc_neurocore/neurons/dsl_cli.py": "cd21e37f2ac41b6bee831e259f4ad932c4e354fd3b1f497f709c963545be16a4",
-    "src/sc_neurocore/neurons/equation_builder.py": "cd4f9c2fe25895aa4cb91bb98a7ed050c575d6cc7c0fd16154de99320754f5bd",
-    "src/sc_neurocore/neurons/equation_evaluation.py": "80e47b4c07a1b8e4c0a9c20dbe82098aaba8ca5754b840fc2c7bca77aa227d06",
-    "src/sc_neurocore/neurons/equation_namespace.py": "39824cb51d49cf781fe7ce0209a13dbfb17c4a656200ebf9b91a72a5434e81d4",
-    "src/sc_neurocore/neurons/equation_program.py": "4064ae6a7b2d77586ea311f318947b2c918bc287f65cf502f1cfe0a53d6daeb8",
-    "src/sc_neurocore/neurons/equation_random.py": "c3b5befd17c9990d0ea1c2639fedc55671060ea7cd1f5848435b90610dd40202",
-    "src/sc_neurocore/neurons/equation_refusals.py": "5ebb46ecaaf66f8108c05bbb3207d5e6b82d70138c6ba11cc4c2848197156692",
-    "src/sc_neurocore/neurons/equation_safety.py": "2627e82d2be63efd7bbb33eba5248a37aed969c9eb67de2468d3e66f987d0386",
-    "src/sc_neurocore/neurons/equation_units_runtime.py": "15cd730c6222bd55891a7746c0de9c4b76d4217da049b7bfceff99a0c2479fb6",
-    "src/sc_neurocore/neurons/evidence_references.py": "033152ba8c881df43d0a45b324928364e950b0e72d223876cc722ba5fd027f12",
-    "src/sc_neurocore/neurons/expression_derivative.py": "d2a0b09f0710dd6c2a0f46960b1d792b99dae300d182440d931a86654e51b1e2",
-    "src/sc_neurocore/neurons/facet_receipts.py": "bf48981c63d5bf9ed56768a0b2df1a30d8137d13b5bf7440868ca43b80a92098",
-    "src/sc_neurocore/neurons/fixed_point_lif.py": "17205e50065d6e6115f3ef0bb1b07d1570b6bc6c45bcfb6ba6476cdd8dbd1be3",
-    "src/sc_neurocore/neurons/homeostatic_lif.py": "e222d2395d2411a1c3cdae2fa90ba14866e9c11e7c490510efc355c950a336aa",
-    "src/sc_neurocore/neurons/lane_runs.py": "64812ad1f29d5f6d51c77391e0798468d4c46ca84b77558050e3b57b717430a0",
-    "src/sc_neurocore/neurons/model_catalogue.py": "bdccedfe00872bb567b1be4c8f951e641dbdca38e82645394f32d7e8c5a008ea",
-    "src/sc_neurocore/neurons/model_descriptor.py": "92d7f6bd3154158575b53557cd4e407d0e02d0beb80fe3fc2930b974abf9894e",
-    "src/sc_neurocore/neurons/model_identity.py": "794dcf0aabbdd8509fb18bf7eee34ae73201f836a216100ec65b49ad32edba52",
-    "src/sc_neurocore/neurons/model_profile.py": "f218c52ef0533358b6dd152da9dc728aecc6e8e14c82f7a372232519ca1670ed",
-    "src/sc_neurocore/neurons/model_receipts.py": "894002e60353c5b86b3949a21ff78f793b1933f59e577f7b1cca92bcdf67fb26",
-    "src/sc_neurocore/neurons/model_registry.py": "c46738d783fc94275dc3e35600afc63a7bd071ffa4421281a650a9e616e32ee4",
-    "src/sc_neurocore/neurons/model_taxonomy.py": "b8b8e5bbed3deda0fe92136f01221744a6c8852bc102e87da4ec7cef84ce5bed",
-    "src/sc_neurocore/neurons/profile_registry.py": "de87535902d50a3f62abe71c6678f322d3ad5699e626c802b6982b641e191dc8",
-    "src/sc_neurocore/neurons/readiness.py": "9e0de77ac9143b45d6a1b76c9a607b816b26ed90bcb38bd5784ef51f842ad1da",
-    "src/sc_neurocore/neurons/receipt_execution.py": "214d129d90ac752d796d3ad0e666da745656e5c52a3818216996ca4308f2e4ba",
-    "src/sc_neurocore/neurons/reference_trace_contracts.py": "7238a0f0474042f2634ba337d2f804ca5fb53e63d43c578d2e89172ebd5d42c1",
-    "src/sc_neurocore/neurons/reference_trace_io.py": "8f47c9041470cb0fedd1b3c07a29519cc3c8ba4d0966b05f8f72d68cb3efb01a",
-    "src/sc_neurocore/neurons/reference_trace_mutations.py": "321e51f6a687772dd180f1992de7499afa88f877a7bf5e3ff660946fac9692df",
-    "src/sc_neurocore/neurons/reference_trace_provenance.py": "6796b3464bcda95842a2b5a604ac44efe514674def12b245457978b2927c5a92",
-    "src/sc_neurocore/neurons/reference_trace_runner.py": "5c75e5c218ded505269492964882b1d7fc57e301299e8c7c6efc2de9955003e1",
-    "src/sc_neurocore/neurons/reference_traces.py": "83d4b9de4747ffac66f527396b270eed55d0186ba7ac9b24a652566bf4b60da1",
-    "src/sc_neurocore/neurons/sc_izhikevich.py": "38ea55c80a886d9fd14fbe9261ca4b90c6199b9e5f3cfd8b1aec64819ac05db7",
-    "src/sc_neurocore/neurons/schema_contracts.py": "971ccd3e5a78cd11982cb07e41c763a633ee05e71a66be9f48b589878e30056c",
-    "src/sc_neurocore/neurons/schema_module_aliases.py": "f72b25ee74dfc6f9969d7e45e0506561eeac1ef71cb7133121bde4a43704edae",
-    "src/sc_neurocore/neurons/schema_validator.py": "21df7b0ea62e0674ff457188d970b20f65d0adc1802beebe2030e55aa3886893",
-    "src/sc_neurocore/neurons/seed_domain.py": "d34075555917bbcb11fb950f4056f61b4087dba83f102d7eaf0c4bf609bd0e00",
-    "src/sc_neurocore/neurons/stochastic_lif.py": "68cd375768b678990fe3d94f719c6c22d3167b47af0ec76423c6d12d424efe00",
-    "src/sc_neurocore/neurons/universal_dsl.py": "72a0ae374db13a4bfbab9982b4487c95b23ccdf2b6ff674ca091d259e14b9527"
-  },
-  "source_tree": "768681a824f92d4f36f980fdaabe21d97edbcb33",
-  "source_unchanged_during_capture": true,
-  "source_worktree_dirty": true
+  }
 }

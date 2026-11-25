@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5584
+    "test_files": 5585
   },
   "documentation": {
     "public_pages": [
@@ -6819,6 +6819,7 @@
       "tests/test_neuromorphic_profile_modularisation.py",
       "tests/test_neuron_complete_packet_domain.py",
       "tests/test_neuron_descriptor_coverage_closure.py",
+      "tests/test_neuron_facade_completeness.py",
       "tests/test_neuron_families_neuron_families.py",
       "tests/test_neuron_families_no_spike_model.py",
       "tests/test_neuron_integrator_cross_language_parity.py",

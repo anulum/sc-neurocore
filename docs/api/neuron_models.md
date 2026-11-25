@@ -44,9 +44,16 @@ with 180 runtime identities wired into the NetworkRunner pipeline.
 
 The package-level `sc_neurocore.neurons` facade remains lazy: core neuron
 symbols are available immediately, while model classes are resolved on first
-attribute access. Setting `SC_NEUROCORE_NO_RUST=1` forces the pure-Python model
-registry even when the optional Rust engine is installed, and the fallback path
-caches the resolved Python class for later imports.
+attribute access. Every class in `sc_neurocore.neurons.models.__all__` is
+importable from the facade. With the Rust engine installed, a facade name
+resolves to its Rust class only when it is in `_RUST_DISPATCH_NAMES`: the
+names whose Rust class accepts every Python constructor field and reproduces
+the Python trajectory over the parity stimulus, as
+`tests/test_neuron_facade_completeness.py` checks. Every other name resolves
+to the Python class, and the Rust classes stay importable from
+`sc_neurocore_engine` directly. Setting `SC_NEUROCORE_NO_RUST=1` forces the
+pure-Python class for every name, and the resolved class is cached for later
+imports.
 
 ## Rust Binding Coverage Map
 
