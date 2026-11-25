@@ -1,0 +1,123 @@
+{
+  "base_commit": "93e8b87cc",
+  "cases": [
+    {
+      "async_aer_sha256": "117bc3b0da07820d90dfe29091f7f8a15db96ec6152d77b1596fb50dc6915287",
+      "bus_width": 8,
+      "layers": [
+        [
+          "hidden",
+          {
+            "n_neurons": 4
+          }
+        ]
+      ],
+      "name": "default_single",
+      "sync_sha256": "e66db040d947b968b164d705e576faefe0f705e14493ec768e5e39c2bb4b9945"
+    },
+    {
+      "async_aer_sha256": "ed06b8fb35ac527904b742dc7e48235db3c198488f27a2f07d41551820ef1010",
+      "bus_width": 3,
+      "layers": [
+        [
+          "l0",
+          {
+            "n_neurons": 2,
+            "weights": [
+              100,
+              2000,
+              65535
+            ]
+          }
+        ]
+      ],
+      "name": "weights_list",
+      "sync_sha256": "03881a107b30d1ab62de43c27164f6f6c547a3be93eff002f8819f5e75dac8b3"
+    },
+    {
+      "async_aer_sha256": "121545b385cfd178b5fb6fb8bf85773a9a04f010346eb8ceaceea99304f5c2dd",
+      "bus_width": 4,
+      "layers": [
+        [
+          "l0",
+          {
+            "n_neurons": 3,
+            "weight_fp": 4096
+          }
+        ]
+      ],
+      "name": "weight_fp_scalar",
+      "sync_sha256": "65aff7984c36de4407b4da845056c3c9c1f6036b0ed0fbebea21040ef97acce8"
+    },
+    {
+      "async_aer_sha256": "37488f3f82be9d08a2b3808405a799e298c23fce64136ef465924b3664949840",
+      "bus_width": 2,
+      "layers": [
+        [
+          "l0",
+          {
+            "cfg_gain": 512,
+            "cfg_leak": 32,
+            "n_neurons": 2,
+            "stream_len": 1024,
+            "weights": [
+              1,
+              2
+            ],
+            "y_max_fp": 1024,
+            "y_min_fp": -256
+          }
+        ]
+      ],
+      "name": "current_range_and_neuron",
+      "sync_sha256": "862697dfa20f48dab1eebfa354dfca3f5a7502854e7bdafa4a7e7d8f962e514a"
+    },
+    {
+      "async_aer_sha256": "a74236b916d1552556732e29cac10f18031f602ccdecbd30c074d9fd7e7a2f36",
+      "bus_width": 6,
+      "layers": [
+        [
+          "a",
+          {
+            "n_neurons": 5,
+            "weight_fp": 30000
+          }
+        ],
+        [
+          "b",
+          {
+            "n_neurons": 2,
+            "weights": [
+              7,
+              8,
+              9,
+              10,
+              11
+            ]
+          }
+        ]
+      ],
+      "name": "two_layers",
+      "sync_sha256": "7a190171eaba06be15c402b5e8e09954937662af824304be93a8f2b21a294f42"
+    },
+    {
+      "async_aer_sha256": "751277828db948db9b8112d27ba0e3a52f674a2e37a8b739fe34419aafe86631",
+      "bus_width": 2,
+      "layers": [
+        [
+          "w",
+          {
+            "data_width": 24,
+            "n_neurons": 1,
+            "weights": [
+              1,
+              16777215
+            ]
+          }
+        ]
+      ],
+      "name": "wide_data",
+      "sync_sha256": "c6d50b644d13ed5d018d07cf99807c6dd8341af3bb79c4950b04205272c73147"
+    }
+  ]
+}

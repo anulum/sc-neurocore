@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5129
+expected_file_count = 5130
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -9017,7 +9017,7 @@ rationale = "Emit top-level synchronous and clocked-AER Verilog modules and stan
 
 [[file]]
 path = "src/sc_neurocore/hdl_gen/aer_emitter.py"
-rationale = "Validate Dense layer parameters and bind sc_dense_layer_core instances for synchronous and clocked-AER top-level emitters."
+rationale = "Validate Dense layer parameters and bind sc_dense_layer_core or, for a 2-D weight matrix, sc_dense_matrix_layer instances for synchronous and clocked-AER top-level emitters."
 
 [[file]]
 path = "tests/hdl_gen/test_verilog_generator_topology.py"
@@ -20559,3 +20559,6 @@ rationale = "Verify constructor, runtime, multi-backend, and overflow-rollback g
 [[file]]
 path = "tests/test_equation_neuron_transactional_rollback.py"
 rationale = "Verify atomic rollback of EquationNeuron state, graded spike value and RNG streams."
+[[file]]
+path = "tests/hdl_gen/test_verilog_generator_dense_matrix.py"
+rationale = "Pin 1-D Dense emission to its base digests, bind 2-D weight matrices to sc_dense_matrix_layer with seeds and current range, refuse unhonourable seeds, and witness per-row spikes in Icarus and Rust mirror parity."

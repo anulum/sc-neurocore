@@ -26815,9 +26815,12 @@ str
 ### Class `AEREmitter`
 Emit a research-stage AER wrapper around the clocked HDL dense path.
 
-The compute pipeline uses ``sc_dense_layer_core`` and wraps its final spike
-vector in a 4-phase AER-style request/acknowledge interface. It is not a
-quasi-delay-insensitive asynchronous network replacement.
+Each ``Dense`` layer of the compute pipeline binds ``sc_dense_layer_core`` for a 1-D
+``weights`` or one ``weight_fp`` (one shared current, so one signal; seed parameters
+refused) or ``sc_dense_matrix_layer`` for a 2-D ``weights`` matrix (per-row weights,
+seeds and current range). The final spike vector is wrapped in a 4-phase AER-style
+request/acknowledge interface. It is not a quasi-delay-insensitive asynchronous network
+replacement.
 
 - **__init__**(module_name, bus_width)
   - Initialise an AER wrapper emitter.
@@ -26841,8 +26844,39 @@ Returns
 int
     Validated positive integer.
 
+### Function `dense_weight_matrix(params)`
+Return the weight rows of a 2-D ``weights`` matrix, or ``None`` for the shared-core forms.
+
+Parameters
+----------
+params : Mapping&#91;str, object&#93;
+    ``Dense`` layer parameters.
+
+Returns
+-------
+list&#91;list&#91;object&#93;&#93; or None
+    One row per neuron when ``weights`` is a list or tuple of lists or tuples; ``None`` when
+    ``weights`` is absent or 1-D, which bind ``sc_dense_layer_core``.
+
+Raises
+------
+ValueError
+    If ``weights`` mixes rows and scalars.
+
 ### Function `validate_dense_layer_params(layer_name, params)`
-Validate ``Dense`` layer configuration for ``sc_dense_layer_core`` binding.
+Validate ``Dense`` layer configuration for its HDL binding.
+
+Every parameter is either honoured by the module the layer binds or refused; none is
+accepted and then ignored.
+
+- Both bindings honour ``n_neurons``, ``input_width``, ``output_width``, ``data_width``,
+  ``stream_len``, ``y_min_fp``, ``y_max_fp``, ``cfg_leak`` and ``cfg_gain``: each reaches a
+  parameter or port of the emitted instance.
+- ``sc_dense_layer_core`` (1-D ``weights``, one ``weight_fp``, or neither) also honours
+  ``weights`` and ``weight_fp``, and refuses ``input_seed_base`` and ``weight_seed_base``,
+  because its encoder seeds are fixed inside the module.
+- ``sc_dense_matrix_layer`` (2-D ``weights``) also honours ``input_seed_base`` and
+  ``weight_seed_base`` as ``INPUT_SEED_BASE`` and ``WEIGHT_SEED_BASE``.
 
 Parameters
 ----------
@@ -26850,6 +26884,14 @@ layer_name : str
     Sanitised Verilog layer identifier.
 params : object
     Layer parameter dictionary.
+
+Raises
+------
+ValueError
+    If a parameter is missing, not an integer, out of range or not honoured by the bound
+    module.
+TypeError
+    If ``params`` is not a mapping.
 
 ### Function `compute_dense_layer_widths(layers, bus_width)`
 Compute ``(input_width, output_width)`` per ``Dense`` layer and reject mismatches.
@@ -26867,7 +26909,10 @@ list&#91;tuple&#91;int, int&#93;&#93;
     Ordered ``(input_width, output_width)`` pairs for ``Dense`` layers.
 
 ### Function `render_dense_layer_instance(*, comment_label, layer_name, params, input_bus, output_bus, input_width)`
-Render one ``sc_dense_layer_core`` instance bound to bitstream buses.
+Render one ``Dense`` layer instance bound to bitstream buses.
+
+A 2-D ``weights`` matrix renders ``sc_dense_matrix_layer``; any other form renders
+``sc_dense_layer_core`` exactly as before.
 
 Parameters
 ----------

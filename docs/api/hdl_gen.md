@@ -345,8 +345,26 @@ chained via width-matched spike buses (`layer_0_to_1[31:0]`,
 `weight_fp` for every input) and computes one dot product, so all
 `N_NEURONS` neurons of a layer receive the same current, leak and gain:
 the layer's output bits always carry the same value, and a layer behaves
-as one neuron fanned out to `n_neurons` wires. Distinct neurons need
-per-neuron weights, which this core does not have.
+as one neuron fanned out to `n_neurons` wires. That core's encoder seeds
+are fixed, so `input_seed_base` and `weight_seed_base` are refused on it.
+
+Distinct neurons need per-neuron weights: give `weights` as a 2-D matrix,
+one row of `n_inputs` words per neuron, and the layer emits
+`sc_dense_matrix_layer` instead, with its own encoders per row:
+
+```python
+gen = VerilogGenerator(module_name="matrix_top", bus_width=3)
+gen.add_layer("Dense", "m", {
+    "n_neurons": 2,
+    "weights": [[1000, 2000, 3000], [65535, 0, 30000]],
+    "input_seed_base": 0x1234,   # INPUT_SEED_BASE, default 0xACE1
+    "weight_seed_base": 0x4321,  # WEIGHT_SEED_BASE, default 0xBEEF
+    "y_min_fp": 0, "y_max_fp": 0x0200,
+})
+```
+
+The rows must match `n_neurons` and the incoming bus width, the seeds are
+16-bit and non-zero, and `y_min_fp` must be below `y_max_fp`.
 
 ### 5.2 Synthesise with the safety monitor
 

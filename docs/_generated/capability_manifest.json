@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5603
+    "test_files": 5604
   },
   "documentation": {
     "public_pages": [
@@ -3508,6 +3508,7 @@
       "tests/gotm_brain_support.py",
       "tests/gpfa_support.py",
       "tests/hdc_python_support.py",
+      "tests/hdl_gen/test_verilog_generator_dense_matrix.py",
       "tests/hdl_gen/test_verilog_generator_io_perf.py",
       "tests/hdl_gen/test_verilog_generator_stochastic_sources.py",
       "tests/hdl_gen/test_verilog_generator_topology.py",

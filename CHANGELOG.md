@@ -122,6 +122,22 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   existing code exactly as before. The engine's StochasticIFNeuron keeps
   its own seeded Xoshiro256++ stream, which is a different generator.
 
+- A `Dense` layer given a 2-D `weights` matrix (`n_neurons` rows of
+  `n_inputs` words) now emits `sc_dense_matrix_layer`: each neuron has its
+  own weight row and encoders, so its neurons are distinct. The encoder
+  seeds come from `input_seed_base` and `weight_seed_base` (16-bit, non-zero;
+  defaults `0xACE1` and `0xBEEF`), and `y_min_fp` must be below `y_max_fp`.
+  A 1-D `weights` or one `weight_fp` still emits `sc_dense_layer_core` byte
+  for byte as before. `VerilogGenerator`, `AEREmitter` and the Rust safety
+  mirror (`DenseLayerParams.weight_matrix`, `input_seed_base`,
+  `weight_seed_base`) follow the same dispatch, and an Icarus test shows
+  equal rows no longer give one signal.
+
+- A `Dense` layer emitted on `sc_dense_layer_core` refuses
+  `input_seed_base` and `weight_seed_base` with a `ValueError` naming the
+  key: that core's encoder seeds are fixed, so the parameters cannot be
+  honoured and are no longer accepted silently.
+
 - `sc_neurocore.accel.contrastive_ssl` runs the contrastive SSL kernels (the
   InfoNCE loss, one CSDP phase and the goodness score) on a chosen lane:
   Python, the original and the floor; Julia (`accel/julia/contrastive/ssl.jl`,

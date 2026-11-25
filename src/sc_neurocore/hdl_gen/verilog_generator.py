@@ -72,12 +72,16 @@ class VerilogGenerator:
         name : str
             Sanitised layer identifier.
         params : dict[str, Any]
-            Layer parameter dictionary. For ``"Dense"``, ``n_neurons`` sets the output width,
-            and ``weights`` (or one ``weight_fp`` for every input) gives one unsigned
-            probability word per input. ``sc_dense_layer_core`` holds one weight per input
+            Layer parameter dictionary. For ``"Dense"``, ``n_neurons`` sets the output width.
+            A 1-D ``weights`` (one unsigned probability word per input) or one ``weight_fp``
+            for every input binds ``sc_dense_layer_core``, which holds one weight per input
             and one dot product, so every neuron of the layer receives the same current
-            with the same leak and gain: its ``n_neurons`` output bits always carry the
-            same value. Per-neuron weights need a different core.
+            with the same leak and gain: its ``n_neurons`` output bits are one signal, and
+            ``input_seed_base``/``weight_seed_base`` are refused because its encoder seeds
+            are fixed. A 2-D ``weights`` matrix (one row of words per neuron) binds
+            ``sc_dense_matrix_layer``: per-row weights and encoders, seeded from
+            ``input_seed_base`` and ``weight_seed_base``, bounded by ``y_min_fp`` and
+            ``y_max_fp``.
         """
         self.layers.append(
             {

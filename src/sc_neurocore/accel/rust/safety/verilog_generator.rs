@@ -6,7 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SC-NeuroCore — Rust safety mirror for verilog_generator
 
-//! Validated top-level Verilog and clocked-AER emitter mirror for `sc_dense_layer_core`.
+//! Validated top-level Verilog and clocked-AER emitter mirror for the `Dense` layer bindings:
+//! `sc_dense_layer_core` for the shared-weight form and `sc_dense_matrix_layer` for a weight matrix.
 
 #![allow(non_snake_case)]
 
@@ -24,8 +25,13 @@ const RESERVED_IDENTIFIERS: [&str; 11] = [
     "xor",
 ];
 
-/// Configuration for one `sc_dense_layer_core` stage.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Configuration for one `Dense` stage.
+///
+/// Without `weight_matrix` the stage binds `sc_dense_layer_core`, a shared-weight population
+/// with the default all-ones weights; its encoder seeds are fixed, so seed bases are refused.
+/// With `weight_matrix` (one row of 16-bit probability words per neuron) it binds
+/// `sc_dense_matrix_layer`, seeded from `input_seed_base` and `weight_seed_base`.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DenseLayerParams {
     /// Number of postsynaptic LIF neurons (`N_NEURONS`).
     pub n_neurons: usize,
@@ -33,6 +39,12 @@ pub struct DenseLayerParams {
     pub input_width: Option<usize>,
     /// Optional explicit outgoing spike bus width (must equal `n_neurons`).
     pub output_width: Option<usize>,
+    /// Optional per-neuron weight rows; `Some` binds `sc_dense_matrix_layer`.
+    pub weight_matrix: Option<Vec<Vec<u16>>>,
+    /// Input-encoder seed base of the matrix layer (default `0xACE1`).
+    pub input_seed_base: Option<u16>,
+    /// Weight-encoder seed base of the matrix layer (default `0xBEEF`).
+    pub weight_seed_base: Option<u16>,
 }
 
 impl DenseLayerParams {
@@ -42,6 +54,9 @@ impl DenseLayerParams {
             n_neurons,
             input_width: None,
             output_width: None,
+            weight_matrix: None,
+            input_seed_base: None,
+            weight_seed_base: None,
         }
     }
 }
@@ -60,7 +75,8 @@ pub enum StochasticSourceKind {
 /// Declared layer entry inside [`VerilogGenerator`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LayerDefinition {
-    /// Clocked stochastic dense layer backed by `sc_dense_layer_core`.
+    /// Clocked stochastic dense layer: `sc_dense_layer_core` for shared weights, or
+    /// `sc_dense_matrix_layer` when `params.weight_matrix` holds one row per neuron.
     Dense {
         /// Sanitised Verilog instance prefix.
         name: String,
@@ -144,7 +160,7 @@ impl VerilogGenerator {
         match &layer {
             LayerDefinition::Dense { name, params } => {
                 sanitize_ident(name, "layer name")?;
-                validate_dense_params(*params, name)?;
+                validate_dense_params(params.clone(), name)?;
             }
             LayerDefinition::StochasticSource { name, .. } => {
                 sanitize_ident(name, "stochastic source module name")?;
@@ -217,11 +233,11 @@ impl VerilogGenerator {
                 code.push_str(&render_dense_layer_instance(
                     &format!("Layer {layer_idx}: {name}"),
                     name,
-                    params.n_neurons,
+                    params,
                     widths[dense_idx].0,
                     &in_bus,
                     &out_bus,
-                ));
+                )?);
                 code.push('\n');
                 dense_idx += 1;
             }
@@ -308,11 +324,11 @@ impl VerilogGenerator {
             code.push_str(&render_dense_layer_instance(
                 &format!("Sync layer {layer_idx}: {name}"),
                 name,
-                params.n_neurons,
+                params,
                 widths[dense_idx].0,
                 &input_bus,
                 &output_bus,
-            ));
+            )?);
             code.push('\n');
             dense_idx += 1;
         }
@@ -413,7 +429,7 @@ impl VerilogGenerator {
         for layer in &self.layers {
             match layer {
                 LayerDefinition::Dense { name, params } => {
-                    validate_dense_params(*params, name)?;
+                    validate_dense_params(params.clone(), name)?;
                 }
                 LayerDefinition::StochasticSource { .. } => {}
                 LayerDefinition::Unsupported { layer_type, name } => {
@@ -430,7 +446,7 @@ impl VerilogGenerator {
         for layer in &self.layers {
             match layer {
                 LayerDefinition::Dense { name, params } => {
-                    validate_dense_params(*params, name)?;
+                    validate_dense_params(params.clone(), name)?;
                 }
                 LayerDefinition::StochasticSource { name, .. } => {
                     return Err(format!(
@@ -507,11 +523,23 @@ impl VerilogGenerator {
 fn render_dense_layer_instance(
     comment_label: &str,
     layer_name: &str,
-    n_neurons: usize,
+    params: &DenseLayerParams,
     input_width: usize,
     input_bus: &str,
     output_bus: &str,
-) -> String {
+) -> Result<String, String> {
+    if let Some(matrix) = &params.weight_matrix {
+        return render_matrix_layer_instance(
+            comment_label,
+            layer_name,
+            params,
+            matrix,
+            input_width,
+            input_bus,
+            output_bus,
+        );
+    }
+    let n_neurons = params.n_neurons;
     let dw = 16usize;
     let lines = [
         format!("    // {comment_label}"),
@@ -555,7 +583,78 @@ fn render_dense_layer_instance(
         ),
         String::new(),
     ];
-    lines.join("\n")
+    Ok(lines.join("\n"))
+}
+
+fn render_matrix_layer_instance(
+    comment_label: &str,
+    layer_name: &str,
+    params: &DenseLayerParams,
+    matrix: &[Vec<u16>],
+    input_width: usize,
+    input_bus: &str,
+    output_bus: &str,
+) -> Result<String, String> {
+    if matrix.iter().any(|row| row.len() != input_width) {
+        return Err(format!(
+            "Dense layer '{layer_name}' weight rows must have input_width ({input_width}) entries"
+        ));
+    }
+    let dw = 16usize;
+    let n_neurons = params.n_neurons;
+    // weight_fp[(j * N_INPUTS + i) * DW +: DW] is row j, input i: the last word goes first.
+    let words = matrix
+        .iter()
+        .rev()
+        .flat_map(|row| row.iter().rev())
+        .map(|word| format!("16'h{word:04X}"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let input_seed = params.input_seed_base.unwrap_or(0xACE1);
+    let weight_seed = params.weight_seed_base.unwrap_or(0xBEEF);
+    let lines = [
+        format!("    // {comment_label}"),
+        format!("    wire [{}:0] {layer_name}_x_input_fp;", input_width * dw - 1),
+        format!("    wire {layer_name}_step_valid;"),
+        format!("    wire {layer_name}_run_done;"),
+        format!("    wire {layer_name}_running;"),
+        "    generate".to_string(),
+        format!(
+            "        for (sc_in_idx = 0; sc_in_idx < {input_width}; sc_in_idx = sc_in_idx + 1) begin : {layer_name}_pack_x"
+        ),
+        format!(
+            "            assign {layer_name}_x_input_fp[sc_in_idx*{dw} +: {dw}] = {{{dw}{{{input_bus}[sc_in_idx]}}}};"
+        ),
+        "        end".to_string(),
+        "    endgenerate".to_string(),
+        "    sc_dense_matrix_layer #(".to_string(),
+        format!("        .N_INPUTS({input_width}),"),
+        format!("        .N_NEURONS({n_neurons}),"),
+        format!("        .DATA_WIDTH({dw}),"),
+        format!("        .INPUT_SEED_BASE(16'h{input_seed:04X}),"),
+        format!("        .WEIGHT_SEED_BASE(16'h{weight_seed:04X})"),
+        format!("    ) {layer_name}_inst ("),
+        "        .clk(clk),".to_string(),
+        "        .rst_n(rst_n),".to_string(),
+        "        .start_pulse(1'b1),".to_string(),
+        "        .stream_len(32'd256),".to_string(),
+        format!("        .x_input_fp({layer_name}_x_input_fp),"),
+        format!("        .weight_fp({{{words}}}),"),
+        "        .y_min_fp(16'h0000),".to_string(),
+        "        .y_max_fp(16'h0200),".to_string(),
+        "        .cfg_leak(16'h0010),".to_string(),
+        "        .cfg_gain(16'h0100),".to_string(),
+        format!("        .spikes({output_bus}),"),
+        format!("        .step_valid({layer_name}_step_valid),"),
+        format!("        .run_done({layer_name}_run_done),"),
+        format!("        .running({layer_name}_running)"),
+        "    );".to_string(),
+        format!(
+            "    wire _unused_{layer_name}_status = &{{1'b0, {layer_name}_step_valid, {layer_name}_run_done, {layer_name}_running, 1'b0}};"
+        ),
+        String::new(),
+    ];
+    Ok(lines.join("\n"))
 }
 
 fn validate_dense_params(params: DenseLayerParams, name: &str) -> Result<DenseLayerParams, String> {
@@ -570,6 +669,50 @@ fn validate_dense_params(params: DenseLayerParams, name: &str) -> Result<DenseLa
                 "Dense layer '{name}' output_width ({width}) must equal n_neurons ({})",
                 params.n_neurons
             ));
+        }
+    }
+    match &params.weight_matrix {
+        None => {
+            for (key, value) in [
+                ("input_seed_base", params.input_seed_base),
+                ("weight_seed_base", params.weight_seed_base),
+            ] {
+                if value.is_some() {
+                    return Err(format!(
+                        "Dense layer '{name}' {key} needs a 2-D weights matrix: sc_dense_layer_core has fixed encoder seeds"
+                    ));
+                }
+            }
+        }
+        Some(matrix) => {
+            if matrix.len() != params.n_neurons {
+                return Err(format!(
+                    "Dense layer '{name}' weights has {} rows; n_neurons is {}",
+                    matrix.len(),
+                    params.n_neurons
+                ));
+            }
+            let width = matrix[0].len();
+            if width == 0 || matrix.iter().any(|row| row.len() != width) {
+                return Err(format!(
+                    "Dense layer '{name}' weight rows must share one non-zero width"
+                ));
+            }
+            if let Some(input_width) = params.input_width {
+                if input_width != width {
+                    return Err(format!(
+                        "Dense layer '{name}' weight rows have {width} entries; input_width is {input_width}"
+                    ));
+                }
+            }
+            for (key, value) in [
+                ("input_seed_base", params.input_seed_base),
+                ("weight_seed_base", params.weight_seed_base),
+            ] {
+                if value == Some(0) {
+                    return Err(format!("Dense layer '{name}' {key} must be in [1, 0xFFFF]"));
+                }
+            }
         }
     }
     Ok(params)
@@ -766,7 +909,7 @@ pub fn validate_verilog_generator(state: &VerilogGenerator) -> bool {
         && state.layers.iter().all(|layer| match layer {
             LayerDefinition::Dense { name, params } => {
                 sanitize_ident(name, "layer name").is_ok()
-                    && validate_dense_params(*params, name).is_ok()
+                    && validate_dense_params(params.clone(), name).is_ok()
             }
             LayerDefinition::StochasticSource { name, .. } => {
                 sanitize_ident(name, "stochastic source module name").is_ok()
@@ -778,6 +921,65 @@ pub fn validate_verilog_generator(state: &VerilogGenerator) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_verilog_generator_routes_a_weight_matrix_to_the_matrix_layer() {
+        let mut generator = VerilogGenerator::try_new("dense_matrix_probe", 3).unwrap();
+        generator
+            .add_dense_layer(
+                "m",
+                DenseLayerParams {
+                    weight_matrix: Some(vec![vec![1000, 2000, 3000], vec![0xFFFF, 0, 30000]]),
+                    input_seed_base: Some(0x1234),
+                    weight_seed_base: Some(0x4321),
+                    ..DenseLayerParams::new(2)
+                },
+            )
+            .unwrap();
+        let verilog = generator.generate("sync").unwrap();
+        assert!(verilog.contains("    sc_dense_matrix_layer #("));
+        assert!(!verilog.contains("sc_dense_layer_core"));
+        assert!(verilog.contains(".INPUT_SEED_BASE(16'h1234),"));
+        assert!(verilog.contains(".WEIGHT_SEED_BASE(16'h4321)"));
+        assert!(verilog
+            .contains(".weight_fp({16'h7530, 16'h0000, 16'hFFFF, 16'h0BB8, 16'h07D0, 16'h03E8}),"));
+    }
+
+    #[test]
+    fn test_verilog_generator_refuses_seeds_on_the_shared_core_and_bad_matrices() {
+        let mut generator = VerilogGenerator::try_new("dense_probe", 2).unwrap();
+        let seeded_core = DenseLayerParams {
+            input_seed_base: Some(5),
+            ..DenseLayerParams::new(2)
+        };
+        let error = generator.add_dense_layer("s", seeded_core).unwrap_err();
+        assert!(error.contains("input_seed_base needs a 2-D weights matrix"));
+        let ragged = DenseLayerParams {
+            weight_matrix: Some(vec![vec![1, 2], vec![3]]),
+            ..DenseLayerParams::new(2)
+        };
+        assert!(generator
+            .add_dense_layer("r", ragged)
+            .unwrap_err()
+            .contains("share one non-zero width"));
+        let short = DenseLayerParams {
+            weight_matrix: Some(vec![vec![1, 2]]),
+            ..DenseLayerParams::new(2)
+        };
+        assert!(generator
+            .add_dense_layer("n", short)
+            .unwrap_err()
+            .contains("1 rows"));
+        let zero_seed = DenseLayerParams {
+            weight_matrix: Some(vec![vec![1, 2], vec![3, 4]]),
+            weight_seed_base: Some(0),
+            ..DenseLayerParams::new(2)
+        };
+        assert!(generator
+            .add_dense_layer("z", zero_seed)
+            .unwrap_err()
+            .contains("weight_seed_base must be in [1, 0xFFFF]"));
+    }
 
     #[test]
     fn test_verilog_generator_new() {
@@ -797,6 +999,9 @@ mod tests {
                     n_neurons: 12,
                     input_width: None,
                     output_width: Some(12),
+                    weight_matrix: None,
+                    input_seed_base: None,
+                    weight_seed_base: None,
                 },
             )
             .unwrap();
@@ -821,6 +1026,9 @@ mod tests {
                     n_neurons: 5,
                     input_width: None,
                     output_width: Some(5),
+                    weight_matrix: None,
+                    input_seed_base: None,
+                    weight_seed_base: None,
                 },
             )
             .unwrap();
@@ -831,6 +1039,9 @@ mod tests {
                     n_neurons: 3,
                     input_width: Some(7),
                     output_width: None,
+                    weight_matrix: None,
+                    input_seed_base: None,
+                    weight_seed_base: None,
                 },
             )
             .unwrap();
@@ -858,6 +1069,9 @@ mod tests {
                     n_neurons: 4,
                     input_width: None,
                     output_width: Some(2),
+                    weight_matrix: None,
+                    input_seed_base: None,
+                    weight_seed_base: None,
                 },
             )
             .is_err());

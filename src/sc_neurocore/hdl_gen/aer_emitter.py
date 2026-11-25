@@ -6,7 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Research AER wrapper and dense-layer HDL emission helpers
 
-"""Emit clocked AER wrappers and ``sc_dense_layer_core`` network bindings."""
+"""Emit clocked AER wrappers and ``Dense`` layer bindings.
+
+A ``Dense`` layer whose ``weights`` is a 2-D ``n_neurons x n_inputs`` matrix binds
+``sc_dense_matrix_layer``: one weight row per neuron, each with its own encoders, seeded from
+``input_seed_base`` and ``weight_seed_base``. A 1-D ``weights`` (or one ``weight_fp``) binds
+``sc_dense_layer_core``, a shared-weight population: one dot product drives every neuron with
+the same current, so its ``n_neurons`` spike bits are one signal. That core has fixed encoder
+seeds, so seed parameters are refused on it rather than ignored.
+"""
 
 from __future__ import annotations
 
@@ -70,8 +78,60 @@ def _require_params_mapping(value: object, layer_name: str) -> Mapping[str, obje
     return value
 
 
+_SEED_KEYS = ("input_seed_base", "weight_seed_base")
+_DEFAULT_SEEDS = {"input_seed_base": 0xACE1, "weight_seed_base": 0xBEEF}
+
+
+def dense_weight_matrix(params: Mapping[str, object]) -> list[list[object]] | None:
+    """Return the weight rows of a 2-D ``weights`` matrix, or ``None`` for the shared-core forms.
+
+    Parameters
+    ----------
+    params : Mapping[str, object]
+        ``Dense`` layer parameters.
+
+    Returns
+    -------
+    list[list[object]] or None
+        One row per neuron when ``weights`` is a list or tuple of lists or tuples; ``None`` when
+        ``weights`` is absent or 1-D, which bind ``sc_dense_layer_core``.
+
+    Raises
+    ------
+    ValueError
+        If ``weights`` mixes rows and scalars.
+    """
+    raw = params.get("weights")
+    if not isinstance(raw, (list, tuple)) or not raw:
+        return None
+    rows: list[list[object]] = []
+    scalars = 0
+    for item in raw:
+        if isinstance(item, (list, tuple)):
+            rows.append(list(item))
+        else:
+            scalars += 1
+    if not rows:
+        return None
+    if scalars:
+        raise ValueError("Dense weights must be all rows (2-D) or all scalars (1-D), not a mix")
+    return rows
+
+
 def validate_dense_layer_params(layer_name: str, params: object) -> None:
-    """Validate ``Dense`` layer configuration for ``sc_dense_layer_core`` binding.
+    """Validate ``Dense`` layer configuration for its HDL binding.
+
+    Every parameter is either honoured by the module the layer binds or refused; none is
+    accepted and then ignored.
+
+    - Both bindings honour ``n_neurons``, ``input_width``, ``output_width``, ``data_width``,
+      ``stream_len``, ``y_min_fp``, ``y_max_fp``, ``cfg_leak`` and ``cfg_gain``: each reaches a
+      parameter or port of the emitted instance.
+    - ``sc_dense_layer_core`` (1-D ``weights``, one ``weight_fp``, or neither) also honours
+      ``weights`` and ``weight_fp``, and refuses ``input_seed_base`` and ``weight_seed_base``,
+      because its encoder seeds are fixed inside the module.
+    - ``sc_dense_matrix_layer`` (2-D ``weights``) also honours ``input_seed_base`` and
+      ``weight_seed_base`` as ``INPUT_SEED_BASE`` and ``WEIGHT_SEED_BASE``.
 
     Parameters
     ----------
@@ -79,6 +139,14 @@ def validate_dense_layer_params(layer_name: str, params: object) -> None:
         Sanitised Verilog layer identifier.
     params : object
         Layer parameter dictionary.
+
+    Raises
+    ------
+    ValueError
+        If a parameter is missing, not an integer, out of range or not honoured by the bound
+        module.
+    TypeError
+        If ``params`` is not a mapping.
     """
     checked = _require_params_mapping(params, layer_name)
     if "n_neurons" not in checked:
@@ -115,8 +183,21 @@ def validate_dense_layer_params(layer_name: str, params: object) -> None:
         raw_weights = checked["weights"]
         if not isinstance(raw_weights, (list, tuple)):
             raise ValueError(f"Dense layer '{layer_name}' weights must be a list or tuple")
-        for idx, item in enumerate(raw_weights):
-            _format_unsigned_word(item, data_width, f"Dense layer '{layer_name}' weights[{idx}]")
+        matrix = dense_weight_matrix(checked)
+        if matrix is None:
+            for idx, item in enumerate(raw_weights):
+                _format_unsigned_word(
+                    item, data_width, f"Dense layer '{layer_name}' weights[{idx}]"
+                )
+        else:
+            _validate_weight_matrix(layer_name, checked, matrix, n_neurons, data_width)
+    if dense_weight_matrix(checked) is None:
+        for key in _SEED_KEYS:
+            if key in checked:
+                raise ValueError(
+                    f"Dense layer '{layer_name}' {key} needs a 2-D weights matrix: "
+                    "sc_dense_layer_core has fixed encoder seeds"
+                )
     for key, default in (
         ("y_min_fp", 0),
         ("y_max_fp", 0x0200),
@@ -125,6 +206,66 @@ def validate_dense_layer_params(layer_name: str, params: object) -> None:
     ):
         _format_signed_word(
             checked.get(key, default), data_width, f"Dense layer '{layer_name}' {key}"
+        )
+
+
+def _validate_weight_matrix(
+    layer_name: str,
+    params: Mapping[str, object],
+    matrix: list[list[object]],
+    n_neurons: int,
+    data_width: int,
+) -> None:
+    """Check a 2-D ``weights`` matrix, its seeds and its current range for ``sc_dense_matrix_layer``.
+
+    Parameters
+    ----------
+    layer_name : str
+        Sanitised Verilog layer identifier.
+    params : Mapping[str, object]
+        ``Dense`` layer parameters.
+    matrix : list[list[object]]
+        Weight rows, one per neuron.
+    n_neurons : int
+        Validated neuron count.
+    data_width : int
+        Word width of the weights and the current range.
+
+    Raises
+    ------
+    ValueError
+        If the row count or row widths are wrong, a weight or seed is out of range, or
+        ``y_min_fp`` is not below ``y_max_fp``.
+    """
+    if len(matrix) != n_neurons:
+        raise ValueError(
+            f"Dense layer '{layer_name}' weights has {len(matrix)} rows; n_neurons is {n_neurons}"
+        )
+    width = len(matrix[0])
+    if width == 0 or any(len(row) != width for row in matrix):
+        raise ValueError(f"Dense layer '{layer_name}' weight rows must share one non-zero width")
+    if "input_width" in params and params["input_width"] != width:
+        raise ValueError(
+            f"Dense layer '{layer_name}' weight rows have {width} entries; "
+            f"input_width is {params['input_width']}"
+        )
+    for row_idx, row in enumerate(matrix):
+        for col_idx, item in enumerate(row):
+            _format_unsigned_word(
+                item, data_width, f"Dense layer '{layer_name}' weights[{row_idx}][{col_idx}]"
+            )
+    for key in _SEED_KEYS:
+        if key in params:
+            seed = _require_non_bool_int(params[key], f"Dense layer '{layer_name}' {key}")
+            if not 1 <= seed <= 0xFFFF:
+                raise ValueError(f"Dense layer '{layer_name}' {key} must be in [1, 0xFFFF]")
+    y_min = _require_non_bool_int(params.get("y_min_fp", 0), f"Dense layer '{layer_name}' y_min_fp")
+    y_max = _require_non_bool_int(
+        params.get("y_max_fp", 0x0200), f"Dense layer '{layer_name}' y_max_fp"
+    )
+    if y_min >= y_max:
+        raise ValueError(
+            f"Dense layer '{layer_name}' y_min_fp ({y_min}) must be below y_max_fp ({y_max})"
         )
 
 
@@ -186,7 +327,10 @@ def render_dense_layer_instance(
     output_bus: str,
     input_width: int,
 ) -> str:
-    """Render one ``sc_dense_layer_core`` instance bound to bitstream buses.
+    """Render one ``Dense`` layer instance bound to bitstream buses.
+
+    A 2-D ``weights`` matrix renders ``sc_dense_matrix_layer``; any other form renders
+    ``sc_dense_layer_core`` exactly as before.
 
     Parameters
     ----------
@@ -208,6 +352,17 @@ def render_dense_layer_instance(
     str
         Indented Verilog instantiation block.
     """
+    matrix = dense_weight_matrix(params)
+    if matrix is not None:
+        return _render_matrix_layer_instance(
+            comment_label=comment_label,
+            layer_name=layer_name,
+            params=params,
+            matrix=matrix,
+            input_bus=input_bus,
+            output_bus=output_bus,
+            input_width=input_width,
+        )
     n_neurons = require_positive_int(params["n_neurons"], "n_neurons")
     dw = require_positive_int(params.get("data_width", 16), "data_width")
     stream_len = require_positive_int(params.get("stream_len", 256), "stream_len")
@@ -277,12 +432,118 @@ def render_dense_layer_instance(
     return "\n".join(lines)
 
 
+def _render_matrix_layer_instance(
+    *,
+    comment_label: str,
+    layer_name: str,
+    params: Mapping[str, object],
+    matrix: list[list[object]],
+    input_bus: str,
+    output_bus: str,
+    input_width: int,
+) -> str:
+    """Render one ``sc_dense_matrix_layer`` instance with one weight row per neuron.
+
+    Parameters
+    ----------
+    comment_label : str
+        Header comment line identifying the layer.
+    layer_name : str
+        Sanitised layer identifier.
+    params : Mapping[str, object]
+        Validated ``Dense`` layer parameters.
+    matrix : list[list[object]]
+        Weight rows, one per neuron, each ``input_width`` entries long.
+    input_bus : str
+        Incoming 1-bit-per-channel Verilog signal name.
+    output_bus : str
+        Outgoing ``N_NEURONS``-bit spike Verilog signal name.
+    input_width : int
+        Bit width of ``input_bus`` (mapped to ``N_INPUTS``).
+
+    Returns
+    -------
+    str
+        Indented Verilog instantiation block.
+
+    Raises
+    ------
+    ValueError
+        If a weight row's width differs from ``input_width``.
+    """
+    n_neurons = require_positive_int(params["n_neurons"], "n_neurons")
+    dw = require_positive_int(params.get("data_width", 16), "data_width")
+    stream_len = require_positive_int(params.get("stream_len", 256), "stream_len")
+    if any(len(row) != input_width for row in matrix):
+        raise ValueError(
+            f"Dense layer '{layer_name}' weight rows must have input_width ({input_width}) entries"
+        )
+    # weight_fp[(j * N_INPUTS + i) * DW +: DW] is row j, input i: the last word goes first.
+    words = [
+        _format_unsigned_word(item, dw, f"Dense layer '{layer_name}' weights")
+        for row in reversed(matrix)
+        for item in reversed(row)
+    ]
+    weight_expr = "{" + ", ".join(words) + "}"
+    seeds = {
+        key: _require_non_bool_int(params.get(key, default), key)
+        for key, default in _DEFAULT_SEEDS.items()
+    }
+    y_min = _format_signed_word(params.get("y_min_fp", 0), dw, "y_min_fp")
+    y_max = _format_signed_word(params.get("y_max_fp", 0x0200), dw, "y_max_fp")
+    cfg_leak = _format_signed_word(params.get("cfg_leak", 0x0010), dw, "cfg_leak")
+    cfg_gain = _format_signed_word(params.get("cfg_gain", 0x0100), dw, "cfg_gain")
+    lines = [
+        f"    // {comment_label}",
+        f"    wire [{input_width * dw - 1}:0] {layer_name}_x_input_fp;",
+        f"    wire {layer_name}_step_valid;",
+        f"    wire {layer_name}_run_done;",
+        f"    wire {layer_name}_running;",
+        "    generate",
+        f"        for (sc_in_idx = 0; sc_in_idx < {input_width}; sc_in_idx = sc_in_idx + 1) "
+        f"begin : {layer_name}_pack_x",
+        f"            assign {layer_name}_x_input_fp[sc_in_idx*{dw} +: {dw}] = "
+        f"{{{dw}{{{input_bus}[sc_in_idx]}}}};",
+        "        end",
+        "    endgenerate",
+        "    sc_dense_matrix_layer #(",
+        f"        .N_INPUTS({input_width}),",
+        f"        .N_NEURONS({n_neurons}),",
+        f"        .DATA_WIDTH({dw}),",
+        f"        .INPUT_SEED_BASE(16'h{seeds['input_seed_base']:04X}),",
+        f"        .WEIGHT_SEED_BASE(16'h{seeds['weight_seed_base']:04X})",
+        f"    ) {layer_name}_inst (",
+        "        .clk(clk),",
+        "        .rst_n(rst_n),",
+        "        .start_pulse(1'b1),",
+        f"        .stream_len(32'd{stream_len}),",
+        f"        .x_input_fp({layer_name}_x_input_fp),",
+        f"        .weight_fp({weight_expr}),",
+        f"        .y_min_fp({y_min}),",
+        f"        .y_max_fp({y_max}),",
+        f"        .cfg_leak({cfg_leak}),",
+        f"        .cfg_gain({cfg_gain}),",
+        f"        .spikes({output_bus}),",
+        f"        .step_valid({layer_name}_step_valid),",
+        f"        .run_done({layer_name}_run_done),",
+        f"        .running({layer_name}_running)",
+        "    );",
+        f"    wire _unused_{layer_name}_status = &{{1'b0, {layer_name}_step_valid, "
+        f"{layer_name}_run_done, {layer_name}_running, 1'b0}};",
+        "",
+    ]
+    return "\n".join(lines)
+
+
 class AEREmitter:
     """Emit a research-stage AER wrapper around the clocked HDL dense path.
 
-    The compute pipeline uses ``sc_dense_layer_core`` and wraps its final spike
-    vector in a 4-phase AER-style request/acknowledge interface. It is not a
-    quasi-delay-insensitive asynchronous network replacement.
+    Each ``Dense`` layer of the compute pipeline binds ``sc_dense_layer_core`` for a 1-D
+    ``weights`` or one ``weight_fp`` (one shared current, so one signal; seed parameters
+    refused) or ``sc_dense_matrix_layer`` for a 2-D ``weights`` matrix (per-row weights,
+    seeds and current range). The final spike vector is wrapped in a 4-phase AER-style
+    request/acknowledge interface. It is not a quasi-delay-insensitive asynchronous network
+    replacement.
     """
 
     def __init__(self, module_name: str = "sc_network_async_aer", bus_width: int = 8) -> None:
