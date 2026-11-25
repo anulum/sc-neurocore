@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5098
+expected_file_count = 5099
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20436,3 +20436,7 @@ rationale = "Public Traub-Miles 1991 neuron model whose removable rate singulari
 [[file]]
 path = "tests/test_traub_miles_removable_rate_limits.py"
 rationale = "Exercise SC-NeuroCore: Traub-Miles removable rate limits, window continuity and the Julia lane."
+
+[[file]]
+path = "tests/test_astrocyte_rust_python_parity.py"
+rationale = "Exercise SC-NeuroCore: the Rust engine and Julia astrocyte lanes against the Python Li-Rinzel reference."

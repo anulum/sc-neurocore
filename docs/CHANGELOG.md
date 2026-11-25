@@ -657,6 +657,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The Rust engine's `AstrocyteModel` now follows the Python Li-Rinzel
+  reference: the ER leak uses `leak` (0.01 per second) rather than the
+  SERCA half-activation `k_er`, IP3 is a third ODE, and the input drives
+  IP3 production rather than calcium. A negative or non-finite input, or
+  a calcium candidate beyond the total pool, is refused (ValueError from
+  Python) and leaves the state unchanged. The Go service and the Rust
+  safety crate, which were stubs, and the Julia lane, which accepted any
+  input and swallowed errors, take the same recurrence and refusals. A
+  new test module checks the engine class against Python and the Julia
+  lane bit for bit.
+
 - `TraubMilesNeuron` now takes the analytic limits at its three removable
   rate singularities: alpha_m(-54 mV) = 1.28, beta_m(-27 mV) = 1.40 and
   alpha_n(-52 mV) = 0.16, where `8.0`, `5.6` and `0.32` (6.25, 4 and 2

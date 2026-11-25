@@ -3646,7 +3646,7 @@
     },
     {
       "path": "src/sc_neurocore/accel/julia/neurons/astrocyte.jl",
-      "sha256": "dea2bc0d1145a41ee59796d67cd33fce482e47e69b444bb1d9de3370fc11ced3",
+      "sha256": "bfbf1b83949cdd5daff5c01a902b61a5855a9b8b78f486a693d041b0a3ceb863",
       "parses": true,
       "authoritative": false,
       "loaded": false,

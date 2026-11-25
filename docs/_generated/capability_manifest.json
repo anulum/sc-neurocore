@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5583
+    "test_files": 5584
   },
   "documentation": {
     "public_pages": [
@@ -3982,6 +3982,7 @@
       "tests/test_asic_flow/test_signoff_signoff_summary.py",
       "tests/test_astrocyte_adapter_astrocyte_neuron.py",
       "tests/test_astrocyte_adapter_astrocyte_population.py",
+      "tests/test_astrocyte_rust_python_parity.py",
       "tests/test_audio_evs_contracts.py",
       "tests/test_audio_package_api.py",
       "tests/test_audio_ssgf_mapping_contracts.py",

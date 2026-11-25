@@ -222,7 +222,25 @@ models — Ca²⁺ oscillations at 0.01–0.1 Hz vs neuronal spiking at 1–100 
 - **Three state variables:** ca, h, ip3.
 - **Only non-neuronal model** in SC-NeuroCore.
 - **Dataclass:** Uses `@dataclass`.
-- **Rust wiring:** Limited (float return, non-neuronal semantics).
+- **Lanes:** the Rust engine class (`sc_neurocore_engine.AstrocyteModel`), the standalone Rust safety
+  crate, the Go service and the Julia lane follow the Python recurrence term for term: three ODEs, the
+  ER leak at `leak`, and the input driving IP3 production. A negative or non-finite input, or a
+  calcium candidate that is not finite or exceeds `c0`, is refused and leaves the state unchanged:
+  Python and the engine class raise `ValueError`, the safety crate and Go return an error, Julia
+  returns `nothing`, and the engine's network-runner adapter keeps the calcium. Before 2026-11-24 the
+  engine class used `k_er` as the leak rate, held IP3 constant, added the input to calcium and
+  validated nothing; the Go and safety lanes were stubs.
+- **Rounding and validation differences that parity tolerates:** Python's `**` and Rust's `powf` call
+  the C `pow`, while Julia's literal power (`x ^ 3` as `x*x*x`, two roundings) and Go's `math.Pow` (its
+  own Frexp-and-squaring implementation for integral exponents) do their own multiplications. Only
+  Julia is compared bit for bit: over the tested 200 steps its state equals Python's, because the
+  last-place differences are absorbed in `ca`, but this is not guaranteed for every input. The Rust and
+  Go `step` re-validate every parameter and the state on each call, while the Python class validates
+  them only at construction; on a valid model the two give the same trajectory, and only a parameter
+  made invalid after construction is refused by the compiled lanes alone.
+- **Local runs:** the parity tests import the installed `sc_neurocore_engine`; with an engine wheel
+  built before this change they fail. Rebuild the engine (`maturin build` from `bridge/`, or the
+  project's develop install) before a local full suite; CI builds it from source.
 
 ---
 
@@ -230,8 +248,14 @@ models — Ca²⁺ oscillations at 0.01–0.1 Hz vs neuronal spiking at 1–100 
 
 | Metric | Python | Rust |
 |--------|--------|------|
-| Isolation | ~300K steps/s | Not applicable |
+| Isolation | ~300K steps/s | ~5.2M steps/s (PyO3 `step`, median of five) |
 | Network | Limited (float return) | — |
+
+The Rust figure is the median of five runs of 100,000 PyO3 `step(0.1)` calls on an i5-11600K under heavy
+memory pressure on 2026-11-24 (runs ranged from 2.3M to 8.6M steps/s). The pre-2026-11-24 engine
+class, which skipped the IP3 ODE and all validation, ran at a median of 8.4M steps/s in alternating
+runs of the same pairs; it computed a different recurrence, so the two figures are not a like-for-like
+speed comparison.
 
 Moderate speed — no exp(), rational functions only.
 
@@ -248,7 +272,9 @@ Moderate speed — no exp(), rational functions only.
 | Pipeline | 2 | Population creates, float return documented |
 | **Total** | **16** | |
 
-See `tests/test_model_astrocyte.py`. No bugs found.
+See the `tests/test_model_astrocyte_astrocyte*.py` modules. `tests/test_astrocyte_rust_python_parity.py` checks the engine class against Python over 500 steps at
+three inputs (to 1e-12), the IP3 drive, the refusals and reset, and the Julia lane bit for bit; the
+engine, safety and Go lanes carry their own reference-value and refusal tests.
 
 ---
 

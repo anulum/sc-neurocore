@@ -29,8 +29,10 @@ impl PyAstrocyteModel {
         }
     }
 
-    fn step(&mut self, current: f64) -> f64 {
-        self.inner.step(current)
+    fn step(&mut self, current: f64) -> PyResult<f64> {
+        self.inner
+            .try_step(current)
+            .map_err(pyo3::exceptions::PyValueError::new_err)
     }
 
     fn reset(&mut self) {
