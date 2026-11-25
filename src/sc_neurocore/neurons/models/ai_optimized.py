@@ -19,8 +19,49 @@ rest of the run (see that class).
 from __future__ import annotations
 
 import math
+import numbers
 from collections import deque
 from dataclasses import dataclass, field
+
+
+def _require_finite_float(value: object, name: str) -> float:
+    """Validate that ``value`` is a finite real scalar (not ``bool``) and return ``float``."""
+    if type(value) is float:
+        if not math.isfinite(value):
+            raise ValueError(f"{name} must be finite")
+        return value
+    if isinstance(value, bool):
+        raise TypeError(f"{name} must be a finite real number, not bool")
+    if isinstance(value, numbers.Real):
+        try:
+            coerced = float(value)
+        except OverflowError as exc:
+            raise FloatingPointError(f"{name} overflowed finite floating-point range") from exc
+        if not math.isfinite(coerced):
+            raise ValueError(f"{name} must be finite")
+        return coerced
+    raise TypeError(f"{name} must be a finite real number")
+
+
+def _require_int(value: object, name: str) -> int:
+    """Validate that ``value`` is a non-boolean integer and return ``int``."""
+    if type(value) is int:
+        return value
+    if isinstance(value, bool):
+        raise TypeError(f"{name} must be an integer, not bool")
+    if isinstance(value, numbers.Integral):
+        return int(value)
+    if isinstance(value, numbers.Real) and not math.isfinite(float(value)):
+        raise ValueError(f"{name} must be finite")
+    raise TypeError(f"{name} must be an integer")
+
+
+def _safe_sigmoid(x: float) -> float:
+    """Evaluate ``1 / (1 + exp(-x))`` without overflowing on large negative ``x``."""
+    if x >= -700.0:
+        return 1.0 / (1.0 + math.exp(-x))
+    ex = math.exp(x)
+    return ex / (1.0 + ex)
 
 
 @dataclass
@@ -50,6 +91,26 @@ class MultiTimescaleNeuron:
     theta_base: float = 1.0
     dt: float = 1.0
 
+    def __post_init__(self) -> None:
+        """Validate all compartments, time constants and positive timestep."""
+        self._validate_configuration()
+
+    def _validate_configuration(self) -> None:
+        self.v_fast = _require_finite_float(self.v_fast, "v_fast")
+        self.v_medium = _require_finite_float(self.v_medium, "v_medium")
+        self.v_slow = _require_finite_float(self.v_slow, "v_slow")
+        self.tau_fast = _require_finite_float(self.tau_fast, "tau_fast")
+        self.tau_medium = _require_finite_float(self.tau_medium, "tau_medium")
+        self.tau_slow = _require_finite_float(self.tau_slow, "tau_slow")
+        self.alpha = _require_finite_float(self.alpha, "alpha")
+        self.beta = _require_finite_float(self.beta, "beta")
+        self.gamma = _require_finite_float(self.gamma, "gamma")
+        self.theta_base = _require_finite_float(self.theta_base, "theta_base")
+        self.dt = _require_finite_float(self.dt, "dt")
+        for name in ("tau_fast", "tau_medium", "tau_slow", "dt"):
+            if getattr(self, name) <= 0.0:
+                raise ValueError(f"{name} must be positive")
+
     def step(self, current: float) -> int:
         """Advance one Euler step of ``dt`` and report whether the fast compartment fired.
 
@@ -61,20 +122,95 @@ class MultiTimescaleNeuron:
         Parameters
         ----------
         current : float
-            Input current of this step.
+            Input current of this step; must be finite.
 
         Returns
         -------
         int
             1 when ``v_fast >= theta_base - gamma * v_slow``, otherwise 0.
+
+        Raises
+        ------
+        ValueError
+            If ``current`` or any state/parameter is non-finite, or any time
+            constant or ``dt`` is not positive. State is left unchanged.
+        TypeError
+            If ``current`` or any state/parameter is a boolean or non-real value.
+            State is left unchanged.
+        FloatingPointError
+            If a candidate compartment state overflows finite range.
+            State is left unchanged.
         """
-        self.v_fast += (-self.v_fast + current) / self.tau_fast * self.dt
-        theta_eff = self.theta_base - self.gamma * self.v_slow
-        fired = int(self.v_fast >= theta_eff)
-        self.v_medium += (-self.v_medium + self.alpha * fired) / self.tau_medium * self.dt
-        self.v_slow += (-self.v_slow + self.beta * self.v_medium) / self.tau_slow * self.dt
-        if fired:
-            self.v_fast = 0.0
+        v_fast = self.v_fast
+        v_medium = self.v_medium
+        v_slow = self.v_slow
+        tau_fast = self.tau_fast
+        tau_medium = self.tau_medium
+        tau_slow = self.tau_slow
+        alpha = self.alpha
+        beta = self.beta
+        gamma = self.gamma
+        theta_base = self.theta_base
+        dt = self.dt
+        if not (
+            current.__class__ is float
+            and math.isfinite(current)
+            and v_fast.__class__ is float
+            and v_medium.__class__ is float
+            and v_slow.__class__ is float
+            and tau_fast.__class__ is float
+            and tau_medium.__class__ is float
+            and tau_slow.__class__ is float
+            and alpha.__class__ is float
+            and beta.__class__ is float
+            and gamma.__class__ is float
+            and theta_base.__class__ is float
+            and dt.__class__ is float
+            and math.isfinite(v_fast)
+            and math.isfinite(v_medium)
+            and math.isfinite(v_slow)
+            and math.isfinite(tau_fast)
+            and math.isfinite(tau_medium)
+            and math.isfinite(tau_slow)
+            and math.isfinite(alpha)
+            and math.isfinite(beta)
+            and math.isfinite(gamma)
+            and math.isfinite(theta_base)
+            and math.isfinite(dt)
+            and tau_fast > 0.0
+            and tau_medium > 0.0
+            and tau_slow > 0.0
+            and dt > 0.0
+        ):
+            current = _require_finite_float(current, "current")
+            self._validate_configuration()
+            v_fast = self.v_fast
+            v_medium = self.v_medium
+            v_slow = self.v_slow
+            tau_fast = self.tau_fast
+            tau_medium = self.tau_medium
+            tau_slow = self.tau_slow
+            alpha = self.alpha
+            beta = self.beta
+            gamma = self.gamma
+            theta_base = self.theta_base
+            dt = self.dt
+
+        next_v_fast = v_fast + (-v_fast + current) / tau_fast * dt
+        theta_eff = theta_base - gamma * v_slow
+        fired = int(next_v_fast >= theta_eff)
+        next_v_medium = v_medium + (-v_medium + alpha * fired) / tau_medium * dt
+        next_v_slow = v_slow + (-v_slow + beta * next_v_medium) / tau_slow * dt
+        if not (
+            math.isfinite(next_v_fast)
+            and math.isfinite(theta_eff)
+            and math.isfinite(next_v_medium)
+            and math.isfinite(next_v_slow)
+        ):
+            raise FloatingPointError("MultiTimescaleNeuron state overflowed finite range")
+        self.v_fast = 0.0 if fired else next_v_fast
+        self.v_medium = next_v_medium
+        self.v_slow = next_v_slow
         return fired
 
     def reset(self) -> None:
@@ -103,24 +239,88 @@ class AttentionGatedNeuron:
     theta: float = 1.0
     dt: float = 1.0
 
+    def __post_init__(self) -> None:
+        """Validate voltage, attention weights, positive ``tau`` and ``dt``."""
+        self._validate_configuration()
+
+    def _validate_configuration(self) -> None:
+        self.v = _require_finite_float(self.v, "v")
+        self.w_key = _require_finite_float(self.w_key, "w_key")
+        self.w_query = _require_finite_float(self.w_query, "w_query")
+        self.tau = _require_finite_float(self.tau, "tau")
+        self.theta = _require_finite_float(self.theta, "theta")
+        self.dt = _require_finite_float(self.dt, "dt")
+        if self.tau <= 0.0:
+            raise ValueError("tau must be positive")
+        if self.dt <= 0.0:
+            raise ValueError("dt must be positive")
+
     def step(self, current: float) -> int:
         """Gate the current, integrate it for one Euler step and test the threshold.
 
         Parameters
         ----------
         current : float
-            Input current of this step.
+            Input current of this step; must be finite.
 
         Returns
         -------
         int
             1 when ``v`` reaches ``theta`` (``v`` is then reset to 0), otherwise 0.
+
+        Raises
+        ------
+        ValueError
+            If ``current`` or any state/parameter is non-finite, or ``tau`` or
+            ``dt`` is not positive. State is left unchanged.
+        TypeError
+            If ``current`` or any state/parameter is a boolean or non-real value.
+            State is left unchanged.
+        FloatingPointError
+            If the candidate membrane potential overflows finite range.
+            State is left unchanged.
         """
-        gate = 1.0 / (1.0 + math.exp(-(self.w_key * current + self.w_query * self.v)))
-        self.v += (-self.v + gate * current) / self.tau * self.dt
-        if self.v >= self.theta:
+        v = self.v
+        w_key = self.w_key
+        w_query = self.w_query
+        tau = self.tau
+        theta = self.theta
+        dt = self.dt
+        if not (
+            current.__class__ is float
+            and math.isfinite(current)
+            and v.__class__ is float
+            and w_key.__class__ is float
+            and w_query.__class__ is float
+            and tau.__class__ is float
+            and theta.__class__ is float
+            and dt.__class__ is float
+            and math.isfinite(v)
+            and math.isfinite(w_key)
+            and math.isfinite(w_query)
+            and math.isfinite(tau)
+            and math.isfinite(theta)
+            and math.isfinite(dt)
+            and tau > 0.0
+            and dt > 0.0
+        ):
+            current = _require_finite_float(current, "current")
+            self._validate_configuration()
+            v = self.v
+            w_key = self.w_key
+            w_query = self.w_query
+            tau = self.tau
+            theta = self.theta
+            dt = self.dt
+
+        gate = _safe_sigmoid(w_key * current + w_query * v)
+        next_v = v + (-v + gate * current) / tau * dt
+        if not math.isfinite(next_v):
+            raise FloatingPointError("AttentionGatedNeuron state overflowed finite range")
+        if next_v >= theta:
             self.v = 0.0
             return 1
+        self.v = next_v
         return 0
 
     def reset(self) -> None:
@@ -149,6 +349,21 @@ class PredictiveCodingNeuron:
     theta: float = 1.0
     dt: float = 1.0
 
+    def __post_init__(self) -> None:
+        """Validate state, threshold and positive ``tau``, ``tau_pred`` and ``dt``."""
+        self._validate_configuration()
+
+    def _validate_configuration(self) -> None:
+        self.v = _require_finite_float(self.v, "v")
+        self.pred = _require_finite_float(self.pred, "pred")
+        self.tau = _require_finite_float(self.tau, "tau")
+        self.tau_pred = _require_finite_float(self.tau_pred, "tau_pred")
+        self.theta = _require_finite_float(self.theta, "theta")
+        self.dt = _require_finite_float(self.dt, "dt")
+        for name in ("tau", "tau_pred", "dt"):
+            if getattr(self, name) <= 0.0:
+                raise ValueError(f"{name} must be positive")
+
     def step(self, current: float) -> int:
         """Measure the surprise against the prediction, update both and test the threshold.
 
@@ -159,19 +374,68 @@ class PredictiveCodingNeuron:
         Parameters
         ----------
         current : float
-            Input current of this step.
+            Input current of this step; must be finite.
 
         Returns
         -------
         int
             1 when ``v`` reaches ``theta`` (``v`` is then reset to 0), otherwise 0.
+
+        Raises
+        ------
+        ValueError
+            If ``current`` or any state/parameter is non-finite, or ``tau``,
+            ``tau_pred`` or ``dt`` is not positive. State is left unchanged.
+        TypeError
+            If ``current`` or any state/parameter is a boolean or non-real value.
+            State is left unchanged.
+        FloatingPointError
+            If a candidate state overflows finite range. State is left unchanged.
         """
-        surprise = abs(current - self.pred)
-        self.pred += (current - self.pred) / self.tau_pred * self.dt
-        self.v += (-self.v + surprise) / self.tau * self.dt
-        if self.v >= self.theta:
+        v = self.v
+        pred = self.pred
+        tau = self.tau
+        tau_pred = self.tau_pred
+        theta = self.theta
+        dt = self.dt
+        if not (
+            current.__class__ is float
+            and math.isfinite(current)
+            and v.__class__ is float
+            and pred.__class__ is float
+            and tau.__class__ is float
+            and tau_pred.__class__ is float
+            and theta.__class__ is float
+            and dt.__class__ is float
+            and math.isfinite(v)
+            and math.isfinite(pred)
+            and math.isfinite(tau)
+            and math.isfinite(tau_pred)
+            and math.isfinite(theta)
+            and math.isfinite(dt)
+            and tau > 0.0
+            and tau_pred > 0.0
+            and dt > 0.0
+        ):
+            current = _require_finite_float(current, "current")
+            self._validate_configuration()
+            v = self.v
+            pred = self.pred
+            tau = self.tau
+            tau_pred = self.tau_pred
+            theta = self.theta
+            dt = self.dt
+
+        surprise = abs(current - pred)
+        next_pred = pred + (current - pred) / tau_pred * dt
+        next_v = v + (-v + surprise) / tau * dt
+        if not (math.isfinite(surprise) and math.isfinite(next_pred) and math.isfinite(next_v)):
+            raise FloatingPointError("PredictiveCodingNeuron state overflowed finite range")
+        self.pred = next_pred
+        if next_v >= theta:
             self.v = 0.0
             return 1
+        self.v = next_v
         return 0
 
     def reset(self) -> None:
@@ -207,29 +471,103 @@ class SelfReferentialNeuron:
     _history: deque[int] = field(default_factory=lambda: deque(maxlen=50))
     _step_count: int = 0
 
+    def __post_init__(self) -> None:
+        """Validate state, positive ``tau``, ``target_rate``, ``dt`` and integer counters."""
+        self._validate_configuration()
+
+    def _validate_configuration(self) -> None:
+        self.v = _require_finite_float(self.v, "v")
+        self.tau = _require_finite_float(self.tau, "tau")
+        self.theta = _require_finite_float(self.theta, "theta")
+        self.target_rate = _require_finite_float(self.target_rate, "target_rate")
+        self.dt = _require_finite_float(self.dt, "dt")
+        self.window = _require_int(self.window, "window")
+        self._step_count = _require_int(self._step_count, "_step_count")
+        for name in ("tau", "target_rate", "dt"):
+            if getattr(self, name) <= 0.0:
+                raise ValueError(f"{name} must be positive")
+        if self.window <= 0:
+            raise ValueError("window must be positive")
+        if self._step_count < 0:
+            raise ValueError("_step_count must be non-negative")
+
     def step(self, current: float) -> int:
         """Set the time constant from the recent rate, integrate one Euler step and test the threshold.
 
         Parameters
         ----------
         current : float
-            Input current of this step.
+            Input current of this step; must be finite.
 
         Returns
         -------
         int
             1 when ``v`` reaches ``theta`` (``v`` is then reset to 0), otherwise
             0; the result is appended to the history.
+
+        Raises
+        ------
+        ValueError
+            If ``current`` or any state/parameter is non-finite, or ``tau``,
+            ``target_rate``, ``dt`` or ``window`` is not positive, or
+            ``_step_count`` is negative. State and history are left unchanged.
+        TypeError
+            If ``current`` or any field has an invalid type. State and history
+            are left unchanged.
+        FloatingPointError
+            If the candidate state or effective time constant overflows finite
+            range. State and history are left unchanged.
         """
-        self._step_count += 1
+        v = self.v
+        tau = self.tau
+        theta = self.theta
+        target_rate = self.target_rate
+        dt = self.dt
+        window = self.window
+        step_count = self._step_count
+        if not (
+            current.__class__ is float
+            and math.isfinite(current)
+            and v.__class__ is float
+            and tau.__class__ is float
+            and theta.__class__ is float
+            and target_rate.__class__ is float
+            and dt.__class__ is float
+            and window.__class__ is int
+            and step_count.__class__ is int
+            and math.isfinite(v)
+            and math.isfinite(tau)
+            and math.isfinite(theta)
+            and math.isfinite(target_rate)
+            and math.isfinite(dt)
+            and tau > 0.0
+            and target_rate > 0.0
+            and dt > 0.0
+            and window > 0
+            and step_count >= 0
+        ):
+            current = _require_finite_float(current, "current")
+            self._validate_configuration()
+            v = self.v
+            tau = self.tau
+            theta = self.theta
+            target_rate = self.target_rate
+            dt = self.dt
+            step_count = self._step_count
+
         n_spikes = sum(self._history)
         rate = n_spikes / max(len(self._history), 1)
-        tau_eff = self.tau * (1.0 + rate / self.target_rate)
-        self.v += (-self.v + current) / tau_eff * self.dt
-        if self.v >= self.theta:
+        tau_eff = tau * (1.0 + rate / target_rate)
+        next_v = v + (-v + current) / tau_eff * dt
+        if not (math.isfinite(tau_eff) and math.isfinite(next_v)):
+            raise FloatingPointError("SelfReferentialNeuron state overflowed finite range")
+
+        self._step_count = step_count + 1
+        if next_v >= theta:
             self.v = 0.0
             self._history.append(1)
             return 1
+        self.v = next_v
         self._history.append(0)
         return 0
 
@@ -263,22 +601,92 @@ class CompositionalBindingNeuron:
     theta: float = 0.8
     dt: float = 1.0
 
+    def __post_init__(self) -> None:
+        """Validate phase, amplitude, parameters and positive ``tau`` and ``dt``."""
+        self._validate_configuration()
+
+    def _validate_configuration(self) -> None:
+        self.phi = _require_finite_float(self.phi, "phi")
+        self.amplitude = _require_finite_float(self.amplitude, "amplitude")
+        self.omega = _require_finite_float(self.omega, "omega")
+        self.coupling = _require_finite_float(self.coupling, "coupling")
+        self.tau = _require_finite_float(self.tau, "tau")
+        self.theta = _require_finite_float(self.theta, "theta")
+        self.dt = _require_finite_float(self.dt, "dt")
+        if self.tau <= 0.0:
+            raise ValueError("tau must be positive")
+        if self.dt <= 0.0:
+            raise ValueError("dt must be positive")
+
     def step(self, current: float) -> int:
         """Advance the phase, integrate the amplitude one Euler step and test the product.
 
         Parameters
         ----------
         current : float
-            Input current of this step.
+            Input current of this step; must be finite.
 
         Returns
         -------
         int
             1 when ``amplitude * cos(phi) > theta``, otherwise 0.
+
+        Raises
+        ------
+        ValueError
+            If ``current`` or any state/parameter is non-finite, or ``tau`` or
+            ``dt`` is not positive. State is left unchanged.
+        TypeError
+            If ``current`` or any state/parameter is a boolean or non-real value.
+            State is left unchanged.
+        FloatingPointError
+            If candidate phase or amplitude overflows finite range.
+            State is left unchanged.
         """
-        self.phi += self.omega * self.dt
-        self.amplitude += (-self.amplitude + current) / self.tau * self.dt
-        if self.amplitude * math.cos(self.phi) > self.theta:
+        phi = self.phi
+        amplitude = self.amplitude
+        omega = self.omega
+        coupling = self.coupling
+        tau = self.tau
+        theta = self.theta
+        dt = self.dt
+        if not (
+            current.__class__ is float
+            and math.isfinite(current)
+            and phi.__class__ is float
+            and amplitude.__class__ is float
+            and omega.__class__ is float
+            and coupling.__class__ is float
+            and tau.__class__ is float
+            and theta.__class__ is float
+            and dt.__class__ is float
+            and math.isfinite(phi)
+            and math.isfinite(amplitude)
+            and math.isfinite(omega)
+            and math.isfinite(coupling)
+            and math.isfinite(tau)
+            and math.isfinite(theta)
+            and math.isfinite(dt)
+            and tau > 0.0
+            and dt > 0.0
+        ):
+            current = _require_finite_float(current, "current")
+            self._validate_configuration()
+            phi = self.phi
+            amplitude = self.amplitude
+            omega = self.omega
+            tau = self.tau
+            theta = self.theta
+            dt = self.dt
+
+        next_phi = phi + omega * dt
+        next_amplitude = amplitude + (-amplitude + current) / tau * dt
+        if not (math.isfinite(next_phi) and math.isfinite(next_amplitude)):
+            raise FloatingPointError("CompositionalBindingNeuron state overflowed finite range")
+        projection = next_amplitude * math.cos(next_phi)
+        self.phi = next_phi
+        self.amplitude = next_amplitude
+        if projection > theta:
             return 1
         return 0
 
@@ -307,6 +715,18 @@ class DifferentiableSurrogateNeuron:
     beta: float = 5.0
     theta: float = 1.0
 
+    def __post_init__(self) -> None:
+        """Validate state, threshold, decay and non-negative ``beta``."""
+        self._validate_configuration()
+
+    def _validate_configuration(self) -> None:
+        self.v = _require_finite_float(self.v, "v")
+        self.alpha = _require_finite_float(self.alpha, "alpha")
+        self.beta = _require_finite_float(self.beta, "beta")
+        self.theta = _require_finite_float(self.theta, "theta")
+        if self.beta < 0.0:
+            raise ValueError("beta must be non-negative")
+
     def step(self, current: float) -> int:
         """Decide the spike from ``v`` before this step's input, then update ``v``.
 
@@ -316,15 +736,53 @@ class DifferentiableSurrogateNeuron:
         Parameters
         ----------
         current : float
-            Input current of this step.
+            Input current of this step; must be finite.
 
         Returns
         -------
         int
             1 when ``v >= theta`` at the start of the step, otherwise 0.
+
+        Raises
+        ------
+        ValueError
+            If ``current`` or any state/parameter is non-finite, or ``beta`` is
+            negative. State is left unchanged.
+        TypeError
+            If ``current`` or any state/parameter is a boolean or non-real value.
+            State is left unchanged.
+        FloatingPointError
+            If the candidate membrane potential overflows finite range.
+            State is left unchanged.
         """
-        spike = int(self.v >= self.theta)
-        self.v = self.alpha * self.v * (1 - spike) + current
+        v = self.v
+        alpha = self.alpha
+        beta = self.beta
+        theta = self.theta
+        if not (
+            current.__class__ is float
+            and math.isfinite(current)
+            and v.__class__ is float
+            and alpha.__class__ is float
+            and beta.__class__ is float
+            and theta.__class__ is float
+            and math.isfinite(v)
+            and math.isfinite(alpha)
+            and math.isfinite(beta)
+            and math.isfinite(theta)
+            and beta >= 0.0
+        ):
+            current = _require_finite_float(current, "current")
+            self._validate_configuration()
+            v = self.v
+            alpha = self.alpha
+            theta = self.theta
+
+        spike = int(v >= theta)
+        next_v = alpha * v * (1 - spike) + current
+        if not math.isfinite(next_v):
+            raise FloatingPointError("DifferentiableSurrogateNeuron state overflowed finite range")
+        self.v = next_v
         return spike
 
     def reset(self) -> None:
@@ -339,8 +797,19 @@ class DifferentiableSurrogateNeuron:
         float
             ``1 / (1 + beta * |v - theta|) ** 2`` at the current ``v``: 1 at the
             threshold, falling with the distance from it.
+
+        Raises
+        ------
+        ValueError
+            If ``v``, ``beta`` or ``theta`` is non-finite, or ``beta`` is negative.
+        TypeError
+            If ``v``, ``beta`` or ``theta`` is a boolean or non-real value.
         """
-        return 1.0 / (1.0 + self.beta * abs(self.v - self.theta)) ** 2
+        self._validate_configuration()
+        denom = 1.0 + self.beta * abs(self.v - self.theta)
+        if not math.isfinite(denom) or denom > 1e154:
+            return 0.0
+        return 1.0 / (denom * denom)
 
 
 @dataclass
@@ -368,11 +837,36 @@ class ContinuousAttractorNeuron:
     _weights: list[list[float]] = field(default_factory=list)
 
     def __post_init__(self) -> None:
-        """Fill ``u`` with zeros and build the ring weights when they were not given."""
+        """Validate ring parameters, fill ``u`` with zeros and build weights if absent."""
+        self._validate_parameters()
         if not self.u:
             self.u = [0.0] * self.n_units
+        elif len(self.u) != self.n_units:
+            raise ValueError(f"u must have length {self.n_units}, got {len(self.u)}")
         if not self._weights:
             self._build_weights()
+        else:
+            self._validate_weight_shape()
+
+    def _validate_parameters(self) -> None:
+        self.n_units = _require_int(self.n_units, "n_units")
+        if self.n_units <= 0:
+            raise ValueError("n_units must be positive")
+        self.tau = _require_finite_float(self.tau, "tau")
+        self.sigma_e = _require_finite_float(self.sigma_e, "sigma_e")
+        self.excitation = _require_finite_float(self.excitation, "excitation")
+        self.inhibition = _require_finite_float(self.inhibition, "inhibition")
+        self.dt = _require_finite_float(self.dt, "dt")
+        for name in ("tau", "sigma_e", "dt"):
+            if getattr(self, name) <= 0.0:
+                raise ValueError(f"{name} must be positive")
+
+    def _validate_weight_shape(self) -> None:
+        if len(self._weights) != self.n_units:
+            raise ValueError(f"_weights must have {self.n_units} rows, got {len(self._weights)}")
+        for idx, row in enumerate(self._weights):
+            if len(row) != self.n_units:
+                raise ValueError(f"_weights[{idx}] must have length {self.n_units}, got {len(row)}")
 
     def _build_weights(self) -> None:
         """Build the Mexican-hat weights over circular distances on the ring."""
@@ -388,8 +882,12 @@ class ContinuousAttractorNeuron:
     @staticmethod
     def _activation(x: float) -> float:
         """Return the saturating rate ``max(0, x)^2 / (1 + max(0, x)^2)``."""
-        r = max(0.0, x)
-        return r * r / (1.0 + r * r)
+        if x <= 0.0:
+            return 0.0
+        if x >= 1e154:
+            return 1.0
+        r_sq = x * x
+        return r_sq / (1.0 + r_sq)
 
     def step(self, current: float) -> int:
         """Advance every unit one Euler step from the activities before the step.
@@ -401,19 +899,56 @@ class ContinuousAttractorNeuron:
         Parameters
         ----------
         current : float
-            Input current added to every unit alike.
+            Input current added to every unit alike; must be finite.
 
         Returns
         -------
         int
             1 when the largest unit activity exceeds 1.0 after the step, otherwise 0.
+
+        Raises
+        ------
+        ValueError
+            If ``current``, any ring parameter, any activity in ``u`` or any
+            weight is non-finite, or ring dimensions/shapes are invalid.
+            State is left unchanged.
+        TypeError
+            If ``current`` or any scalar field has an invalid type.
+            State is left unchanged.
+        FloatingPointError
+            If any candidate unit activity overflows finite range.
+            State is left unchanged.
         """
-        new_u = [0.0] * self.n_units
-        for i in range(self.n_units):
+        drive = _require_finite_float(current, "current")
+        self._validate_parameters()
+        n = self.n_units
+        if len(self.u) != n:
+            raise ValueError(f"u must have length {n}, got {len(self.u)}")
+        self._validate_weight_shape()
+        u = self.u
+        weights = self._weights
+        rates = [0.0] * n
+        for j in range(n):
+            uj = u[j]
+            if not (uj.__class__ is float and math.isfinite(uj)):
+                uj = _require_finite_float(uj, f"u[{j}]")
+            rates[j] = self._activation(uj)
+
+        tau = self.tau
+        dt = self.dt
+        new_u = [0.0] * n
+        for i in range(n):
+            row = weights[i]
             recurrent = 0.0
-            for j in range(self.n_units):
-                recurrent += self._weights[i][j] * self._activation(self.u[j])
-            new_u[i] = self.u[i] + (-self.u[i] + recurrent + current) / self.tau * self.dt
+            for j in range(n):
+                w_ij = row[j]
+                if not (w_ij.__class__ is float and math.isfinite(w_ij)):
+                    w_ij = _require_finite_float(w_ij, f"_weights[{i}][{j}]")
+                recurrent += w_ij * rates[j]
+            cand = u[i] + (-u[i] + recurrent + drive) / tau * dt
+            if not math.isfinite(cand):
+                raise FloatingPointError("ContinuousAttractorNeuron state overflowed finite range")
+            new_u[i] = cand
         self.u = new_u
         peak = max(self.u)
         return int(peak > 1.0)
@@ -425,7 +960,14 @@ class ContinuousAttractorNeuron:
         -------
         int
             Position of the activity bump on the ring, from 0 to ``n_units - 1``.
+
+        Raises
+        ------
+        ValueError
+            If ``u`` is empty.
         """
+        if not self.u:
+            raise ValueError("u must not be empty")
         return self.u.index(max(self.u))
 
     def reset(self) -> None:
@@ -457,23 +999,93 @@ class MetaPlasticNeuron:
     target_error: float = 0.3
     dt: float = 1.0
 
+    def __post_init__(self) -> None:
+        """Validate state, positive time constants/``dt`` and non-negative ``lr0``."""
+        self._validate_configuration()
+
+    def _validate_configuration(self) -> None:
+        self.v = _require_finite_float(self.v, "v")
+        self.error_trace = _require_finite_float(self.error_trace, "error_trace")
+        self.expected_reward = _require_finite_float(self.expected_reward, "expected_reward")
+        self.tau = _require_finite_float(self.tau, "tau")
+        self.tau_meta = _require_finite_float(self.tau_meta, "tau_meta")
+        self.theta = _require_finite_float(self.theta, "theta")
+        self.lr0 = _require_finite_float(self.lr0, "lr0")
+        self.kappa = _require_finite_float(self.kappa, "kappa")
+        self.target_error = _require_finite_float(self.target_error, "target_error")
+        self.dt = _require_finite_float(self.dt, "dt")
+        for name in ("tau", "tau_meta", "dt"):
+            if getattr(self, name) <= 0.0:
+                raise ValueError(f"{name} must be positive")
+        if self.lr0 < 0.0:
+            raise ValueError("lr0 must be non-negative")
+
     def step(self, current: float) -> int:
         """Integrate the current one Euler step and test the threshold.
 
         Parameters
         ----------
         current : float
-            Input current of this step.
+            Input current of this step; must be finite.
 
         Returns
         -------
         int
             1 when ``v`` reaches ``theta`` (``v`` is then reset to 0), otherwise 0.
+
+        Raises
+        ------
+        ValueError
+            If ``current`` or any state/parameter is non-finite, or ``tau``,
+            ``tau_meta`` or ``dt`` is not positive, or ``lr0`` is negative.
+            State is left unchanged.
+        TypeError
+            If ``current`` or any state/parameter is a boolean or non-real value.
+            State is left unchanged.
+        FloatingPointError
+            If the candidate membrane potential overflows finite range.
+            State is left unchanged.
         """
-        self.v += (-self.v + current) / self.tau * self.dt
-        if self.v >= self.theta:
+        v = self.v
+        tau = self.tau
+        tau_meta = self.tau_meta
+        theta = self.theta
+        lr0 = self.lr0
+        dt = self.dt
+        if not (
+            current.__class__ is float
+            and math.isfinite(current)
+            and v.__class__ is float
+            and tau.__class__ is float
+            and tau_meta.__class__ is float
+            and theta.__class__ is float
+            and lr0.__class__ is float
+            and dt.__class__ is float
+            and math.isfinite(v)
+            and math.isfinite(tau)
+            and math.isfinite(tau_meta)
+            and math.isfinite(theta)
+            and math.isfinite(lr0)
+            and math.isfinite(dt)
+            and tau > 0.0
+            and tau_meta > 0.0
+            and dt > 0.0
+            and lr0 >= 0.0
+        ):
+            current = _require_finite_float(current, "current")
+            self._validate_configuration()
+            v = self.v
+            tau = self.tau
+            theta = self.theta
+            dt = self.dt
+
+        next_v = v + (-v + current) / tau * dt
+        if not math.isfinite(next_v):
+            raise FloatingPointError("MetaPlasticNeuron state overflowed finite range")
+        if next_v >= theta:
             self.v = 0.0
             return 1
+        self.v = next_v
         return 0
 
     def update_meta(self, reward: float) -> None:
@@ -486,12 +1098,35 @@ class MetaPlasticNeuron:
         Parameters
         ----------
         reward : float
-            Reward observed for this update.
+            Reward observed for this update; must be finite.
+
+        Raises
+        ------
+        ValueError
+            If ``reward`` or any state/parameter is non-finite, or time
+            constants/``dt`` are not positive, or ``lr0`` is negative.
+            Meta state is left unchanged.
+        TypeError
+            If ``reward`` or any state/parameter is a boolean or non-real value.
+            Meta state is left unchanged.
+        FloatingPointError
+            If candidate error trace or expected reward overflows finite range.
+            Meta state is left unchanged.
         """
-        error = abs(reward - self.expected_reward)
-        self.error_trace += (-self.error_trace + error) / self.tau_meta * self.dt
-        meta_lr = self.lr0 / (1.0 + math.exp(-self.kappa * (self.error_trace - self.target_error)))
-        self.expected_reward += meta_lr * (reward - self.expected_reward)
+        reward_val = _require_finite_float(reward, "reward")
+        self._validate_configuration()
+        error = abs(reward_val - self.expected_reward)
+        next_error_trace = self.error_trace + (-self.error_trace + error) / self.tau_meta * self.dt
+        meta_lr = self.lr0 * _safe_sigmoid(self.kappa * (next_error_trace - self.target_error))
+        next_expected = self.expected_reward + meta_lr * (reward_val - self.expected_reward)
+        if not (
+            math.isfinite(error)
+            and math.isfinite(next_error_trace)
+            and math.isfinite(next_expected)
+        ):
+            raise FloatingPointError("MetaPlasticNeuron meta state overflowed finite range")
+        self.error_trace = next_error_trace
+        self.expected_reward = next_expected
 
     @property
     def meta_lr(self) -> float:
@@ -501,8 +1136,16 @@ class MetaPlasticNeuron:
         -------
         float
             A rate between 0 and ``lr0``.
+
+        Raises
+        ------
+        ValueError
+            If configuration or meta state is invalid or non-finite.
+        TypeError
+            If any numeric field is a boolean or non-real value.
         """
-        return self.lr0 / (1.0 + math.exp(-self.kappa * (self.error_trace - self.target_error)))
+        self._validate_configuration()
+        return self.lr0 * _safe_sigmoid(self.kappa * (self.error_trace - self.target_error))
 
     def reset(self) -> None:
         """Set ``v``, the error trace and the expected reward to 0."""

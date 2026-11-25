@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5109
+expected_file_count = 5110
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20480,3 +20480,7 @@ rationale = "Produce the SC Compte ring16 RTL/Yosys/formal receipt with portable
 [[file]]
 path = "tests/test_bench_sc_compte_wm_ring16_toolchain.py"
 rationale = "Exercise SC-NeuroCore: ring16 receipt toolchain resolution and child environment."
+
+[[file]]
+path = "tests/test_ai_optimized_neuron_domain_guards.py"
+rationale = "Verify finiteness, domain, sigmoid/activation overflow and rollback guards on AI-optimised neurons."

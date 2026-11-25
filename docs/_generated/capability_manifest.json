@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5590
+    "test_files": 5591
   },
   "documentation": {
     "public_pages": [
@@ -3912,6 +3912,7 @@
       "tests/test_ai_neurons_multi_timescale.py",
       "tests/test_ai_neurons_predictive_coding.py",
       "tests/test_ai_neurons_self_referential.py",
+      "tests/test_ai_optimized_neuron_domain_guards.py",
       "tests/test_aihara_julia_buffer_contracts.py",
       "tests/test_aihara_map_backends.py",
       "tests/test_aihara_native_buffer_contracts.py",

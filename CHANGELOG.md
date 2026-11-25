@@ -752,6 +752,21 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The eight AI-optimised neuron models in `sc_neurocore.neurons.models.ai_optimized`
+  (`MultiTimescaleNeuron`, `AttentionGatedNeuron`, `PredictiveCodingNeuron`,
+  `SelfReferentialNeuron`, `CompositionalBindingNeuron`,
+  `DifferentiableSurrogateNeuron`, `ContinuousAttractorNeuron` and
+  `MetaPlasticNeuron`) now validate inputs, constructor domains and candidate
+  state updates before mutating state. Non-finite inputs, parameters and ring
+  states raise `ValueError`; booleans and non-real values raise `TypeError`;
+  candidate floating-point overflows raise `FloatingPointError` without
+  altering state; `AttentionGatedNeuron` and `MetaPlasticNeuron` evaluate their
+  sigmoids without overflowing on large negative arguments;
+  `DifferentiableSurrogateNeuron.surrogate_grad` underflows smoothly at extreme
+  potentials; and `ContinuousAttractorNeuron._activation` saturates cleanly to
+  `1.0` without overflowing while preserving left-to-right recurrent summation
+  and `bump_position` tie/NaN semantics.
+
 - The coverage-scope count no longer counts untracked files in a
   repository whose package has no tracked source. A successful but empty
   `git ls-files` sent the count to the filesystem, against the tool's

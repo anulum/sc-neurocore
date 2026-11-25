@@ -33427,6 +33427,8 @@ context over seconds, modulating excitability.
 
 Reference: Custom SC-NeuroCore model — no external publication.
 
+- **__post_init__**()
+  - Validate all compartments, time constants and positive timestep.
 - **step**(current)
   - Advance one Euler step of ``dt`` and report whether the fast compartment fired.
 - **reset**()
@@ -33442,6 +33444,8 @@ The key and query weights decide which input magnitudes pass and which
 are suppressed. They are parameters: this class does not change them,
 so any learning of them is the caller's.
 
+- **__post_init__**()
+  - Validate voltage, attention weights, positive ``tau`` and ``dt``.
 - **step**(current)
   - Gate the current, integrate it for one Euler step and test the threshold.
 - **reset**()
@@ -33459,6 +33463,8 @@ surprise, integrated, reaches ``theta``: an input that differs from the
 prediction by less than ``theta`` does not fire while ``dt <= tau``, as with
 the defaults (a larger step overshoots).
 
+- **__post_init__**()
+  - Validate state, threshold and positive ``tau``, ``tau_pred`` and ``dt``.
 - **step**(current)
   - Measure the surprise against the prediction, update both and test the threshold.
 - **reset**()
@@ -33480,6 +33486,8 @@ first 50 steps and can stay apart afterwards: under a constant current
 of 2.0 they first differ at the 15th step and differ at 155 of the first
 1,000 steps.
 
+- **__post_init__**()
+  - Validate state, positive ``tau``, ``target_rate``, ``dt`` and integer counters.
 - **step**(current)
   - Set the time constant from the recent rate, integrate one Euler step and test the threshold.
 - **reset**()
@@ -33498,6 +33506,8 @@ freely advancing phase: it takes no input phase, ``coupling`` is stored
 but not used, and nothing resets on a spike, so it fires on every step
 while ``A * cos(phi)`` stays above ``theta``.
 
+- **__post_init__**()
+  - Validate phase, amplitude, parameters and positive ``tau`` and ``dt``.
 - **step**(current)
   - Advance the phase, integrate the amplitude one Euler step and test the product.
 - **reset**()
@@ -33515,6 +33525,8 @@ a training procedure would adjust. This class does not adjust them: it
 computes the forward step and, through ``surrogate_grad``, the surrogate
 derivative at the current ``v``.
 
+- **__post_init__**()
+  - Validate state, threshold, decay and non-negative ``beta``.
 - **step**(current)
   - Decide the spike from ``v`` before this step's input, then update ``v``.
 - **reset**()
@@ -33536,7 +33548,7 @@ it cannot place or move a bump. ``step`` reports whether the peak exceeds
 1.0; ``bump_position`` gives the position of the activity bump.
 
 - **__post_init__**()
-  - Fill ``u`` with zeros and build the ring weights when they were not given.
+  - Validate ring parameters, fill ``u`` with zeros and build weights if absent.
 - **step**(current)
   - Advance every unit one Euler step from the activities before the step.
 - **bump_position**()
@@ -33555,6 +33567,8 @@ High error: faster learning. Low error: stabilize. The spiking part
 (``step``) is a leaky integrate-and-fire neuron that the meta state does
 not touch; the meta state moves only through ``update_meta``.
 
+- **__post_init__**()
+  - Validate state, positive time constants/``dt`` and non-negative ``lr0``.
 - **step**(current)
   - Integrate the current one Euler step and test the threshold.
 - **update_meta**(reward)

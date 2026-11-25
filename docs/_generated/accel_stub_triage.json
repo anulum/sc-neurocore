@@ -6107,7 +6107,7 @@
           "pure numeric calls with multiplicative operators",
           "multiplicative operators"
         ],
-        "operators": 57,
+        "operators": 58,
         "basis": "b"
       },
       "stubs": [
@@ -6115,7 +6115,7 @@
           "lane": "mojo",
           "path": "src/sc_neurocore/accel/mojo/kernels/ai_optimized.mojo",
           "rule": "header_stem",
-          "verbatim_line_share": "7/70",
+          "verbatim_line_share": "9/70",
           "loaders": [],
           "named_by": [],
           "declared": "mirror"
