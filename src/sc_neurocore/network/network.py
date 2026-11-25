@@ -207,6 +207,10 @@ class Network:
             self._run_python(duration, dt, progress)
         self._elapsed_steps += int(round(duration / dt))
         self._clock_dt = dt
+        monitored_populations = {id(pop) for pop in self.populations}
+        for sp_mon in self.spike_monitors:
+            if id(sp_mon.population) in monitored_populations:
+                sp_mon.advance_to(self._elapsed_steps)
 
     def _run_mpi(self, duration: float, dt: float) -> None:
         # MPIRunner does not honour spike_gating or fim_lambda; refuse

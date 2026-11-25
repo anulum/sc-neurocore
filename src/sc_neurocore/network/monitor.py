@@ -24,13 +24,42 @@ class SpikeMonitor:
     """Records (neuron_idx, timestep) pairs from a population."""
 
     def __init__(self, population: Population, label: str | None = None) -> None:
+        """Initialise spike event storage for ``population``."""
         self.population = population
         self.label = label or f"spikes_{population.label}"
         self._neuron_ids: list[int] = []
         self._timesteps: list[int] = []
+        self._observed_steps: int = 0
+
+    @property
+    def observed_steps(self) -> int:
+        """Return the number of simulated timesteps observed by this monitor."""
+        return self._observed_steps
+
+    def advance_to(self, n_steps: int) -> None:
+        """Record that the monitored simulation has advanced to ``n_steps`` steps.
+
+        Parameters
+        ----------
+        n_steps : int
+            Non-negative total simulated step count.
+
+        Raises
+        ------
+        ValueError
+            If ``n_steps`` is a boolean, not an integer, or negative.
+        """
+        if (
+            isinstance(n_steps, bool)
+            or not isinstance(n_steps, (int, np.integer))
+            or int(n_steps) < 0
+        ):
+            raise ValueError(f"n_steps must be a non-negative integer, got {n_steps!r}")
+        self._observed_steps = max(self._observed_steps, int(n_steps))
 
     def record(self, spikes: np.ndarray[Any, Any], t_step: int) -> None:
         """Store spike events for this timestep (from binary spike vector)."""
+        self._observed_steps = max(self._observed_steps, t_step + 1)
         idx = np.nonzero(spikes)[0]
         for i in idx:
             self._neuron_ids.append(int(i))
@@ -38,6 +67,7 @@ class SpikeMonitor:
 
     def record_event(self, neuron_id: int, t_step: int) -> None:
         """Store a single spike event directly (from Rust backend)."""
+        self._observed_steps = max(self._observed_steps, t_step + 1)
         self._neuron_ids.append(neuron_id)
         self._timesteps.append(t_step)
 
@@ -86,9 +116,51 @@ class SpikeMonitor:
         return np.diff(ts)
 
     def cross_correlation(
-        self, i: int, j: int, max_lag: int = 50
+        self,
+        i: int,
+        j: int,
+        max_lag: int = 50,
+        n_steps: int | None = None,
     ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
-        """Cross-correlogram between neurons i and j."""
+        """Compute the cross-correlogram between neurons ``i`` and ``j``.
+
+        Parameters
+        ----------
+        i : int
+            First neuron index.
+        j : int
+            Second neuron index.
+        max_lag : int
+            Non-negative maximum lag in timesteps.
+        n_steps : int, optional
+            Explicit simulation length in timesteps; defaults to the full
+            window observed by this monitor.
+
+        Returns
+        -------
+        tuple of numpy.ndarray
+            ``(correlation, lags)`` over ``[-max_lag, +max_lag]`` timesteps.
+
+        Raises
+        ------
+        ValueError
+            If ``max_lag`` is negative or non-integral, or if ``n_steps`` is
+            smaller than the latest recorded spike of ``i`` or ``j``.
+        """
+        if (
+            isinstance(max_lag, bool)
+            or not isinstance(max_lag, (int, np.integer))
+            or int(max_lag) < 0
+        ):
+            raise ValueError(f"max_lag must be a non-negative integer, got {max_lag!r}")
+        if n_steps is not None and (
+            isinstance(n_steps, bool)
+            or not isinstance(n_steps, (int, np.integer))
+            or int(n_steps) < 0
+        ):
+            raise ValueError(f"n_steps must be a non-negative integer, got {n_steps!r}")
+        max_lag_i = int(max_lag)
+        n_steps_i = None if n_steps is None else int(n_steps)
         # sc_neurocore.analysis ships only in a source checkout.
         require_source_checkout_package(
             "sc_neurocore.analysis.spike_stats", "SpikeMonitor.cross_correlation"
@@ -96,20 +168,28 @@ class SpikeMonitor:
         from sc_neurocore.analysis.spike_stats import cross_correlation as _cc
 
         trains = self.spike_trains
-        ts_i = trains.get(i, np.array([], dtype=np.int64))
-        ts_j = trains.get(j, np.array([], dtype=np.int64))
-        lags = np.arange(-max_lag, max_lag + 1)
+        ts_i = trains.get(int(i), np.array([], dtype=np.int64))
+        ts_j = trains.get(int(j), np.array([], dtype=np.int64))
+        required_steps = max(
+            int(ts_i.max()) + 1 if ts_i.size else 0,
+            int(ts_j.max()) + 1 if ts_j.size else 0,
+        )
+        if n_steps_i is not None and n_steps_i < required_steps:
+            raise ValueError(
+                f"n_steps ({n_steps_i}) cannot precede recorded spike step {required_steps - 1}"
+            )
+        lags = np.arange(-max_lag_i, max_lag_i + 1)
         if ts_i.size == 0 or ts_j.size == 0:
             return np.zeros(len(lags)), lags
-        max_t = max(ts_i.max(), ts_j.max()) + 1
-        bin_i = np.zeros(max_t, dtype=np.int8)
-        bin_j = np.zeros(max_t, dtype=np.int8)
+        total_steps = max(self._observed_steps, required_steps) if n_steps_i is None else n_steps_i
+        bin_i = np.zeros(total_steps, dtype=np.int8)
+        bin_j = np.zeros(total_steps, dtype=np.int8)
         bin_i[ts_i] = 1
         bin_j[ts_j] = 1
         # One sample per timestep: the delegate takes dt in seconds and the lag in
         # milliseconds, so a 1 ms sample makes max_lag_ms count timesteps. dt=1.0
         # (one second per sample) collapsed every lag below 1000 steps to zero.
-        correlation, _lags_ms = _cc(bin_i, bin_j, max_lag_ms=float(max_lag), dt=0.001)
+        correlation, _lags_ms = _cc(bin_i, bin_j, max_lag_ms=float(max_lag_i), dt=0.001)
         return correlation, lags
 
 

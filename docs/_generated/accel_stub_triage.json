@@ -849,9 +849,10 @@
         "app": [],
         "numeric": [
           "numpy calls",
+          "pure numeric calls with multiplicative operators",
           "multiplicative operators"
         ],
-        "operators": 47,
+        "operators": 45,
         "basis": "a"
       },
       "stubs": [
@@ -859,7 +860,7 @@
           "lane": "mojo",
           "path": "src/sc_neurocore/accel/mojo/kernels/correlation.mojo",
           "rule": "header_stem",
-          "verbatim_line_share": "122/185",
+          "verbatim_line_share": "119/185",
           "loaders": [],
           "named_by": [],
           "declared": "mirror"
@@ -5785,7 +5786,7 @@
           "lane": "mojo",
           "path": "src/sc_neurocore/accel/mojo/kernels/monitor.mojo",
           "rule": "header_stem",
-          "verbatim_line_share": "13/50",
+          "verbatim_line_share": "12/50",
           "loaders": [],
           "named_by": [],
           "declared": "mirror"

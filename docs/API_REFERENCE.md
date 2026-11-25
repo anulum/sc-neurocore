@@ -3618,52 +3618,217 @@ ValueError
 ## Module `analysis.spike_stats.correlation`
 
 ### Function `cross_correlation(train_a, train_b, max_lag_ms, dt)`
-Cross-correlogram between two binary spike trains.
+Compute the normalised cross-correlogram between two spike trains.
 
-Returns (correlation, lags_ms).
+Parameters
+----------
+train_a : numpy.ndarray
+    First one-dimensional spike train.
+train_b : numpy.ndarray
+    Second one-dimensional spike train.
+max_lag_ms : float
+    Maximum lag magnitude in milliseconds; must be finite and non-negative.
+dt : float
+    Sampling timestep in seconds; must be finite and positive.
+
+Returns
+-------
+tuple of numpy.ndarray
+    ``(correlation, lags_ms)`` spanning ``&#91;-max_lag, +max_lag&#93;`` timesteps;
+    lags whose magnitude reaches or exceeds the shared train length carry
+    zero overlap and evaluate to ``0.0``.
+
+Raises
+------
+ValueError
+    If ``dt`` is not positive and finite, ``max_lag_ms`` is negative or
+    non-finite, or either spike train is not one-dimensional or contains
+    non-finite or non-real values.
 
 ### Function `pairwise_correlation(trains, dt)`
-Pairwise Pearson correlation matrix across neurons.
+Compute the pairwise Pearson correlation matrix across spike trains.
+
+Parameters
+----------
+trains : list of numpy.ndarray
+    Binary spike trains aligned to a shared sampling clock.
+dt : float
+    Sampling timestep in seconds (retained for API symmetry).
+
+Returns
+-------
+numpy.ndarray
+    Symmetric ``(n_neurons, n_neurons)`` correlation matrix, or ``(1, 0)``
+    when ``trains`` is empty.
 
 ### Function `event_synchronization(train_a, train_b, dt, tau_ms)`
-Quian Quiroga et al. 2002 -- event synchronization.
+Compute event synchronisation (Quian Quiroga et al., 2002).
+
+Parameters
+----------
+train_a : numpy.ndarray
+    First binary spike train.
+train_b : numpy.ndarray
+    Second binary spike train.
+dt : float
+    Sampling timestep in seconds.
+tau_ms : float
+    Coincidence tolerance window in milliseconds.
+
+Returns
+-------
+float
+    Normalised event coincidence count in ``&#91;0, 1&#93;`` for sparse trains.
 
 ### Function `spike_train_coherence(train_a, train_b, dt)`
-Magnitude-squared coherence between two binary spike trains.
+Compute magnitude-squared spectral coherence between two spike trains.
 
-Returns (coherence, freqs_hz).
+Parameters
+----------
+train_a : numpy.ndarray
+    First binary spike train.
+train_b : numpy.ndarray
+    Second binary spike train.
+dt : float
+    Sampling timestep in seconds.
+
+Returns
+-------
+tuple of numpy.ndarray
+    ``(coherence, freqs_hz)`` across real FFT frequencies, or two empty
+    arrays when fewer than two samples are shared.
 
 ### Function `spike_time_tiling_coefficient(train_a, train_b, dt_param, delta_ms)`
-Spike Time Tiling Coefficient (STTC). Cutts & Eglen 2014.
+Compute the Spike Time Tiling Coefficient (Cutts & Eglen, 2014).
 
-Corrects for firing rate bias unlike simple coincidence measures.
+Parameters
+----------
+train_a : numpy.ndarray
+    First binary spike train.
+train_b : numpy.ndarray
+    Second binary spike train.
+dt_param : float
+    Sampling timestep in seconds.
+delta_ms : float
+    Symmetric coincidence half-window in milliseconds.
+
+Returns
+-------
+float
+    Rate-corrected tiling correlation in ``&#91;-1, 1&#93;``.
 
 ### Function `covariance_matrix(trains, bin_size)`
-Spike count covariance matrix across neurons. de la Rocha et al. 2007.
+Compute the binned spike-count covariance matrix (de la Rocha et al., 2007).
+
+Parameters
+----------
+trains : list of numpy.ndarray
+    Binary spike trains across neurons.
+bin_size : int
+    Number of timesteps per count bin.
+
+Returns
+-------
+numpy.ndarray
+    ``(n_neurons, n_neurons)`` sample covariance matrix across bins.
 
 ### Function `autocorrelation_time(binary_train, dt, max_lag_ms)`
-Autocorrelation time (seconds). Integral of normalized autocorrelation until first zero crossing.
+Integrate normalised autocorrelation up to its first negative crossing.
+
+Parameters
+----------
+binary_train : numpy.ndarray
+    Binary spike train.
+dt : float
+    Sampling timestep in seconds.
+max_lag_ms : float
+    Maximum integration lag in milliseconds.
+
+Returns
+-------
+float
+    Estimated autocorrelation timescale in seconds.
 
 ### Function `noise_correlation(trains, bin_size)`
-Noise correlation (trial-to-trial variability correlation). Averbeck & Lee 2006.
+Compute residual noise correlation across binned spike trains (Averbeck & Lee, 2006).
 
-Uses residuals after subtracting mean across neurons.
+Parameters
+----------
+trains : list of numpy.ndarray
+    Binary spike trains across neurons.
+bin_size : int
+    Number of timesteps per count bin.
+
+Returns
+-------
+numpy.ndarray
+    Symmetric ``(n_neurons, n_neurons)`` residual correlation matrix.
 
 ### Function `signal_correlation(trains, bin_size)`
-Signal correlation (tuning similarity). Pearson correlation of mean responses.
+Compute binned signal Pearson correlation across spike trains.
+
+Parameters
+----------
+trains : list of numpy.ndarray
+    Binary spike trains across neurons.
+bin_size : int
+    Number of timesteps per count bin.
+
+Returns
+-------
+numpy.ndarray
+    ``(n_neurons, n_neurons)`` Pearson correlation matrix of binned counts.
 
 ### Function `spike_count_covariance(trains, window)`
-Windowed spike count covariance. Kohn & Smith 2005.
+Compute windowed spike-count covariance (Kohn & Smith, 2005).
+
+Parameters
+----------
+trains : list of numpy.ndarray
+    Binary spike trains across neurons.
+window : int
+    Number of timesteps per count window.
+
+Returns
+-------
+numpy.ndarray
+    ``(n_neurons, n_neurons)`` windowed spike-count covariance matrix.
 
 ### Function `joint_psth(train_a, train_b, bin_size)`
-Joint PSTH (JPSTH) matrix. Aertsen et al. 1989.
+Compute the mean-centred Joint PSTH matrix (Aertsen et al., 1989).
 
-Returns 2D histogram of binned spike counts (neuron_a x neuron_b).
+Parameters
+----------
+train_a : numpy.ndarray
+    First binary spike train.
+train_b : numpy.ndarray
+    Second binary spike train.
+bin_size : int
+    Number of timesteps per count bin.
+
+Returns
+-------
+numpy.ndarray
+    Two-dimensional ``(n_bins, n_bins)`` outer-product covariance matrix.
 
 ### Function `coincidence_index(train_a, train_b, dt, delta_ms)`
-Coincidence index (kappa). Joris et al. 2006.
+Compute the rate-corrected coincidence index kappa (Joris et al., 2006).
 
-Corrects raw coincidence count for expected coincidences from rate.
+Parameters
+----------
+train_a : numpy.ndarray
+    First binary spike train.
+train_b : numpy.ndarray
+    Second binary spike train.
+dt : float
+    Sampling timestep in seconds.
+delta_ms : float
+    Coincidence half-window in milliseconds.
+
+Returns
+-------
+float
+    Coincidence index corrected for chance coincidences, clipped below at ``0.0``.
 
 ---
 
@@ -30216,6 +30381,11 @@ gain-loop strength.
 Records (neuron_idx, timestep) pairs from a population.
 
 - **__init__**(population, label)
+  - Initialise spike event storage for ``population``.
+- **observed_steps**()
+  - Return the number of simulated timesteps observed by this monitor.
+- **advance_to**(n_steps)
+  - Record that the monitored simulation has advanced to ``n_steps`` steps.
 - **record**(spikes, t_step)
   - Store spike events for this timestep (from binary spike vector).
 - **record_event**(neuron_id, t_step)
@@ -30232,8 +30402,8 @@ Records (neuron_idx, timestep) pairs from a population.
   - Mean firing rate (Hz) per neuron over the simulation.
 - **isi**(neuron)
   - Inter-spike intervals (timestep units) for a single neuron.
-- **cross_correlation**(i, j, max_lag)
-  - Cross-correlogram between neurons i and j.
+- **cross_correlation**(i, j, max_lag, n_steps)
+  - Compute the cross-correlogram between neurons ``i`` and ``j``.
 
 ### Class `StateMonitor`
 Records state variable traces from a population.
