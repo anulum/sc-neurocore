@@ -14,6 +14,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Security
 
+- `SECURITY.md` states the fuzzing that exists. Its known limitations
+  still said there was no fuzzing harness, after the `cargo-fuzz`
+  targets, the scheduled fuzz workflow and the Python `hypothesis` fuzz
+  suites had been added, and its remaining work still asked for
+  `cargo-fuzz` targets. It now names the four targets in `engine/fuzz/`
+  that `.github/workflows/fuzz.yml` runs every Monday and on demand,
+  says that a crash fails that workflow rather than a pull request, that
+  corpora are not kept between runs and that the two older targets in
+  `fuzz/` are not run by any workflow, names the Rust `proptest` suites
+  that run with the engine tests on pushes and pull requests, and asks
+  instead for the remaining native parsers and PyO3 boundaries to be
+  covered. A new test ties each statement to the fuzz manifests, the
+  workflows and the test tree.
+
 - The release-only Semgrep environment takes wcmatch 11.2 instead of
   8.5.2, which matches multi-star patterns against untrusted names in
   polynomial time (GHSA-53pm-wgxf-c6qf). Semgrep 1.185.0 still declares

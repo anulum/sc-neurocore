@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5587
+    "test_files": 5588
   },
   "documentation": {
     "public_pages": [
@@ -7610,6 +7610,7 @@
       "tests/test_scpn_neurocore_datastream.py",
       "tests/test_security_asimov_governor.py",
       "tests/test_security_digital_immune_system.py",
+      "tests/test_security_policy_fuzzing_statement.py",
       "tests/test_security_security_integration.py",
       "tests/test_security_side_channel_benchmark_benchmark_contracts.py",
       "tests/test_security_side_channel_benchmark_happy_path_report.py",

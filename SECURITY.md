@@ -81,9 +81,15 @@ correct Python ↔ Rust conversions.
 
 ## Known Limitations
 
-- **No fuzzing harness yet.** Property-based testing via `proptest` (Rust) and
-  `hypothesis` (Python) covers many input paths, but dedicated fuzzing has not
-  been set up.
+- **Fuzzing is scheduled, not a merge gate.** Four `cargo-fuzz` targets in
+  `engine/fuzz/` (`parse_ir`, `roundtrip_ir`, `bitstream`, `csr_matrix`) run
+  every Monday and on demand through `.github/workflows/fuzz.yml`; a crash
+  fails that workflow, not a pull request. Corpora are not kept between runs,
+  and the two older targets in `fuzz/` (`ir_parser`, `bitstream_ops`) are not
+  run by any workflow. Python `hypothesis` fuzz suites (`tests/test_fuzz_*.py`)
+  run with the test suite, and the Rust `proptest` suites
+  (`engine/tests/prop_*.rs`) run with `cargo test` in the engine workflow on
+  pushes and pull requests that touch the engine.
 - **No third-party security audit.** The codebase has not been reviewed by an
   external security firm.
 - **No CVE history.** No vulnerabilities have been reported to date.
@@ -93,8 +99,8 @@ integration, audit reports) are welcome.
 
 ## 2026-04-30 Hardening Status Update
 
-The older limitation above is now partially superseded. The repository has
-Python property-based fuzz coverage for high-risk structured inputs, including
+The repository has Python property-based fuzz coverage for high-risk
+structured inputs, including
 bitstream/IR parsing, NIR import, model-zoo `.npz` inputs, chip-spec JSON,
 optimizer evidence JSON, SCPN datastream JSON, Studio graph JSON,
 equation-to-MLIR lowering, HDL-source lowering, and transfer-checkpoint inputs.
@@ -109,8 +115,9 @@ bandit -r src/sc_neurocore/ -c pyproject.toml -q
 
 Remaining hardening work:
 
-- Add dedicated Rust `cargo-fuzz` targets for native parsers and PyO3 boundary
-  adapters.
+- Extend the `cargo-fuzz` targets beyond the IR parser, the printer round
+  trip, the bitstream and the sparse matrix to the remaining native parsers and
+  PyO3 boundary adapters, and keep their corpora between runs.
 - Keep expanding Python Hypothesis coverage for malicious `.nir`, `.npz`, JSON,
   and pathological bitstream-length cases.
 - Complete an external third-party security review before making audited

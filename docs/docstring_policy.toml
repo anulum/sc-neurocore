@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5105
+expected_file_count = 5106
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20464,3 +20464,7 @@ rationale = "Exercise SC-NeuroCore: FPGA estimator block-RAM units, the full tar
 [[file]]
 path = "tests/test_star_import_gate.py"
 rationale = "Exercise SC-NeuroCore: the whole-tree star-import gate in CI and pre-commit."
+
+[[file]]
+path = "tests/test_security_policy_fuzzing_statement.py"
+rationale = "Exercise SC-NeuroCore: the security policy states the fuzzing that exists."
