@@ -19,7 +19,7 @@ from typing import Any
 
 import numpy as np
 
-from .basic import isi
+from .basic import _require_finite_train, _require_positive_dt, isi
 
 
 def cv_isi(binary_train: np.ndarray[Any, Any], dt: float = 0.001) -> float:
@@ -31,14 +31,20 @@ def cv_isi(binary_train: np.ndarray[Any, Any], dt: float = 0.001) -> float:
     ----------
     binary_train : numpy.ndarray
         One entry per time step; a positive entry marks a spike.
-    dt : float
-        Time step in seconds.
+    dt : float, default=0.001
+        Non-negative time step in seconds.
 
     Returns
     -------
     float
         Standard deviation of the intervals divided by their mean; ``nan``
         when the train has fewer than two intervals or their mean is zero.
+
+    Raises
+    ------
+    ValueError
+        If ``binary_train`` contains non-finite values or ``dt`` is negative,
+        boolean, or non-finite.
     """
     intervals = isi(binary_train, dt)
     if intervals.size < 2:
@@ -58,10 +64,11 @@ def fano_factor(
     ----------
     binary_train : numpy.ndarray
         One entry per time step; each entry is counted as that many spikes.
-    window_ms : float
-        Window length in milliseconds; at least one time step is used.
-    dt : float
-        Time step in seconds.
+    window_ms : float, default=50.0
+        Strictly positive window length in milliseconds; at least one time step
+        is used.
+    dt : float, default=0.001
+        Strictly positive time step in seconds.
 
     Returns
     -------
@@ -69,13 +76,28 @@ def fano_factor(
         Variance of the window counts divided by their mean; steps after the
         last complete window are dropped. ``nan`` when the train is shorter
         than one window or the mean count is zero.
+
+    Raises
+    ------
+    ValueError
+        If ``binary_train`` contains non-finite values, or ``window_ms`` or
+        ``dt`` is boolean, non-finite, or not positive.
     """
-    window_steps = max(1, int(window_ms / (dt * 1000)))
-    n = binary_train.size
+    arr = _require_finite_train(binary_train)
+    if (
+        isinstance(window_ms, bool)
+        or not isinstance(window_ms, (int, float, np.integer, np.floating))
+        or not math.isfinite(float(window_ms))
+        or float(window_ms) <= 0.0
+    ):
+        raise ValueError(f"window_ms must be a finite positive real number, got {window_ms!r}")
+    step_s = _require_positive_dt(dt)
+    window_steps = max(1, int(float(window_ms) / (step_s * 1000.0)))
+    n = arr.size
     if n < window_steps:
         return float("nan")
     n_windows = n // window_steps
-    counts = binary_train[: n_windows * window_steps].reshape(n_windows, window_steps).sum(axis=1)
+    counts = arr[: n_windows * window_steps].reshape(n_windows, window_steps).sum(axis=1)
     mu = counts.mean()
     if mu == 0:
         return float("nan")
@@ -96,10 +118,10 @@ def permutation_entropy(
     ----------
     binary_train : numpy.ndarray
         One entry per time step.
-    order : int
-        Samples per window; must be at least 1.
-    delay : int
-        Steps between the samples of a window; must be at least 1.
+    order : int, default=3
+        Samples per window; must be an integer at least 1.
+    delay : int, default=1
+        Steps between the samples of a window; must be an integer at least 1.
 
     Returns
     -------
@@ -110,17 +132,32 @@ def permutation_entropy(
     Raises
     ------
     ValueError
-        ``order`` or ``delay`` is less than 1.
+        If ``binary_train`` contains non-finite values, or ``order`` or
+        ``delay`` is boolean, non-integer, or less than 1.
     """
-    if order < 1 or delay < 1:
-        raise ValueError(f"order and delay must be at least 1, got order={order}, delay={delay}")
-    x = np.asarray(binary_train, dtype=np.float64)
-    if x.size < order * delay:
+    if (
+        isinstance(order, bool)
+        or isinstance(delay, bool)
+        or not isinstance(order, (int, np.integer))
+        or not isinstance(delay, (int, np.integer))
+    ):
+        raise ValueError(
+            f"order and delay must be positive integers, got order={order!r}, delay={delay!r}"
+        )
+    order_i = int(order)
+    delay_i = int(delay)
+    if order_i < 1 or delay_i < 1:
+        raise ValueError(
+            f"order and delay must be at least 1, got order={order_i}, delay={delay_i}"
+        )
+    arr = _require_finite_train(binary_train)
+    x = np.asarray(arr, dtype=np.float64)
+    if x.size < order_i * delay_i:
         return float("nan")
-    windows = np.lib.stride_tricks.sliding_window_view(x, (order - 1) * delay + 1)[:, ::delay]
+    windows = np.lib.stride_tricks.sliding_window_view(x, (order_i - 1) * delay_i + 1)[:, ::delay_i]
     ranks = np.argsort(np.argsort(windows, axis=1, kind="stable"), axis=1, kind="stable")
     _, counts = np.unique(ranks, axis=0, return_counts=True)
     p = counts / counts.sum()
     h = float(np.sum(p * np.log2(1.0 / p)))
-    h_max = math.log2(math.factorial(order))
+    h_max = math.log2(math.factorial(order_i))
     return h / h_max if h_max > 0 else 0.0

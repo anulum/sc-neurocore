@@ -4453,7 +4453,7 @@
           "lane": "mojo",
           "path": "src/sc_neurocore/accel/mojo/kernels/decoder.mojo",
           "rule": "header_stem",
-          "verbatim_line_share": "35/54",
+          "verbatim_line_share": "26/54",
           "loaders": [],
           "named_by": [],
           "declared": "mirror"
@@ -9615,7 +9615,8 @@
       "markers": {
         "app": [],
         "numeric": [
-          "numpy calls"
+          "numpy calls",
+          "pure numeric calls with multiplicative operators"
         ],
         "operators": 4,
         "basis": "a"
@@ -9625,7 +9626,7 @@
           "lane": "mojo",
           "path": "src/sc_neurocore/accel/mojo/kernels/basic.mojo",
           "rule": "stem_by_lines",
-          "verbatim_line_share": "8/8",
+          "verbatim_line_share": "3/8",
           "loaders": [],
           "named_by": [],
           "declared": "mirror"
@@ -9651,7 +9652,7 @@
           "lane": "mojo",
           "path": "src/sc_neurocore/accel/mojo/kernels/spectral.mojo",
           "rule": "stem_by_lines",
-          "verbatim_line_share": "2/6",
+          "verbatim_line_share": "1/6",
           "loaders": [],
           "named_by": [],
           "declared": "mirror"

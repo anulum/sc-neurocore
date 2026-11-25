@@ -14,6 +14,8 @@ from typing import Any
 
 import numpy as np
 
+from .basic import _require_finite_train, _require_positive_dt
+
 
 def power_spectrum(
     binary_train: np.ndarray[Any, Any], dt: float = 0.001
@@ -27,8 +29,8 @@ def power_spectrum(
     ----------
     binary_train : numpy.ndarray
         One entry per time step.
-    dt : float
-        Time step in seconds.
+    dt : float, default=0.001
+        Strictly positive time step in seconds.
 
     Returns
     -------
@@ -36,12 +38,20 @@ def power_spectrum(
         ``(psd, freqs_hz)``: the squared FFT magnitude divided by the number of
         samples, and the matching non-negative frequencies in hertz. Both are
         empty when the train has fewer than two samples.
+
+    Raises
+    ------
+    ValueError
+        If ``binary_train`` contains non-finite values or ``dt`` is boolean,
+        non-finite, or not positive.
     """
-    n = binary_train.size
+    arr = _require_finite_train(binary_train)
+    step_s = _require_positive_dt(dt)
+    n = arr.size
     if n < 2:
         return np.array([]), np.array([])
-    x = binary_train.astype(np.float64) - binary_train.mean()
+    x = arr.astype(np.float64) - arr.mean()
     fft_vals = np.fft.rfft(x)
     psd = np.abs(fft_vals) ** 2 / n
-    freqs = np.fft.rfftfreq(n, d=dt)
+    freqs = np.fft.rfftfreq(n, d=step_s)
     return psd, freqs

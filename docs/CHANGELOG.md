@@ -776,6 +776,8 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `StateDecoder.extract_attractor_states` now partitions functional connectivity graphs into disjoint sorted connected components invariant to neuron ordering and rejects boolean or non-finite thresholds, and `sc_neurocore.spike_train_statistics` validates finite real spike trains and parameter domains (`dt`, `window_ms`, `bin_size`, `order`, `delay`) before division or array reshaping.
+
 - `cross_correlation` now guards non-overlapping lags (`|lag| >= n`) so
   spike trains shorter than `max_lag` return `0.0` at unreachable lags
   instead of wrapping negative slice indices and raising a broadcast

@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5598
+    "test_files": 5599
   },
   "documentation": {
     "public_pages": [
@@ -7877,6 +7877,7 @@
       "tests/test_spintronic/test_spintronic_mapper_write_verify.py",
       "tests/test_spintronic/test_spintronic_package_api.py",
       "tests/test_star_import_gate.py",
+      "tests/test_state_decoder_components_and_spike_stats_guards.py",
       "tests/test_stateless_declaration.py",
       "tests/test_static_analysis_fixed_point_envelope_proof.py",
       "tests/test_static_analysis_guard_bits.py",

@@ -27627,18 +27627,23 @@ Save and restore complete IdentitySubstrate state.
 ## Module `identity.decoder`
 
 ### Class `StateDecoder`
-Extract cognitive state from spiking network for session priming.
+Extract cognitive state from a spiking network for session priming.
+
+Parameters
+----------
+substrate : IdentitySubstrate
+    Persistent spiking substrate whose recorded history is decoded.
 
 - **__init__**(substrate)
-  - Read state from ``substrate``.
+  - Initialise the decoder around ``substrate``.
 - **extract_dominant_patterns**(n_components)
-  - PCA on recent spike trains -> dominant activity patterns.
+  - Project recent cortical spike trains onto principal activity modes.
 - **extract_attractor_states**(threshold)
-  - Find stable attractor states via correlation clustering.
+  - Extract disjoint attractor ensembles via connected components.
 - **extract_connectivity_signature**()
-  - Functional connectivity matrix summarizing learned structure.
+  - Compute the functional connectivity matrix of recent cortical trains.
 - **generate_priming_context**()
-  - Generate a text summary of current network state.
+  - Summarise the active substrate state as a single priming sentence.
 
 ---
 
@@ -46702,13 +46707,19 @@ Parameters
 ----------
 binary_train : numpy.ndarray
     One entry per time step; a positive entry marks a spike.
-dt : float
-    Time step in seconds.
+dt : float, default=0.001
+    Non-negative time step in seconds.
 
 Returns
 -------
 numpy.ndarray
     Index of every spiking step multiplied by ``dt``, in increasing order.
+
+Raises
+------
+ValueError
+    If ``binary_train`` contains non-finite values or ``dt`` is negative,
+    boolean, or non-finite.
 
 ### Function `isi(binary_train, dt)`
 Return the inter-spike intervals of a binary spike train, in seconds.
@@ -46717,14 +46728,20 @@ Parameters
 ----------
 binary_train : numpy.ndarray
     One entry per time step; a positive entry marks a spike.
-dt : float
-    Time step in seconds.
+dt : float, default=0.001
+    Non-negative time step in seconds.
 
 Returns
 -------
 numpy.ndarray
     Differences between consecutive spike times; an empty ``float64``
     array when the train holds fewer than two spikes.
+
+Raises
+------
+ValueError
+    If ``binary_train`` contains non-finite values or ``dt`` is negative,
+    boolean, or non-finite.
 
 ### Function `firing_rate(binary_train, dt)`
 Return the mean firing rate of a binary spike train, in hertz.
@@ -46733,14 +46750,20 @@ Parameters
 ----------
 binary_train : numpy.ndarray
     One entry per time step; each entry is counted as that many spikes.
-dt : float
-    Time step in seconds.
+dt : float, default=0.001
+    Non-negative time step in seconds.
 
 Returns
 -------
 float
     Sum of the train divided by its duration ``binary_train.size * dt``;
-    ``0.0`` when that duration is not positive.
+    ``0.0`` when that duration is zero.
+
+Raises
+------
+ValueError
+    If ``binary_train`` contains non-finite values or ``dt`` is negative,
+    boolean, or non-finite.
 
 ### Function `spike_count(binary_train)`
 Return the total number of spikes in a binary spike train.
@@ -46755,6 +46778,11 @@ Returns
 int
     Sum of the train.
 
+Raises
+------
+ValueError
+    If ``binary_train`` contains non-finite values.
+
 ### Function `bin_spike_train(binary_train, bin_size)`
 Return the spike count in each consecutive bin of ``bin_size`` steps.
 
@@ -46762,8 +46790,8 @@ Parameters
 ----------
 binary_train : numpy.ndarray
     One entry per time step; each entry is counted as that many spikes.
-bin_size : int
-    Number of time steps per bin; must be positive.
+bin_size : int, default=10
+    Number of time steps per bin; must be a positive integer.
 
 Returns
 -------
@@ -46771,6 +46799,12 @@ numpy.ndarray
     One count per complete bin; steps after the last complete bin are
     dropped. When the train is shorter than one bin, a single-element
     array holding the count of the whole train.
+
+Raises
+------
+ValueError
+    If ``binary_train`` contains non-finite values or ``bin_size`` is
+    boolean, non-integer, or less than 1.
 
 ---
 
@@ -46786,8 +46820,8 @@ Parameters
 ----------
 binary_train : numpy.ndarray
     One entry per time step.
-dt : float
-    Time step in seconds.
+dt : float, default=0.001
+    Strictly positive time step in seconds.
 
 Returns
 -------
@@ -46795,6 +46829,12 @@ tuple of numpy.ndarray
     ``(psd, freqs_hz)``: the squared FFT magnitude divided by the number of
     samples, and the matching non-negative frequencies in hertz. Both are
     empty when the train has fewer than two samples.
+
+Raises
+------
+ValueError
+    If ``binary_train`` contains non-finite values or ``dt`` is boolean,
+    non-finite, or not positive.
 
 ---
 
@@ -46809,14 +46849,20 @@ Parameters
 ----------
 binary_train : numpy.ndarray
     One entry per time step; a positive entry marks a spike.
-dt : float
-    Time step in seconds.
+dt : float, default=0.001
+    Non-negative time step in seconds.
 
 Returns
 -------
 float
     Standard deviation of the intervals divided by their mean; ``nan``
     when the train has fewer than two intervals or their mean is zero.
+
+Raises
+------
+ValueError
+    If ``binary_train`` contains non-finite values or ``dt`` is negative,
+    boolean, or non-finite.
 
 ### Function `fano_factor(binary_train, window_ms, dt)`
 Return the Fano factor of the spike counts in consecutive windows.
@@ -46825,10 +46871,11 @@ Parameters
 ----------
 binary_train : numpy.ndarray
     One entry per time step; each entry is counted as that many spikes.
-window_ms : float
-    Window length in milliseconds; at least one time step is used.
-dt : float
-    Time step in seconds.
+window_ms : float, default=50.0
+    Strictly positive window length in milliseconds; at least one time step
+    is used.
+dt : float, default=0.001
+    Strictly positive time step in seconds.
 
 Returns
 -------
@@ -46836,6 +46883,12 @@ float
     Variance of the window counts divided by their mean; steps after the
     last complete window are dropped. ``nan`` when the train is shorter
     than one window or the mean count is zero.
+
+Raises
+------
+ValueError
+    If ``binary_train`` contains non-finite values, or ``window_ms`` or
+    ``dt`` is boolean, non-finite, or not positive.
 
 ### Function `permutation_entropy(binary_train, order, delay)`
 Return the normalised Bandt-Pompe permutation entropy (Bandt & Pompe 2002).
@@ -46849,10 +46902,10 @@ Parameters
 ----------
 binary_train : numpy.ndarray
     One entry per time step.
-order : int
-    Samples per window; must be at least 1.
-delay : int
-    Steps between the samples of a window; must be at least 1.
+order : int, default=3
+    Samples per window; must be an integer at least 1.
+delay : int, default=1
+    Steps between the samples of a window; must be an integer at least 1.
 
 Returns
 -------
@@ -46863,7 +46916,8 @@ float
 Raises
 ------
 ValueError
-    ``order`` or ``delay`` is less than 1.
+    If ``binary_train`` contains non-finite values, or ``order`` or
+    ``delay`` is boolean, non-integer, or less than 1.
 
 ---
 

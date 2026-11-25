@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 import numpy as np
@@ -26,14 +27,20 @@ _ANALYSIS = "sc_neurocore.analysis"
 
 
 class StateDecoder:
-    """Extract cognitive state from spiking network for session priming."""
+    """Extract cognitive state from a spiking network for session priming.
+
+    Parameters
+    ----------
+    substrate : IdentitySubstrate
+        Persistent spiking substrate whose recorded history is decoded.
+    """
 
     def __init__(self, substrate: IdentitySubstrate) -> None:
-        """Read state from ``substrate``."""
+        """Initialise the decoder around ``substrate``."""
         self.substrate = substrate
 
     def _recent_trains(self, n_neurons: int = 50, window: int = 1000) -> list[np.ndarray[Any, Any]]:
-        """Get recent binary spike trains for the first n_neurons."""
+        """Get recent binary spike trains for the first ``n_neurons``."""
         history = self.substrate.spike_history
         if len(history) < 2:
             return []
@@ -42,7 +49,19 @@ class StateDecoder:
         return [np.array([h[i] for h in recent], dtype=np.int8) for i in range(n)]
 
     def extract_dominant_patterns(self, n_components: int = 10) -> np.ndarray[Any, Any]:
-        """PCA on recent spike trains -> dominant activity patterns."""
+        """Project recent cortical spike trains onto principal activity modes.
+
+        Parameters
+        ----------
+        n_components : int, default=10
+            Maximum number of principal components to retain.
+
+        Returns
+        -------
+        numpy.ndarray
+            Projected activity array, or an empty ``(0, 0)`` array when fewer
+            than two timesteps have been recorded.
+        """
         trains = self._recent_trains()
         if not trains:
             return np.zeros((0, 0))
@@ -54,11 +73,37 @@ class StateDecoder:
         return projected
 
     def extract_attractor_states(self, threshold: float = 0.8) -> list[np.ndarray[Any, Any]]:
-        """Find stable attractor states via correlation clustering.
+        """Extract disjoint attractor ensembles via connected components.
 
-        Groups of neurons that fire together with correlation above
-        threshold are identified as attractor ensembles.
+        Pairs of neurons ``(i, j)`` with functional connectivity
+        ``fc[i, j] >= threshold`` form undirected edges; transitive connected
+        components of size at least two are returned in deterministic order
+        by minimum neuron index, invariant to neuron permutation.
+
+        Parameters
+        ----------
+        threshold : float, default=0.8
+            Minimum functional connectivity edge weight; must be finite.
+
+        Returns
+        -------
+        list of numpy.ndarray
+            Sorted ``int64`` index arrays for each connected component of
+            cardinality at least two, ordered by smallest member index.
+
+        Raises
+        ------
+        ValueError
+            If ``threshold`` is boolean or non-finite.
         """
+        if (
+            isinstance(threshold, bool)
+            or not isinstance(threshold, (int, float, np.integer, np.floating))
+            or not math.isfinite(float(threshold))
+        ):
+            raise ValueError(f"threshold must be a finite real number, got {threshold!r}")
+        threshold_f = float(threshold)
+
         trains = self._recent_trains(n_neurons=30)
         if len(trains) < 3:
             return []
@@ -66,26 +111,45 @@ class StateDecoder:
         from sc_neurocore.analysis import functional_connectivity
 
         fc = functional_connectivity(trains)
-        n = fc.shape[0]
-        visited: set[int] = set()
-        attractors: list[np.ndarray[Any, Any]] = []
+        n = int(fc.shape[0])
+        parent = list(range(n))
+
+        def find(node: int) -> int:
+            while parent[node] != node:
+                parent[node] = parent[parent[node]]
+                node = parent[node]
+            return node
 
         for i in range(n):
-            if i in visited:
-                continue
-            group = [i]
             for j in range(i + 1, n):
-                if fc[i, j] >= threshold:
-                    group.append(j)
-                    visited.add(j)
-            if len(group) >= 2:
-                visited.add(i)
-                attractors.append(np.array(group, dtype=np.int64))
+                if fc[i, j] >= threshold_f:
+                    ri = find(i)
+                    rj = find(j)
+                    if ri != rj:
+                        if ri < rj:
+                            parent[rj] = ri
+                        else:
+                            parent[ri] = rj
 
-        return attractors
+        components: dict[int, list[int]] = {}
+        for idx in range(n):
+            components.setdefault(find(idx), []).append(idx)
+
+        return [
+            np.array(components[root], dtype=np.int64)
+            for root in sorted(components)
+            if len(components[root]) >= 2
+        ]
 
     def extract_connectivity_signature(self) -> np.ndarray[Any, Any]:
-        """Functional connectivity matrix summarizing learned structure."""
+        """Compute the functional connectivity matrix of recent cortical trains.
+
+        Returns
+        -------
+        numpy.ndarray
+            Pairwise functional connectivity matrix, or ``(0, 0)`` when fewer
+            than two timesteps have been recorded.
+        """
         trains = self._recent_trains(n_neurons=30)
         if not trains:
             return np.zeros((0, 0))
@@ -95,7 +159,14 @@ class StateDecoder:
         return functional_connectivity(trains)
 
     def generate_priming_context(self) -> str:
-        """Generate a text summary of current network state."""
+        """Summarise the active substrate state as a single priming sentence.
+
+        Returns
+        -------
+        str
+            Human-readable summary of step count, dominant modes, attractors,
+            mean rate, ISI variability, and excitatory weight statistics.
+        """
         history = self.substrate.spike_history
         n_steps = len(history)
 
