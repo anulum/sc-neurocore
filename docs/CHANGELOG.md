@@ -793,6 +793,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- StochasticIFNeuron takes a NumPy integer seed (`np.int64(7)` and the
+  like), which it refused with a `TypeError`. Any integral seed except a
+  bool is accepted, stored as a Python `int` and seeds the same stream as
+  that int; a negative or non-integral one is still refused.
+
 - StochasticIFNeuron, which takes a `seed` since it gained its own noise
   generator, now declares its seed domain (`SEED_DOMAIN`, the NumPy range
   0 to 2^63-1 its constructor already enforced), and the catalogue pin of

@@ -85,11 +85,28 @@ def test_without_a_seed_the_global_generator_still_governs() -> None:
     assert _train(StochasticIFNeuron(), steps=200) == first
 
 
+@pytest.mark.parametrize("seed", [np.int64(7), np.int32(7), np.uint16(7), np.uint64(7)])
+def test_a_numpy_integer_seed_is_the_same_seed(seed: np.integer[Any]) -> None:
+    """A NumPy integer seeds the stream its Python value seeds, and is stored as a Python int."""
+    neuron = StochasticIFNeuron(seed=seed)
+    assert type(neuron.seed) is int and neuron.seed == 7
+    assert _train(neuron) == _train(StochasticIFNeuron(seed=7))
+
+
 @pytest.mark.parametrize(
-    ("seed", "error"), [(-1, ValueError), (True, TypeError), (1.5, TypeError), ("7", TypeError)]
+    ("seed", "error"),
+    [
+        (-1, ValueError),
+        (np.int64(-1), ValueError),
+        (True, TypeError),
+        (np.bool_(True), TypeError),
+        (1.5, TypeError),
+        (np.float64(7.0), TypeError),
+        ("7", TypeError),
+    ],
 )
 def test_a_bad_seed_is_refused(seed: object, error: type[Exception]) -> None:
-    """A negative, boolean or non-integer seed is refused at construction."""
+    """A negative, boolean or non-integer seed is refused at construction, NumPy's included."""
     arguments: dict[str, Any] = {"seed": seed}
     with pytest.raises(error, match="seed"):
         StochasticIFNeuron(**arguments)

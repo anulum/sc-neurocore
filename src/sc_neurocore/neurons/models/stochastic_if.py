@@ -11,8 +11,9 @@
 from __future__ import annotations
 
 import math
+import numbers
 from dataclasses import dataclass, field
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import numpy as np
 
@@ -43,7 +44,7 @@ class StochasticIFNeuron:
     mu: float = 0.0
     sigma: float = 3.0
     dt: float = 1.0
-    seed: int | None = None
+    seed: int | np.integer[Any] | None = None
     _rng: np.random.Generator | None = field(default=None, init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
@@ -59,10 +60,14 @@ class StochasticIFNeuron:
         if not math.isfinite(self.sigma) or self.sigma < 0.0:
             raise ValueError("sigma must be non-negative and finite")
         if self.seed is not None:
-            if isinstance(self.seed, bool) or not isinstance(self.seed, int):
-                raise TypeError("seed must be an int or None")
-            if self.seed < 0:
+            # Any integral seed is taken, NumPy's included, and stored as a Python int; a bool is
+            # not a seed, however it compares.
+            if isinstance(self.seed, bool) or not isinstance(self.seed, numbers.Integral):
+                raise TypeError("seed must be an integer or None")
+            seed = int(self.seed)
+            if seed < 0:
                 raise ValueError("seed must be non-negative")
+            self.seed = seed
         self._rng = None if self.seed is None else np.random.default_rng(self.seed)
 
     def step(self, current: float) -> int:

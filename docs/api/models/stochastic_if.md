@@ -58,7 +58,7 @@ generator.
 | `mu` | 0.0 | mV | Constant mean drive (DC offset) |
 | `sigma` | 3.0 | mV | Noise amplitude (diffusion coefficient) |
 | `dt` | 1.0 | ms | Integration timestep |
-| `seed` | None | — | Seed of the neuron's own noise generator; `None` uses NumPy's global generator |
+| `seed` | None | — | Seed of the neuron's own noise generator: a non-negative integer, Python or NumPy (stored as a Python `int`; a bool is refused); `None` uses NumPy's global generator |
 
 ### Validation contract
 
