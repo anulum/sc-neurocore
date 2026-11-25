@@ -162,7 +162,7 @@ uses it for supported hot paths. If it is absent, Python/NumPy fallbacks remain
 available.
 
 Release automation builds pre-built `sc_neurocore_engine` wheels with `maturin`
-for Python 3.10-3.14 on Linux x86_64/aarch64, macOS, and Windows. Prefer a
+for Python 3.11-3.14 on Linux x86_64/aarch64, macOS, and Windows. Prefer a
 matching release wheel:
 
 ```bash

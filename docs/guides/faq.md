@@ -32,7 +32,7 @@ gradient training (`pip install sc-neurocore[training]`).
 
 ### Which Python versions are supported?
 
-Python 3.10–3.14. CI tests all five versions on every commit.
+Python 3.11–3.14. CI tests all four versions on every commit.
 
 ---
 

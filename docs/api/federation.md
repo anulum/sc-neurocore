@@ -11,8 +11,8 @@ Install the optional platform contract before importing it:
 pip install "sc-neurocore[federation]"
 ```
 
-Federation requires Python **3.11 or newer** and pins
-`scpn-studio-platform>=0.11,<0.12`; the base library still supports Python 3.10. Environments without that
+Federation requires Python **3.11 or newer**, the same floor as the base
+library, and pins `scpn-studio-platform>=0.11,<0.12`. Environments without that
 platform SDK should not import this package; tests use `pytest.importorskip` so
 the base CI lane stays independent of the optional federation dependency.
 

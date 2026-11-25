@@ -18,7 +18,7 @@ lines with the expected output shown here. If a block and its output disagree,
 the test fails, not the reader.
 
 What "supported" means here is narrow: this input gives this output on the
-interpreters the test matrix runs (Python 3.10 to 3.14, Linux). It is not a
+interpreters the test matrix runs (Python 3.11 to 3.14, Linux). It is not a
 statement about speed, about other inputs, or about hardware.
 
 ## 1. Simulate a stochastic neuron

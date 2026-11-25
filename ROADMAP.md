@@ -102,7 +102,7 @@ Python golden model → Icarus Verilog → bit-exact checker.
 
 ### ~~Quantum backend stabilisation~~ ✓
 
-Qiskit Aer + PennyLane backends validated (Python 3.10+).
+Qiskit Aer + PennyLane backends validated, when the floor was Python 3.10.
 IBM Heron r2 noise model (depolarizing, amplitude/phase damping,
 asymmetric readout). Parameter-shift gradient rule for variational
 circuits. Hybrid quantum-classical VQE pipeline with scipy optimizer.

@@ -15,7 +15,7 @@ Computing in Distributed Representation with High-Dimensional Random Vectors",
 Hyperdimensional Computing for Robotics", *KI - Kunstliche Intelligenz* 33(4),
 2019.
 
-**Prerequisites**: Python 3.10+, `pip install sc-neurocore` (pure Python path;
+**Prerequisites**: Python 3.11+, `pip install sc-neurocore` (pure Python path;
 the optional Rust engine adds SIMD acceleration but is not required).
 
 ## 1. The algebra

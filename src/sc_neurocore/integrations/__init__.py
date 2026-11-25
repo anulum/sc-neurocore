@@ -15,8 +15,8 @@ Always importable:
 - ``export_weights_loihi`` — SC ``[0, 1]`` weights → signed Q8 ints
 - ``loihi_threshold_from_sc`` — SC normalised threshold → integer
 
-Importable only when ``HAS_LAVA`` is True (i.e. when ``lava-nc`` is
-installed; the package supports Python 3.10):
+Importable only when ``HAS_LAVA`` is True, that is when ``lava-nc`` is
+installed (``lava-nc`` supports only Python 3.10, below this package's floor):
 - ``SCDenseProcess``  — Lava ``Process`` wrapping an SC dense layer
 - ``PySCDenseModel``  — Loihi-protocol Python model implementation
 

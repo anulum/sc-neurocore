@@ -42,7 +42,7 @@ Prefer the base package plus the narrow workflow extra you need. See
 [Install Profiles](install_profiles.md) before using `full`; it is not required
 for simulation, NIR import/export, or FPGA scaffolding.
 
-**Python 3.10 through 3.14** supported. Linux, macOS, Windows.
+**Python 3.11 through 3.14** supported. Linux, macOS, Windows.
 
 ## NIR Interoperability
 

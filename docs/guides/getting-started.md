@@ -49,7 +49,7 @@ dependency boundary, see [Install Profiles](install_profiles.md).
 
 ## Requirements
 
-- Python >= 3.10
+- Python >= 3.11
 - NumPy >= 1.24
 - SciPy >= 1.10
 - PyTorch (optional, `pip install sc-neurocore[training]`)

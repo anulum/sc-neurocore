@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5110
+expected_file_count = 5112
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20484,3 +20484,11 @@ rationale = "Exercise SC-NeuroCore: ring16 receipt toolchain resolution and chil
 [[file]]
 path = "tests/test_ai_optimized_neuron_domain_guards.py"
 rationale = "Verify finiteness, domain, sigmoid/activation overflow and rollback guards on AI-optimised neurons."
+
+[[file]]
+path = "tests/test_supported_python_statements.py"
+rationale = "Exercise SC-NeuroCore: notebooks and documentation name only the Python versions the package supports."
+
+[[file]]
+path = "src/sc_neurocore/integrations/__init__.py"
+rationale = "Document the Lava and Loihi integration surface and when its Lava-only names are importable."

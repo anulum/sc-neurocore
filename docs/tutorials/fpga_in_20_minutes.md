@@ -13,7 +13,7 @@ turn a planning estimate into a power, timing, or production-throughput claim.
 
 **Prerequisites**:
 
-- Python 3.10+, `pip install sc-neurocore scikit-learn`
+- Python 3.11+, `pip install sc-neurocore scikit-learn`
 - Optional: [Yosys](https://github.com/YosysHQ/yosys) plus any required
   SystemVerilog frontend helpers for open-source resource reports
 - Optional: Xilinx Vivado Design Suite (for Artix-7/Zynq implementation) or Lattice iCEcube2 (for iCE40)

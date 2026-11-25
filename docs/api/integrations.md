@@ -81,8 +81,8 @@ If any one of these fails, `HAS_LAVA` is set to `False` and all 9
 names go out of scope.
 
 **Install instructions** (per the bridge's module docstring):
-`pip install lava-nc`. Note that `lava-nc` officially supports Python
-3.10 (the test file `test_lava_integration.py` documents this
+`pip install lava-nc`. Note that `lava-nc` officially supports only
+Python 3.10, below this package's floor (the test file `test_lava_integration.py` documents this
 constraint at line 11). On Python 3.12 — the system interpreter on
 this workstation — `lava-nc` is not available, so all three Lava
 tests skip.

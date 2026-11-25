@@ -40,7 +40,7 @@ flowchart LR
 
 ## Prerequisites
 
-- **Python 3.10+** with the `sc_neurocore` package installed
+- **Python 3.11+** with the `sc_neurocore` package installed
 - **Icarus Verilog** (`iverilog`, `vvp`) — install via `apt install iverilog`
 - Tests skip gracefully if iverilog is not available
 

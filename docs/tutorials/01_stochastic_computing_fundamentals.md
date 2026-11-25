@@ -11,7 +11,7 @@ bits of information, and estimation variance scales as 1/*L*.
 This tutorial covers the mathematical foundations and the SC-NeuroCore API
 for encoding, arithmetic, and variance analysis.
 
-**Prerequisites:** Python 3.10+, `pip install sc-neurocore numpy`
+**Prerequisites:** Python 3.11+, `pip install sc-neurocore numpy`
 
 ## 1. Unipolar encoding
 

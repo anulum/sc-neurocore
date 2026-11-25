@@ -2,7 +2,7 @@
 
 # Building Your First Spiking Neural Network
 
-**Prerequisites**: Python 3.10+, `pip install sc-neurocore`
+**Prerequisites**: Python 3.11+, `pip install sc-neurocore`
 
 SC-NeuroCore implements spiking neural networks (SNNs) using stochastic
 computing (SC). Inputs, weights, and activations are encoded as Bernoulli

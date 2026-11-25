@@ -752,6 +752,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- Notebooks and documentation no longer name Python 3.10, which the
+  package stopped supporting in 4.0.0. Two notebooks, the Colab quickstart
+  and the NIR bridge, carried Python 3.10.0 kernel metadata; that unused
+  version field is removed, as in the other notebooks. The FAQ said
+  Python 3.10–3.14 with all five versions tested on every commit, and the
+  getting-started requirements, the research-lab guide, the install
+  profiles, the Studio page, the supported-workflows page, the
+  co-simulation and FPGA guides and four tutorials still gave 3.10 as the
+  floor. They now give 3.11, and the FAQ says four versions, which is
+  what CI tests. The Lava notes on the integrations page and in the
+  `sc_neurocore.integrations` docstring now say that `lava-nc` supports
+  only Python 3.10, below this package's floor. A new test reads
+  `requires-python` and the CI test matrix and fails when a notebook
+  names an older interpreter, or a page or a source docstring states a
+  range that starts below the floor or ends above the newest tested
+  Python. Changelogs, release notes, dated reports and the
+  version 3 migration guide keep their original facts.
+
 - The eight AI-optimised neuron models in `sc_neurocore.neurons.models.ai_optimized`
   (`MultiTimescaleNeuron`, `AttentionGatedNeuron`, `PredictiveCodingNeuron`,
   `SelfReferentialNeuron`, `CompositionalBindingNeuron`,

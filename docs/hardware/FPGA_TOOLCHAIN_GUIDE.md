@@ -172,7 +172,7 @@ yosys -p "read_verilog -formal -sv hdl/sc_aer_priority_queue.v hdl/formal/sc_aer
 
 ### Minimum: Co-Simulation Only (No FPGA Board)
 
-- Any PC with Python 3.10+ and Icarus Verilog
+- Any PC with Python 3.11+ and Icarus Verilog
 - Verifies bit-exact parity between Python model and Verilog RTL
 - Cost: **€0** (software only)
 
