@@ -752,6 +752,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The SC Compte ring16 RTL receipt can be produced on ML350.
+  `benchmarks/bench_sc_compte_wm_ring16.py` required every EDA tool
+  under the repository `.venv/bin`, so it could not use the shared tools
+  that `/opt/eda/env.sh` puts on `PATH`, and it ran Yosys without the
+  `COLUMNS=4096` that keeps its ABC step from hanging on a dumb
+  terminal, with temporary files in the system directory. Each tool is
+  now taken from `.venv/bin` when present and otherwise from `PATH`; the
+  tools run with their directories first on `PATH`, `COLUMNS=4096`,
+  `TERM=xterm` and a `TMPDIR` inside the run's own temporary directory,
+  where the formal proof also works; the receipt records where each tool
+  came from. The receipt is regenerated: the repository toolchain is now
+  Yosys 0.70, which synthesizes the top to 4,690 generic cells (Yosys
+  0.33 gave 5,659), and the guide says so.
+
 - The fuzz workflow runs every cargo-fuzz target even when an earlier
   one finds a crash. The step's shell stopped at the first crashing
   target, so the later targets were never fuzzed in that run; the step

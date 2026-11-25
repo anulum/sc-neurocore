@@ -15,7 +15,9 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -28,6 +30,59 @@ SBY = ROOT / "hdl/formal/catalogue/sc_compte_wm_ring16.sby"
 SCHEMA = ROOT / "src/sc_neurocore/network/schemas/sc_compte_wm_network.json"
 TEST = ROOT / "tests/test_sc_compte_wm_ring16_rtl.py"
 OUTPUT = ROOT / "benchmarks/results/bench_sc_compte_wm_ring16.json"
+EDA_TOOLS = ("yosys", "iverilog", "vvp", "sby", "cvc5")
+VENV_CUSTODY = "repository .venv/bin"
+
+
+def _resolve_tool(name: str) -> Path:
+    """Return the repository ``.venv/bin`` copy of an EDA tool, else the one on ``PATH``.
+
+    On ML350 the shared tools are put on ``PATH`` by ``. /opt/eda/env.sh``.
+
+    Parameters
+    ----------
+    name : str
+        Executable name.
+
+    Returns
+    -------
+    Path
+        Path of the executable that the receipt is produced with.
+
+    Raises
+    ------
+    RuntimeError
+        If the tool is neither in the repository ``.venv/bin`` nor on ``PATH``.
+    """
+    local = VENV_BIN / name
+    if local.exists():
+        return local
+    found = shutil.which(name)
+    if found is None:
+        raise RuntimeError(
+            f"EDA tool {name} is neither in the repository .venv/bin nor on PATH "
+            "(on ML350, source /opt/eda/env.sh first)"
+        )
+    return Path(found)
+
+
+def _tool_environment(tools: dict[str, Path], scratch: Path) -> dict[str, str]:
+    """Return the environment for the tools' child processes.
+
+    The tools' directories come first on ``PATH``. ``COLUMNS=4096`` and ``TERM=xterm`` keep
+    Yosys's ABC from wrapping or hanging on a dumb terminal, and ``TMPDIR`` keeps every
+    tool's temporary files inside this run's directory.
+    """
+    environment = os.environ.copy()
+    directories = list(dict.fromkeys(str(path.parent) for path in tools.values()))
+    environment["PATH"] = os.pathsep.join([*directories, environment.get("PATH", "")])
+    environment.update({"TERM": "xterm", "COLUMNS": "4096", "TMPDIR": str(scratch)})
+    return environment
+
+
+def _custody(path: Path) -> str:
+    """Name where a tool came from: the repository ``.venv/bin`` or its directory on ``PATH``."""
+    return VENV_CUSTODY if path.parent == VENV_BIN else path.parent.as_posix()
 
 
 def _run(command: list[str], *, cwd: Path = ROOT, env: dict[str, str] | None = None) -> str:
@@ -51,9 +106,9 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _yosys_statistics(yosys: Path) -> dict[str, Any]:
+def _yosys_statistics(yosys: Path, environment: dict[str, str]) -> dict[str, Any]:
     script = f"read_verilog -sv {RTL.relative_to(ROOT)}; synth -top sc_compte_wm_ring16; stat -json"
-    output = _run([str(yosys), "-p", script])
+    output = _run([str(yosys), "-p", script], env=environment)
     match = re.search(r'\n(\{\n\s+"creator".*)', output, flags=re.DOTALL)
     if match is None:
         raise RuntimeError("Yosys stat -json payload was not found")
@@ -72,7 +127,7 @@ def _yosys_statistics(yosys: Path) -> dict[str, Any]:
     }
 
 
-def _run_equivalence(yosys: Path) -> None:
+def _run_equivalence(yosys: Path, environment: dict[str, str]) -> None:
     rtl = RTL.relative_to(ROOT)
     script = f"""
 read_verilog -sv {rtl}
@@ -95,51 +150,44 @@ equiv_simple -seq 1
 equiv_induct -seq 4
 equiv_status -assert
 """
-    _run([str(yosys), "-q", "-p", script])
+    _run([str(yosys), "-q", "-p", script], env=environment)
 
 
-def _run_formal(sby: Path) -> None:
-    env = os.environ.copy()
-    env["PATH"] = f"{VENV_BIN}:{env['PATH']}"
-    with tempfile.TemporaryDirectory(prefix="sc-compte-ring16-") as temporary:
-        work = Path(temporary) / "proof"
-        _run(
-            [str(sby), "-f", "-d", str(work), SBY.name],
-            cwd=SBY.parent,
-            env=env,
-        )
-        if (work / "status").read_text(encoding="utf-8").split()[0] != "PASS":
-            raise RuntimeError("SymbiYosys did not report PASS")
+def _run_formal(sby: Path, environment: dict[str, str], scratch: Path) -> None:
+    work = scratch / "proof"
+    _run([str(sby), "-f", "-d", str(work), SBY.name], cwd=SBY.parent, env=environment)
+    if (work / "status").read_text(encoding="utf-8").split()[0] != "PASS":
+        raise RuntimeError("SymbiYosys did not report PASS")
 
 
 def main() -> None:
     """Run focused proof stages and write one source-custodied receipt."""
-    yosys = VENV_BIN / "yosys"
-    iverilog = VENV_BIN / "iverilog"
-    vvp = VENV_BIN / "vvp"
-    sby = VENV_BIN / "sby"
-    cvc5 = VENV_BIN / "cvc5"
-    for tool in (yosys, iverilog, vvp, sby, cvc5):
-        if not tool.exists():
-            raise RuntimeError(f"repository .venv is missing required tool: {tool.name}")
+    tools = {name: _resolve_tool(name) for name in EDA_TOOLS}
+    with tempfile.TemporaryDirectory(prefix="sc-compte-ring16-") as temporary:
+        _write_receipt(tools, _tool_environment(tools, Path(temporary)), Path(temporary))
+    print(f"wrote {OUTPUT.relative_to(ROOT)}")
 
+
+def _write_receipt(tools: dict[str, Path], environment: dict[str, str], scratch: Path) -> None:
+    """Run co-simulation, formal, synthesis and equivalence with ``tools`` and write the receipt."""
+    yosys, iverilog, sby, cvc5 = tools["yosys"], tools["iverilog"], tools["sby"], tools["cvc5"]
     pytest_output = _run(
         [
-            str(VENV_BIN / "python"),
+            sys.executable,
             "-m",
             "pytest",
             "-q",
             f"{TEST.relative_to(ROOT)}::test_frozen_lut_is_live_source_derived_and_schema_bounded",
             f"{TEST.relative_to(ROOT)}::test_iverilog_matches_independent_dense_oracle",
         ],
-        env={**os.environ, "PYTHONPATH": "src"},
+        env={**environment, "PYTHONPATH": "src"},
     )
     if "2 passed" not in pytest_output:
         raise RuntimeError("focused co-simulation did not report two passing tests")
 
-    _run_formal(sby)
-    synthesis = _yosys_statistics(yosys)
-    _run_equivalence(yosys)
+    _run_formal(sby, environment, scratch)
+    synthesis = _yosys_statistics(yosys, environment)
+    _run_equivalence(yosys, environment)
 
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
     boundary = schema["hardware_boundary"]
@@ -204,11 +252,11 @@ def main() -> None:
             "power_claimed": False,
         },
         "toolchain": {
-            "yosys": _run([str(yosys), "-V"]).strip(),
-            "iverilog": _run([str(iverilog), "-V"]).splitlines()[0],
-            "sby": _run([str(sby), "--version"]).strip(),
-            "cvc5": _run([str(cvc5), "--version"]).splitlines()[0],
-            "custody": "repository .venv/bin",
+            "yosys": _run([str(yosys), "-V"], env=environment).strip(),
+            "iverilog": _run([str(iverilog), "-V"], env=environment).splitlines()[0],
+            "sby": _run([str(sby), "--version"], env=environment).strip(),
+            "cvc5": _run([str(cvc5), "--version"], env=environment).splitlines()[0],
+            "custody": {name: _custody(path) for name, path in sorted(tools.items())},
         },
         "source_sha256": {
             path.relative_to(ROOT).as_posix(): _sha256(path)
@@ -217,7 +265,6 @@ def main() -> None:
     }
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(f"wrote {OUTPUT.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

@@ -67,7 +67,7 @@
   },
   "schema_version": 1,
   "source_sha256": {
-    "benchmarks/bench_sc_compte_wm_ring16.py": "e70f7dd5422d7eb561aa926305078889b1ce391259b749eed08cb08853bd135b",
+    "benchmarks/bench_sc_compte_wm_ring16.py": "9fb32b2be50ae22ad7d6b79c95f5fd2e9969bd9e86621035042f093436dbc263",
     "hdl/formal/catalogue/sc_compte_wm_ring16.sby": "2c2fe1a93a213f6e3407c881d800f30a0becca4f28bd5445420a909aebeb6ac1",
     "hdl/formal/catalogue/sc_compte_wm_ring16.v": "f26aa6ff2e616c1c76a7fd265e67e1ad07b79770a1a0f2215268f00fa38e6799",
     "hdl/formal/catalogue/sc_compte_wm_ring16_formal.v": "c3498d9f55aedc90148592d0f1a7accb1f2321c65bfe4d7ae833fa76ea4aa4f9",
@@ -76,39 +76,44 @@
   },
   "synthesis": {
     "area_claimed": false,
-    "creator": "Yosys 0.33 (git sha1 2584903a060)",
+    "creator": "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, GNU /usr/bin/c++ 13.3.0)",
     "device_target": null,
-    "num_cells": 5659,
+    "num_cells": 4690,
     "num_cells_by_type": {
-      "$_ANDNOT_": 1271,
-      "$_AND_": 65,
-      "$_MUX_": 494,
-      "$_NAND_": 107,
-      "$_NOR_": 396,
-      "$_NOT_": 661,
-      "$_ORNOT_": 177,
-      "$_OR_": 591,
+      "$_ANDNOT_": 82,
+      "$_AND_": 706,
+      "$_MUX_": 576,
+      "$_NAND_": 1399,
+      "$_NOR_": 19,
+      "$_NOT_": 12,
+      "$_ORNOT_": 67,
+      "$_OR_": 165,
       "$_SDFFCE_PN0P_": 512,
-      "$_SDFFE_PN0N_": 52,
-      "$_SDFFE_PN0P_": 36,
+      "$_SDFFE_PN0P_": 88,
       "$_SDFF_PN0_": 6,
-      "$_XNOR_": 346,
-      "$_XOR_": 945
+      "$_XNOR_": 112,
+      "$_XOR_": 946
     },
     "num_memories": 0,
     "num_processes": 0,
-    "num_wire_bits": 5851,
-    "num_wires": 5055,
+    "num_wire_bits": 5046,
+    "num_wires": 3984,
     "passed": true,
     "power_claimed": false,
     "timing_claimed": false,
     "top": "sc_compte_wm_ring16"
   },
   "toolchain": {
-    "custody": "repository .venv/bin",
+    "custody": {
+      "cvc5": "/usr/bin",
+      "iverilog": "/usr/bin",
+      "sby": "repository .venv/bin",
+      "vvp": "/usr/bin",
+      "yosys": "repository .venv/bin"
+    },
     "cvc5": "This is cvc5 version 1.1.2",
     "iverilog": "Icarus Verilog version 12.0 (stable) ()",
-    "sby": "SBY",
-    "yosys": "Yosys 0.33 (git sha1 2584903a060)"
+    "sby": "SBY v0.70",
+    "yosys": "Yosys 0.70+post (git sha1 0c11ea098be065e585a90a06e7b7da49936cf231, Release, GNU /usr/bin/c++ 13.3.0)"
   }
 }

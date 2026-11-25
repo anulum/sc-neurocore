@@ -272,9 +272,14 @@ checks 29 aggregates across zero, unity, ramp, and mixed vectors, covers every
 target bin, injects rejected busy-time loads, and matches an independent dense
 integer oracle with zero LSB error. A depth-20 cvc5 proof covers reset,
 one-cycle `done`, busy/done exclusion, and exact accepted-request latency.
-Yosys 0.33 synthesizes the top to 5,659 generic cells with no residual process
+Yosys 0.70 synthesizes the top to 4,690 generic cells with no residual process
 or memory and proves its `proc+memory` representation equivalent to the same
 netlist after `opt` using `equiv_status -assert`.
+
+`benchmarks/bench_sc_compte_wm_ring16.py` produces the receipt. It takes each tool
+from the repository `.venv/bin` when present and otherwise from `PATH` (on ML350,
+after `. /opt/eda/env.sh`), runs them with `COLUMNS=4096` and a private
+`TMPDIR`, and records where each tool came from under `toolchain.custody`.
 
 This closes the declared representative RTL/Yosys/formal readiness surface,
 not physical silicon. There is no device target, place-and-route, clock
