@@ -6814,7 +6814,7 @@
           "lane": "mojo",
           "path": "src/sc_neurocore/accel/mojo/kernels/spinnaker2.mojo",
           "rule": "header_stem",
-          "verbatim_line_share": "1/10",
+          "verbatim_line_share": "0/10",
           "loaders": [],
           "named_by": [],
           "declared": "mirror"

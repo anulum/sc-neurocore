@@ -765,6 +765,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The five neuromorphic-chip integer neuron models (`SpiNNaker2Neuron`,
+  `Loihi2Neuron`, `LoihiCUBANeuron`, `TrueNorthNeuron` and `AkidaNeuron`) now
+  validate inputs, constructor domains and candidate state transitions before
+  mutating state. Non-finite inputs and parameters raise `ValueError`;
+  booleans and non-real values raise `TypeError`; `SpiNNaker2Neuron.step`
+  rejects floats on the first call rather than drifting into a step-2 shift
+  failure; `Loihi2Neuron` and `LoihiCUBANeuron` require decay divisors of at
+  least 1; `TrueNorthNeuron` requires a positive threshold; `AkidaNeuron`
+  confines its modulation factor to `[0, 1]` and rejects non-finite weights
+  with `ValueError` rather than `OverflowError`; and floating-point overflow on
+  network-driven steps raises `FloatingPointError` without altering state.
+
 - The documentation site's navigation lists each section and page once.
   It had two top-level Benchmarks tabs, two tutorials titled Reservoir
   Computing, and thirteen API pages listed both in their topical section

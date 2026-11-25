@@ -33631,6 +33631,8 @@ The engine's AkidaNeuron follows the same rule.
 
 Reference: BrainChip Inc. (2021). Akida Neuromorphic Processor Reference Manual.
 
+- **__post_init__**()
+  - Validate accumulator, threshold, rank-order decay and internal state.
 - **step**(weight)
   - Process one input spike event with given synaptic weight.
 - **reset**()
@@ -35665,6 +35667,8 @@ positive mirror does.
 
 Reference: Intel Corp. (2021). Loihi 2 Neuromorphic Processor Technical Brief.
 
+- **__post_init__**()
+  - Validate all state and parameter fields and require decay divisors >= 1.
 - **step**(weighted_input)
   - Advance one chip step with the integer input; return 1 on a spike, else 0.
 - **reset**()
@@ -35683,6 +35687,8 @@ state decays as its positive mirror does.
 
 Reference: Davies, M. et al. (2018). IEEE Micro 38:82–99.
 
+- **__post_init__**()
+  - Validate all state and parameter fields and require decay divisors >= 1.
 - **step**(weighted_input)
   - Advance one chip step with the integer input; return 1 on a spike, else 0.
 - **reset**()
@@ -37322,8 +37328,12 @@ Includes refractory counter and configurable precision.
 
 Reference: Mayr, C. et al. (2019). Proc. DATE 2019: 1547–1552.
 
+- **__post_init__**()
+  - Validate all fixed-point fields and coerce integral values to ``int``.
 - **step**(current)
+  - Advance one fixed-point step with an integer input; return 1 on a spike, else 0.
 - **reset**()
+  - Restore ``v`` to ``v_rest`` and clear the refractory counter.
 
 ---
 
@@ -37632,8 +37642,12 @@ Merolla 2014 — IBM TrueNorth digital neuron.
 
 Reference: Merolla, P.A. et al. (2014). Science 345:668–673.
 
+- **__post_init__**()
+  - Validate all state and parameter fields and require a positive threshold.
 - **step**(weighted_input)
+  - Advance one digital step with the weighted input; return 1 on a spike, else 0.
 - **reset**()
+  - Reset membrane potential to 0; the parameters stay.
 
 ---
 

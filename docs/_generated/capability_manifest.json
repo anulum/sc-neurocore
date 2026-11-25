@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5594
+    "test_files": 5595
   },
   "documentation": {
     "public_pages": [
@@ -4387,6 +4387,7 @@
       "tests/test_chip_compiler_chip_spec_loading_guards.py",
       "tests/test_chip_compiler_compile_for_chip.py",
       "tests/test_chip_compiler_weight_quantisation.py",
+      "tests/test_chip_integer_neuron_domain_guards.py",
       "tests/test_chiplet/chiplet_gen_edge_cases_support.py",
       "tests/test_chiplet/hierarchical_partitioner_core_support.py",
       "tests/test_chiplet/hierarchical_partitioner_support.py",
