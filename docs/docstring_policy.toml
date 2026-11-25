@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5113
+expected_file_count = 5114
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20496,3 +20496,7 @@ rationale = "Document the Lava and Loihi integration surface and when its Lava-o
 [[file]]
 path = "tests/test_docs_navigation_unique_entries.py"
 rationale = "Exercise SC-NeuroCore: each documentation page and section appears once in the site navigation."
+
+[[file]]
+path = "tests/test_neuron_models_coverage_omit.py"
+rationale = "Exercise SC-NeuroCore: the neuron-model coverage omit list matches its measurement."

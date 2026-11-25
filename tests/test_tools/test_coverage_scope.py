@@ -143,9 +143,14 @@ def test_the_committed_validation_document_states_the_current_scope() -> None:
     assert completed.returncode == 0, completed.stderr
     document = (ROOT / "VALIDATION.md").read_text(encoding="utf-8")
     block = document.split(BEGIN, 1)[1].split(END, 1)[0]
-    for pattern in ("*/neurons/models/*", "*/training/*", "*/studio/*", "*/conversion/*"):
+    for pattern in (
+        "*/neurons/models/hindmarsh_rose.py",
+        "*/training/*",
+        "*/studio/*",
+        "*/conversion/*",
+    ):
         assert f"| `{pattern}` |" in block
-    for stale in ("drivers/", "ccw_bridge", "sleep/"):
+    for stale in ("drivers/", "ccw_bridge", "sleep/", "| `*/neurons/models/*` |"):
         assert stale not in block
 
 

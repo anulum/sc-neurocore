@@ -1,0 +1,1100 @@
+{
+  "absent_lanes": [
+    "Julia: juliacall stays uninitialised (SC_NEUROCORE_REQUIRE_JULIA unset), so no Julia lane loads",
+    "Go: no compiled Go lane libraries in the measured trees",
+    "Mojo: no Mojo toolchain or compiled Mojo lane libraries"
+  ],
+  "commit": "0babf4e1c",
+  "deviations_from_ci": [
+    "--continue-on-collection-errors where a batch stopped at collection (missing lanes)",
+    "chunked reruns and time limits as described in shard_layout",
+    "modules stopped at 600 s contribute only the lines they reached before the limit"
+  ],
+  "files": {
+    "src/sc_neurocore/neurons/models/__init__.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 12
+    },
+    "src/sc_neurocore/neurons/models/adaptive_threshold_if.py": {
+      "missing_lines": 8,
+      "missing_on_native_lane_paths": 0,
+      "percent": 92.3077,
+      "statements": 104
+    },
+    "src/sc_neurocore/neurons/models/adaptive_threshold_moe.py": {
+      "missing_lines": 4,
+      "missing_on_native_lane_paths": 0,
+      "percent": 94.6667,
+      "statements": 75
+    },
+    "src/sc_neurocore/neurons/models/adex.py": {
+      "missing_lines": 61,
+      "missing_on_native_lane_paths": 58,
+      "percent": 78.8194,
+      "statements": 288
+    },
+    "src/sc_neurocore/neurons/models/ai_optimized.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 194
+    },
+    "src/sc_neurocore/neurons/models/aihara_map_neuron.py": {
+      "missing_lines": 13,
+      "missing_on_native_lane_paths": 0,
+      "percent": 85.0575,
+      "statements": 87
+    },
+    "src/sc_neurocore/neurons/models/akida_neuron.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 25
+    },
+    "src/sc_neurocore/neurons/models/alpha.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 128
+    },
+    "src/sc_neurocore/neurons/models/alpha_motor_neuron.py": {
+      "missing_lines": 2,
+      "missing_on_native_lane_paths": 0,
+      "percent": 98.5714,
+      "statements": 140
+    },
+    "src/sc_neurocore/neurons/models/amari_field.py": {
+      "missing_lines": 8,
+      "missing_on_native_lane_paths": 0,
+      "percent": 90.4762,
+      "statements": 84
+    },
+    "src/sc_neurocore/neurons/models/arcane_neuron.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 169
+    },
+    "src/sc_neurocore/neurons/models/astrocyte.py": {
+      "missing_lines": 1,
+      "missing_on_native_lane_paths": 0,
+      "percent": 98.4127,
+      "statements": 63
+    },
+    "src/sc_neurocore/neurons/models/astrocyte_adapter.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 26
+    },
+    "src/sc_neurocore/neurons/models/astrocyte_lif.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 62
+    },
+    "src/sc_neurocore/neurons/models/atype_k_neuron.py": {
+      "missing_lines": 4,
+      "missing_on_native_lane_paths": 0,
+      "percent": 96.8504,
+      "statements": 127
+    },
+    "src/sc_neurocore/neurons/models/av_ron_cardiac.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 83
+    },
+    "src/sc_neurocore/neurons/models/balanced_resonate_and_fire.py": {
+      "missing_lines": 2,
+      "missing_on_native_lane_paths": 0,
+      "percent": 96.9697,
+      "statements": 66
+    },
+    "src/sc_neurocore/neurons/models/benda_herz.py": {
+      "missing_lines": 7,
+      "missing_on_native_lane_paths": 0,
+      "percent": 89.2308,
+      "statements": 65
+    },
+    "src/sc_neurocore/neurons/models/bertram_phantom.py": {
+      "missing_lines": 9,
+      "missing_on_native_lane_paths": 0,
+      "percent": 94.0789,
+      "statements": 152
+    },
+    "src/sc_neurocore/neurons/models/bk_neuron.py": {
+      "missing_lines": 3,
+      "missing_on_native_lane_paths": 0,
+      "percent": 97.6744,
+      "statements": 129
+    },
+    "src/sc_neurocore/neurons/models/booth_rinzel.py": {
+      "missing_lines": 4,
+      "missing_on_native_lane_paths": 0,
+      "percent": 96.3636,
+      "statements": 110
+    },
+    "src/sc_neurocore/neurons/models/brainscales_adex.py": {
+      "missing_lines": 1,
+      "missing_on_native_lane_paths": 0,
+      "percent": 98.3871,
+      "statements": 62
+    },
+    "src/sc_neurocore/neurons/models/brunel_wang.py": {
+      "missing_lines": 7,
+      "missing_on_native_lane_paths": 0,
+      "percent": 94.4444,
+      "statements": 126
+    },
+    "src/sc_neurocore/neurons/models/butera_respiratory.py": {
+      "missing_lines": 10,
+      "missing_on_native_lane_paths": 0,
+      "percent": 93.4211,
+      "statements": 152
+    },
+    "src/sc_neurocore/neurons/models/cazelles_map.py": {
+      "missing_lines": 51,
+      "missing_on_native_lane_paths": 46,
+      "percent": 77.13,
+      "statements": 223
+    },
+    "src/sc_neurocore/neurons/models/cerebellar_basket_neuron.py": {
+      "missing_lines": 4,
+      "missing_on_native_lane_paths": 0,
+      "percent": 96.875,
+      "statements": 128
+    },
+    "src/sc_neurocore/neurons/models/cfc.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 42
+    },
+    "src/sc_neurocore/neurons/models/chandelier_neuron.py": {
+      "missing_lines": 4,
+      "missing_on_native_lane_paths": 0,
+      "percent": 96.5517,
+      "statements": 116
+    },
+    "src/sc_neurocore/neurons/models/chay.py": {
+      "missing_lines": 6,
+      "missing_on_native_lane_paths": 0,
+      "percent": 95.082,
+      "statements": 122
+    },
+    "src/sc_neurocore/neurons/models/chay_keizer.py": {
+      "missing_lines": 6,
+      "missing_on_native_lane_paths": 0,
+      "percent": 95.9184,
+      "statements": 147
+    },
+    "src/sc_neurocore/neurons/models/chay_keizer_minimal.py": {
+      "missing_lines": 6,
+      "missing_on_native_lane_paths": 0,
+      "percent": 95.2381,
+      "statements": 126
+    },
+    "src/sc_neurocore/neurons/models/chialvo_map.py": {
+      "missing_lines": 25,
+      "missing_on_native_lane_paths": 25,
+      "percent": 89.2704,
+      "statements": 233
+    },
+    "src/sc_neurocore/neurons/models/clif.py": {
+      "missing_lines": 4,
+      "missing_on_native_lane_paths": 0,
+      "percent": 94.3662,
+      "statements": 71
+    },
+    "src/sc_neurocore/neurons/models/coba_lif.py": {
+      "missing_lines": 16,
+      "missing_on_native_lane_paths": 12,
+      "percent": 91.4439,
+      "statements": 187
+    },
+    "src/sc_neurocore/neurons/models/cochlear_hair_cell.py": {
+      "missing_lines": 5,
+      "missing_on_native_lane_paths": 0,
+      "percent": 92.1875,
+      "statements": 64
+    },
+    "src/sc_neurocore/neurons/models/compte_wm.py": {
+      "missing_lines": 7,
+      "missing_on_native_lane_paths": 0,
+      "percent": 95.4545,
+      "statements": 154
+    },
+    "src/sc_neurocore/neurons/models/connor_stevens.py": {
+      "missing_lines": 41,
+      "missing_on_native_lane_paths": 27,
+      "percent": 83.9216,
+      "statements": 255
+    },
+    "src/sc_neurocore/neurons/models/courage_nekorkin_map.py": {
+      "missing_lines": 52,
+      "missing_on_native_lane_paths": 47,
+      "percent": 76.6816,
+      "statements": 223
+    },
+    "src/sc_neurocore/neurons/models/dcn_neuron.py": {
+      "missing_lines": 2,
+      "missing_on_native_lane_paths": 0,
+      "percent": 98.6755,
+      "statements": 151
+    },
+    "src/sc_neurocore/neurons/models/de_schutter_purkinje.py": {
+      "missing_lines": 14,
+      "missing_on_native_lane_paths": 0,
+      "percent": 90.1408,
+      "statements": 142
+    },
+    "src/sc_neurocore/neurons/models/dendrify.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 40
+    },
+    "src/sc_neurocore/neurons/models/dendritic_nmda.py": {
+      "missing_lines": 3,
+      "missing_on_native_lane_paths": 0,
+      "percent": 96.9072,
+      "statements": 97
+    },
+    "src/sc_neurocore/neurons/models/destexhe_thalamic.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 44
+    },
+    "src/sc_neurocore/neurons/models/direction_selective_rgc.py": {
+      "missing_lines": 5,
+      "missing_on_native_lane_paths": 0,
+      "percent": 94.186,
+      "statements": 86
+    },
+    "src/sc_neurocore/neurons/models/dpi_neuron.py": {
+      "missing_lines": 4,
+      "missing_on_native_lane_paths": 4,
+      "percent": 97.9695,
+      "statements": 197
+    },
+    "src/sc_neurocore/neurons/models/durstewitz_dopamine.py": {
+      "missing_lines": 8,
+      "missing_on_native_lane_paths": 0,
+      "percent": 93.3333,
+      "statements": 120
+    },
+    "src/sc_neurocore/neurons/models/e_prop_alif.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 49
+    },
+    "src/sc_neurocore/neurons/models/energy_lif.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 94
+    },
+    "src/sc_neurocore/neurons/models/ermentrout_kopell_map_neuron.py": {
+      "missing_lines": 64,
+      "missing_on_native_lane_paths": 59,
+      "percent": 68.1592,
+      "statements": 201
+    },
+    "src/sc_neurocore/neurons/models/ermentrout_kopell_pop.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 92
+    },
+    "src/sc_neurocore/neurons/models/escape_rate.py": {
+      "missing_lines": 12,
+      "missing_on_native_lane_paths": 10,
+      "percent": 90.0826,
+      "statements": 121
+    },
+    "src/sc_neurocore/neurons/models/expif.py": {
+      "missing_lines": 64,
+      "missing_on_native_lane_paths": 58,
+      "percent": 78.0069,
+      "statements": 291
+    },
+    "src/sc_neurocore/neurons/models/fitzhugh_nagumo.py": {
+      "missing_lines": 62,
+      "missing_on_native_lane_paths": 57,
+      "percent": 75.0,
+      "statements": 248
+    },
+    "src/sc_neurocore/neurons/models/fitzhugh_rinzel.py": {
+      "missing_lines": 69,
+      "missing_on_native_lane_paths": 62,
+      "percent": 70.7627,
+      "statements": 236
+    },
+    "src/sc_neurocore/neurons/models/fractional_lif.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 50
+    },
+    "src/sc_neurocore/neurons/models/galves_locherbach.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 41
+    },
+    "src/sc_neurocore/neurons/models/gamma_motor_neuron.py": {
+      "missing_lines": 1,
+      "missing_on_native_lane_paths": 0,
+      "percent": 98.2759,
+      "statements": 58
+    },
+    "src/sc_neurocore/neurons/models/gamma_renewal.py": {
+      "missing_lines": 3,
+      "missing_on_native_lane_paths": 0,
+      "percent": 94.7368,
+      "statements": 57
+    },
+    "src/sc_neurocore/neurons/models/gated_lif.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 31
+    },
+    "src/sc_neurocore/neurons/models/gif_population.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 75
+    },
+    "src/sc_neurocore/neurons/models/glif.py": {
+      "missing_lines": 59,
+      "missing_on_native_lane_paths": 49,
+      "percent": 79.932,
+      "statements": 294
+    },
+    "src/sc_neurocore/neurons/models/glm_neuron.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 72
+    },
+    "src/sc_neurocore/neurons/models/golgi_cell.py": {
+      "missing_lines": 15,
+      "missing_on_native_lane_paths": 0,
+      "percent": 92.8571,
+      "statements": 210
+    },
+    "src/sc_neurocore/neurons/models/golomb_fs.py": {
+      "missing_lines": 6,
+      "missing_on_native_lane_paths": 0,
+      "percent": 94.5946,
+      "statements": 111
+    },
+    "src/sc_neurocore/neurons/models/granule_cell.py": {
+      "missing_lines": 3,
+      "missing_on_native_lane_paths": 0,
+      "percent": 98.0132,
+      "statements": 151
+    },
+    "src/sc_neurocore/neurons/models/gutkin_ermentrout.py": {
+      "missing_lines": 5,
+      "missing_on_native_lane_paths": 0,
+      "percent": 93.5065,
+      "statements": 77
+    },
+    "src/sc_neurocore/neurons/models/hay_l5.py": {
+      "missing_lines": 13,
+      "missing_on_native_lane_paths": 0,
+      "percent": 92.2156,
+      "statements": 167
+    },
+    "src/sc_neurocore/neurons/models/hill_tononi.py": {
+      "missing_lines": 13,
+      "missing_on_native_lane_paths": 0,
+      "percent": 91.5033,
+      "statements": 153
+    },
+    "src/sc_neurocore/neurons/models/hindmarsh_rose.py": {
+      "missing_lines": 72,
+      "missing_on_native_lane_paths": 62,
+      "percent": 70.1245,
+      "statements": 241
+    },
+    "src/sc_neurocore/neurons/models/hodgkin_huxley.py": {
+      "missing_lines": 30,
+      "missing_on_native_lane_paths": 22,
+      "percent": 86.6667,
+      "statements": 225
+    },
+    "src/sc_neurocore/neurons/models/huber_braun.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 33
+    },
+    "src/sc_neurocore/neurons/models/hybrid_fisher_posner_lif.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 2
+    },
+    "src/sc_neurocore/neurons/models/hybrid_linear_attention.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 58
+    },
+    "src/sc_neurocore/neurons/models/ibarz_tanaka_map.py": {
+      "missing_lines": 37,
+      "missing_on_native_lane_paths": 28,
+      "percent": 83.6283,
+      "statements": 226
+    },
+    "src/sc_neurocore/neurons/models/ih_neuron.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 108
+    },
+    "src/sc_neurocore/neurons/models/ilif.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 44
+    },
+    "src/sc_neurocore/neurons/models/inhomogeneous_poisson.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 20
+    },
+    "src/sc_neurocore/neurons/models/iqif.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 113
+    },
+    "src/sc_neurocore/neurons/models/izhikevich2007.py": {
+      "missing_lines": 65,
+      "missing_on_native_lane_paths": 61,
+      "percent": 75.0958,
+      "statements": 261
+    },
+    "src/sc_neurocore/neurons/models/jansen_rit.py": {
+      "missing_lines": 1,
+      "missing_on_native_lane_paths": 0,
+      "percent": 98.8889,
+      "statements": 90
+    },
+    "src/sc_neurocore/neurons/models/kilinc_bhatt_map_neuron.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 4
+    },
+    "src/sc_neurocore/neurons/models/klif.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 22
+    },
+    "src/sc_neurocore/neurons/models/lapicque.py": {
+      "missing_lines": 19,
+      "missing_on_native_lane_paths": 6,
+      "percent": 90.1042,
+      "statements": 192
+    },
+    "src/sc_neurocore/neurons/models/larter_breakspear.py": {
+      "missing_lines": 1,
+      "missing_on_native_lane_paths": 0,
+      "percent": 99.0654,
+      "statements": 107
+    },
+    "src/sc_neurocore/neurons/models/leaky_compete_fire.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 64
+    },
+    "src/sc_neurocore/neurons/models/lnm.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 39
+    },
+    "src/sc_neurocore/neurons/models/loihi2.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 28
+    },
+    "src/sc_neurocore/neurons/models/loihi_cuba.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 20
+    },
+    "src/sc_neurocore/neurons/models/ltc.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 24
+    },
+    "src/sc_neurocore/neurons/models/lugaro_cell.py": {
+      "missing_lines": 2,
+      "missing_on_native_lane_paths": 0,
+      "percent": 96.7742,
+      "statements": 62
+    },
+    "src/sc_neurocore/neurons/models/mainen_sejnowski.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 102
+    },
+    "src/sc_neurocore/neurons/models/marder_stg.py": {
+      "missing_lines": 1,
+      "missing_on_native_lane_paths": 0,
+      "percent": 99.3103,
+      "statements": 145
+    },
+    "src/sc_neurocore/neurons/models/martinotti_neuron.py": {
+      "missing_lines": 6,
+      "missing_on_native_lane_paths": 0,
+      "percent": 95.4887,
+      "statements": 133
+    },
+    "src/sc_neurocore/neurons/models/mat.py": {
+      "missing_lines": 1,
+      "missing_on_native_lane_paths": 0,
+      "percent": 98.8764,
+      "statements": 89
+    },
+    "src/sc_neurocore/neurons/models/mcculloch_pitts.py": {
+      "missing_lines": 7,
+      "missing_on_native_lane_paths": 0,
+      "percent": 92.3913,
+      "statements": 92
+    },
+    "src/sc_neurocore/neurons/models/mckean.py": {
+      "missing_lines": 4,
+      "missing_on_native_lane_paths": 0,
+      "percent": 93.5484,
+      "statements": 62
+    },
+    "src/sc_neurocore/neurons/models/medvedev_map.py": {
+      "missing_lines": 25,
+      "missing_on_native_lane_paths": 22,
+      "percent": 91.0394,
+      "statements": 279
+    },
+    "src/sc_neurocore/neurons/models/mihalas_niebur.py": {
+      "missing_lines": 54,
+      "missing_on_native_lane_paths": 47,
+      "percent": 77.1186,
+      "statements": 236
+    },
+    "src/sc_neurocore/neurons/models/morris_lecar.py": {
+      "missing_lines": 19,
+      "missing_on_native_lane_paths": 0,
+      "percent": 89.6175,
+      "statements": 183
+    },
+    "src/sc_neurocore/neurons/models/motor_unit.py": {
+      "missing_lines": 4,
+      "missing_on_native_lane_paths": 0,
+      "percent": 94.0299,
+      "statements": 67
+    },
+    "src/sc_neurocore/neurons/models/multicompartment_mcn.py": {
+      "missing_lines": 10,
+      "missing_on_native_lane_paths": 0,
+      "percent": 91.453,
+      "statements": 117
+    },
+    "src/sc_neurocore/neurons/models/nagumo_sato_map_neuron.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 77
+    },
+    "src/sc_neurocore/neurons/models/neurogrid.py": {
+      "missing_lines": 9,
+      "missing_on_native_lane_paths": 0,
+      "percent": 91.3462,
+      "statements": 104
+    },
+    "src/sc_neurocore/neurons/models/nlif.py": {
+      "missing_lines": 1,
+      "missing_on_native_lane_paths": 0,
+      "percent": 98.5294,
+      "statements": 68
+    },
+    "src/sc_neurocore/neurons/models/nmda_neuron.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 112
+    },
+    "src/sc_neurocore/neurons/models/non_resetting_lif.py": {
+      "missing_lines": 11,
+      "missing_on_native_lane_paths": 0,
+      "percent": 83.8235,
+      "statements": 68
+    },
+    "src/sc_neurocore/neurons/models/perfect_integrator.py": {
+      "missing_lines": 15,
+      "missing_on_native_lane_paths": 6,
+      "percent": 89.2086,
+      "statements": 139
+    },
+    "src/sc_neurocore/neurons/models/pernarowski.py": {
+      "missing_lines": 69,
+      "missing_on_native_lane_paths": 62,
+      "percent": 72.8346,
+      "statements": 254
+    },
+    "src/sc_neurocore/neurons/models/persistent_na_neuron.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 107
+    },
+    "src/sc_neurocore/neurons/models/pinsky_rinzel.py": {
+      "missing_lines": 1,
+      "missing_on_native_lane_paths": 0,
+      "percent": 99.2806,
+      "statements": 139
+    },
+    "src/sc_neurocore/neurons/models/plant_r15.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 50
+    },
+    "src/sc_neurocore/neurons/models/plif.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 44
+    },
+    "src/sc_neurocore/neurons/models/poisson.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 92
+    },
+    "src/sc_neurocore/neurons/models/pospischil.py": {
+      "missing_lines": 6,
+      "missing_on_native_lane_paths": 0,
+      "percent": 95.0413,
+      "statements": 121
+    },
+    "src/sc_neurocore/neurons/models/prescott.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 92
+    },
+    "src/sc_neurocore/neurons/models/psn.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 44
+    },
+    "src/sc_neurocore/neurons/models/pv_fast_spiking_neuron.py": {
+      "missing_lines": 5,
+      "missing_on_native_lane_paths": 0,
+      "percent": 95.7983,
+      "statements": 119
+    },
+    "src/sc_neurocore/neurons/models/quadratic_if.py": {
+      "missing_lines": 9,
+      "missing_on_native_lane_paths": 4,
+      "percent": 93.75,
+      "statements": 144
+    },
+    "src/sc_neurocore/neurons/models/quantum_inspired_lif.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 55
+    },
+    "src/sc_neurocore/neurons/models/rall_cable.py": {
+      "missing_lines": 9,
+      "missing_on_native_lane_paths": 0,
+      "percent": 91.0,
+      "statements": 100
+    },
+    "src/sc_neurocore/neurons/models/renshaw_cell.py": {
+      "missing_lines": 6,
+      "missing_on_native_lane_paths": 0,
+      "percent": 93.6842,
+      "statements": 95
+    },
+    "src/sc_neurocore/neurons/models/resonate_and_fire.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 103
+    },
+    "src/sc_neurocore/neurons/models/rulkov_map.py": {
+      "missing_lines": 51,
+      "missing_on_native_lane_paths": 46,
+      "percent": 78.1116,
+      "statements": 233
+    },
+    "src/sc_neurocore/neurons/models/sc_adaptive_threshold_map_neuron.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 78
+    },
+    "src/sc_neurocore/neurons/models/sc_chaotic_map_neuron.py": {
+      "missing_lines": 10,
+      "missing_on_native_lane_paths": 0,
+      "percent": 83.871,
+      "statements": 62
+    },
+    "src/sc_neurocore/neurons/models/sc_clipped_logistic_bursting_map.py": {
+      "missing_lines": 60,
+      "missing_on_native_lane_paths": 57,
+      "percent": 62.5,
+      "statements": 160
+    },
+    "src/sc_neurocore/neurons/models/sc_clipped_rational_recovery_map.py": {
+      "missing_lines": 60,
+      "missing_on_native_lane_paths": 53,
+      "percent": 68.4211,
+      "statements": 190
+    },
+    "src/sc_neurocore/neurons/models/sc_decoupled_adaptation_ion_mass.py": {
+      "missing_lines": 8,
+      "missing_on_native_lane_paths": 0,
+      "percent": 88.5714,
+      "statements": 70
+    },
+    "src/sc_neurocore/neurons/models/sc_exponential_tc_lif.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 51
+    },
+    "src/sc_neurocore/neurons/models/sc_four_state_glif.py": {
+      "missing_lines": 69,
+      "missing_on_native_lane_paths": 62,
+      "percent": 73.3591,
+      "statements": 259
+    },
+    "src/sc_neurocore/neurons/models/sc_leaky_tc_lif.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 49
+    },
+    "src/sc_neurocore/neurons/models/sc_non_resetting_adaptive_lif.py": {
+      "missing_lines": 2,
+      "missing_on_native_lane_paths": 0,
+      "percent": 96.1538,
+      "statements": 52
+    },
+    "src/sc_neurocore/neurons/models/sc_normalized_energy_lif.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 75
+    },
+    "src/sc_neurocore/neurons/models/sc_resetting_mat.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 74
+    },
+    "src/sc_neurocore/neurons/models/sc_resetting_psn.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 42
+    },
+    "src/sc_neurocore/neurons/models/sc_resetting_wilson_hr.py": {
+      "missing_lines": 73,
+      "missing_on_native_lane_paths": 58,
+      "percent": 69.3277,
+      "statements": 238
+    },
+    "src/sc_neurocore/neurons/models/sc_scaled_reset_adaptive_if.py": {
+      "missing_lines": 40,
+      "missing_on_native_lane_paths": 36,
+      "percent": 80.6763,
+      "statements": 207
+    },
+    "src/sc_neurocore/neurons/models/sc_sigma_delta_accumulator.py": {
+      "missing_lines": 2,
+      "missing_on_native_lane_paths": 0,
+      "percent": 93.5484,
+      "statements": 31
+    },
+    "src/sc_neurocore/neurons/models/sc_six_state_thalamocortical.py": {
+      "missing_lines": 8,
+      "missing_on_native_lane_paths": 0,
+      "percent": 94.2029,
+      "statements": 138
+    },
+    "src/sc_neurocore/neurons/models/sc_stochastic_rate_adaptation.py": {
+      "missing_lines": 8,
+      "missing_on_native_lane_paths": 0,
+      "percent": 90.0,
+      "statements": 80
+    },
+    "src/sc_neurocore/neurons/models/sc_three_state_phantom.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 149
+    },
+    "src/sc_neurocore/neurons/models/sc_triangular_mckean.py": {
+      "missing_lines": 58,
+      "missing_on_native_lane_paths": 55,
+      "percent": 77.2549,
+      "statements": 255
+    },
+    "src/sc_neurocore/neurons/models/sc_unit_capacitance_respiratory.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 7
+    },
+    "src/sc_neurocore/neurons/models/sc_upward_crossing_rulkov_map.py": {
+      "missing_lines": 49,
+      "missing_on_native_lane_paths": 44,
+      "percent": 74.3455,
+      "statements": 191
+    },
+    "src/sc_neurocore/neurons/models/sc_wb_nmda_magnesium_block.py": {
+      "missing_lines": 16,
+      "missing_on_native_lane_paths": 0,
+      "percent": 84.466,
+      "statements": 103
+    },
+    "src/sc_neurocore/neurons/models/sfa.py": {
+      "missing_lines": 8,
+      "missing_on_native_lane_paths": 0,
+      "percent": 91.0112,
+      "statements": 89
+    },
+    "src/sc_neurocore/neurons/models/sherman_rinzel_keizer.py": {
+      "missing_lines": 3,
+      "missing_on_native_lane_paths": 0,
+      "percent": 96.25,
+      "statements": 80
+    },
+    "src/sc_neurocore/neurons/models/siegert.py": {
+      "missing_lines": 8,
+      "missing_on_native_lane_paths": 0,
+      "percent": 89.1892,
+      "statements": 74
+    },
+    "src/sc_neurocore/neurons/models/sigma_delta.py": {
+      "missing_lines": 6,
+      "missing_on_native_lane_paths": 0,
+      "percent": 86.0465,
+      "statements": 43
+    },
+    "src/sc_neurocore/neurons/models/sigmoid_rate.py": {
+      "missing_lines": 1,
+      "missing_on_native_lane_paths": 1,
+      "percent": 98.9796,
+      "statements": 98
+    },
+    "src/sc_neurocore/neurons/models/sk_neuron.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 107
+    },
+    "src/sc_neurocore/neurons/models/spike_response.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 38
+    },
+    "src/sc_neurocore/neurons/models/spinnaker2.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 25
+    },
+    "src/sc_neurocore/neurons/models/spinnaker_lif.py": {
+      "missing_lines": 5,
+      "missing_on_native_lane_paths": 0,
+      "percent": 92.6471,
+      "statements": 68
+    },
+    "src/sc_neurocore/neurons/models/srm0.py": {
+      "missing_lines": 4,
+      "missing_on_native_lane_paths": 0,
+      "percent": 95.2941,
+      "statements": 85
+    },
+    "src/sc_neurocore/neurons/models/sst_neuron.py": {
+      "missing_lines": 6,
+      "missing_on_native_lane_paths": 0,
+      "percent": 95.7447,
+      "statements": 141
+    },
+    "src/sc_neurocore/neurons/models/stellate_cell.py": {
+      "missing_lines": 6,
+      "missing_on_native_lane_paths": 0,
+      "percent": 94.7826,
+      "statements": 115
+    },
+    "src/sc_neurocore/neurons/models/stochastic_if.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 36
+    },
+    "src/sc_neurocore/neurons/models/stochastic_lif.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 3
+    },
+    "src/sc_neurocore/neurons/models/superspike_neuron.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 30
+    },
+    "src/sc_neurocore/neurons/models/tc_lif.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 54
+    },
+    "src/sc_neurocore/neurons/models/terman_wang.py": {
+      "missing_lines": 65,
+      "missing_on_native_lane_paths": 60,
+      "percent": 73.6842,
+      "statements": 247
+    },
+    "src/sc_neurocore/neurons/models/theta.py": {
+      "missing_lines": 8,
+      "missing_on_native_lane_paths": 4,
+      "percent": 94.2446,
+      "statements": 139
+    },
+    "src/sc_neurocore/neurons/models/threshold_linear_rate.py": {
+      "missing_lines": 1,
+      "missing_on_native_lane_paths": 1,
+      "percent": 98.6111,
+      "statements": 72
+    },
+    "src/sc_neurocore/neurons/models/traub_miles.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 97
+    },
+    "src/sc_neurocore/neurons/models/truenorth.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 18
+    },
+    "src/sc_neurocore/neurons/models/tsodyks_markram.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 35
+    },
+    "src/sc_neurocore/neurons/models/ttype_ca_neuron.py": {
+      "missing_lines": 0,
+      "missing_on_native_lane_paths": 0,
+      "percent": 100.0,
+      "statements": 104
+    },
+    "src/sc_neurocore/neurons/models/unipolar_brush_cell.py": {
+      "missing_lines": 11,
+      "missing_on_native_lane_paths": 0,
+      "percent": 84.2857,
+      "statements": 70
+    },
+    "src/sc_neurocore/neurons/models/upper_motor_neuron.py": {
+      "missing_lines": 8,
+      "missing_on_native_lane_paths": 0,
+      "percent": 92.9825,
+      "statements": 114
+    },
+    "src/sc_neurocore/neurons/models/vip_neuron.py": {
+      "missing_lines": 5,
+      "missing_on_native_lane_paths": 0,
+      "percent": 95.5752,
+      "statements": 113
+    },
+    "src/sc_neurocore/neurons/models/wang_buzsaki.py": {
+      "missing_lines": 4,
+      "missing_on_native_lane_paths": 0,
+      "percent": 94.9367,
+      "statements": 79
+    },
+    "src/sc_neurocore/neurons/models/wendling.py": {
+      "missing_lines": 1,
+      "missing_on_native_lane_paths": 0,
+      "percent": 98.75,
+      "statements": 80
+    },
+    "src/sc_neurocore/neurons/models/wilson_cowan.py": {
+      "missing_lines": 1,
+      "missing_on_native_lane_paths": 1,
+      "percent": 99.2063,
+      "statements": 126
+    },
+    "src/sc_neurocore/neurons/models/wilson_hr.py": {
+      "missing_lines": 67,
+      "missing_on_native_lane_paths": 61,
+      "percent": 73.5178,
+      "statements": 253
+    },
+    "src/sc_neurocore/neurons/models/wong_wang.py": {
+      "missing_lines": 3,
+      "missing_on_native_lane_paths": 0,
+      "percent": 96.9697,
+      "statements": 99
+    },
+    "src/sc_neurocore/neurons/models/yamada.py": {
+      "missing_lines": 7,
+      "missing_on_native_lane_paths": 0,
+      "percent": 92.6316,
+      "statements": 95
+    }
+  },
+  "files_below_100": 114,
+  "files_listed_only_for_absent_lanes": [
+    "src/sc_neurocore/neurons/models/chialvo_map.py",
+    "src/sc_neurocore/neurons/models/dpi_neuron.py",
+    "src/sc_neurocore/neurons/models/sigmoid_rate.py",
+    "src/sc_neurocore/neurons/models/threshold_linear_rate.py",
+    "src/sc_neurocore/neurons/models/wilson_cowan.py"
+  ],
+  "files_measured": 177,
+  "host": "ML350 (Xeon E5, Sandy Bridge), the landing venv",
+  "modules_stopped_at_600_s": [
+    "tests/test_function_unit_programs.py",
+    "tests/test_qc_e2e_large_scale_population.py",
+    "tests/test_qc_e2e_radical_pair_field_response.py",
+    "tests/test_tools/test_function_synthesis_checkpoint_serialization.py",
+    "tests/test_tools/test_function_synthesis_cli.py",
+    "tests/test_tools/test_function_synthesis_gia_fallback.py",
+    "tests/test_tools/test_function_synthesis_gia_protocol.py",
+    "tests/test_tools/test_function_synthesis_proof.py",
+    "tests/test_tools/test_function_synthesis_yosys.py",
+    "tests/test_tools/test_model_behaviour_variants.py"
+  ],
+  "shard_layout": "tools/run_full_cov.sh --shard=K/8 --list-files (round-robin, no timings), the unit's own coverage config with the */neurons/models/* omit removed; each shard in batches of 384 modules; shard 8 batch 1 and shard 3 and 5 batch 2 ran into 7200 s and were rerun in chunks of 24 modules (1800 s each, a stopped chunk module by module at 600 s), with coverage's sigterm option so a stopped run still saved its data"
+}

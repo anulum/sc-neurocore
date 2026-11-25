@@ -477,6 +477,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- The coverage gate now measures the neuron model files it can hold at
+  100 %. The single omission `*/neurons/models/*` kept all 177 model
+  files out of the threshold; it is replaced by the 114 files that a full
+  sharded run measured below 100 %, named one by one, so the other 63 are
+  measured and must stay at 100 %. The gate's scope grows from 1,254 to
+  1,317 files (61.7 % to 63.7 % of source lines, in `VALIDATION.md`). The
+  measurement is a test fixture that names its commit, host, shard
+  layout, the native lanes it lacked (Julia, Go, Mojo) and its deviations
+  from CI; `tests/test_neuron_models_coverage_omit.py` holds the list to
+  it in both directions and fails when a model file is added unmeasured.
+  Five files are listed only because those lanes were absent; a file
+  that the hosted union shows at 100 % leaves the list.
+
 - FPGA energy estimator migration notes. `FPGATarget.total_bram_kb` is
   renamed to the field `total_bram_kbits`, so `FPGATarget(total_bram_kb=...)`
   now raises TypeError; `.total_bram_kb` is now a read-only property in
