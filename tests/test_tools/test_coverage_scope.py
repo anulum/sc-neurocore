@@ -16,7 +16,7 @@ import sys
 
 import pytest
 
-from tools.coverage_scope import BEGIN, END, main, read_scope, render, replace_block
+from tools.coverage_scope import BEGIN, END, main, read_scope, render, replace_block, source_files
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIGURATION = (
@@ -169,3 +169,32 @@ def test_in_a_work_tree_only_tracked_files_are_counted(tmp_path: Path) -> None:
     tracked = read_scope(root)
     assert (tracked.files, tracked.lines) == (untracked.files, untracked.lines) == (4, 16)
     assert tracked.omissions == untracked.omissions
+
+
+def test_an_own_work_tree_with_nothing_tracked_counts_no_source(tmp_path: Path) -> None:
+    """A repository whose package holds only untracked files has no source, and is refused.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        Root of the small package, made its own Git work tree with nothing added.
+    """
+    root = _tree(tmp_path)
+    subprocess.run(["git", "init", "--quiet", str(root)], check=True, timeout=30)
+    assert source_files(root, "src/pkg") == []
+    with pytest.raises(ValueError, match="holds no Python file"):
+        read_scope(root)
+
+
+def test_a_tree_inside_another_work_tree_counts_its_files(tmp_path: Path) -> None:
+    """A source tree that is not a work tree of its own keeps the filesystem count.
+
+    Parameters
+    ----------
+    tmp_path : Path
+        An enclosing Git work tree that holds the small package, untracked, in a subdirectory.
+    """
+    subprocess.run(["git", "init", "--quiet", str(tmp_path)], check=True, timeout=30)
+    root = _tree(tmp_path / "nested")
+    scope = read_scope(root)
+    assert (scope.files, scope.lines) == (4, 16)

@@ -124,19 +124,30 @@ def source_files(root: Path, directory: str) -> list[Path]:
     Returns
     -------
     list of Path
-        In a Git work tree, the tracked ``.py`` files under the directory, so
-        that build products and local leftovers do not change the counts
-        between one checkout and another. Outside a work tree, every ``.py``
-        file under the directory except interpreter caches.
+        When the root is the top of its own Git work tree, the tracked ``.py``
+        files under the directory, so that build products and local leftovers
+        do not change the counts between one checkout and another; none when
+        nothing there is tracked. Otherwise, including a root that lies inside
+        another repository's work tree, every ``.py`` file under the directory
+        except interpreter caches.
     """
-    listed = subprocess.run(
-        ["git", "-C", str(root), "ls-files", "-z", "--", directory],
+    top = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "--show-toplevel"],
         capture_output=True,
         check=False,
         timeout=60,
     )
-    if listed.returncode == 0 and listed.stdout:
-        names = listed.stdout.decode("utf-8").rstrip("\0").split("\0")
+    own_work_tree = (
+        top.returncode == 0 and Path(top.stdout.decode("utf-8").strip()).resolve() == root.resolve()
+    )
+    if own_work_tree:
+        listed = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "-z", "--", directory],
+            capture_output=True,
+            check=True,
+            timeout=60,
+        )
+        names = [name for name in listed.stdout.decode("utf-8").split("\0") if name]
         return sorted(root / name for name in names if name.endswith(".py"))
     return sorted(
         path for path in (root / directory).rglob("*.py") if "__pycache__" not in path.parts

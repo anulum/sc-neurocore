@@ -752,6 +752,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The coverage-scope count no longer counts untracked files in a
+  repository whose package has no tracked source. A successful but empty
+  `git ls-files` sent the count to the filesystem, against the tool's
+  tracked-only rule inside a work tree. The tracked listing now applies
+  whenever the root is the top of its own work tree, so such a package
+  is refused as holding no Python file. A tree that lies inside another
+  repository's work tree, which the empty listing used to stand for,
+  keeps the filesystem count. Two tests cover both cases.
+
 - The SC Compte ring16 RTL receipt can be produced on ML350.
   `benchmarks/bench_sc_compte_wm_ring16.py` required every EDA tool
   under the repository `.venv/bin`, so it could not use the shared tools
