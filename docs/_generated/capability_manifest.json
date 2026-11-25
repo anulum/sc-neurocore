@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5588
+    "test_files": 5589
   },
   "documentation": {
     "public_pages": [
@@ -5373,6 +5373,7 @@
       "tests/test_fuzz_scpn_datastream_json_inputs.py",
       "tests/test_fuzz_studio_graph_inputs.py",
       "tests/test_fuzz_transfer_checkpoint_inputs.py",
+      "tests/test_fuzz_workflow_contract.py",
       "tests/test_gamma_oscillation_go_parity.py",
       "tests/test_gamma_oscillation_julia_parity.py",
       "tests/test_gamma_oscillation_mojo_parity.py",

@@ -752,6 +752,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The fuzz workflow runs every cargo-fuzz target even when an earlier
+  one finds a crash. The step's shell stopped at the first crashing
+  target, so the later targets were never fuzzed in that run; the step
+  now runs all four, names each crashing target and fails at the end.
+  On failure it also uploads the reproducers under
+  `engine/fuzz/artifacts/` as the `fuzz-crash-reproducers` artifact,
+  which the job had only listed in its log. A contract test runs the
+  step script with a stand-in cargo and checks that its targets match
+  `engine/fuzz/Cargo.toml`.
+
 - The CI job that holds the GPU encoder's refusal of a software adapter
   installs the hash-locked CPU torch before the development extras and
   checks the CPU build afterwards, like every other job that runs
