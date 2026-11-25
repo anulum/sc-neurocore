@@ -36968,12 +36968,14 @@ Bursting arises from slow y modulation of fast x.
 This is a project-defined recurrence without whole-model publication
 attribution.
 
+- **__post_init__**()
+  - Validate initial state and parameters.
 - **step**(current)
-  - Advance the clipped logistic map one step; return 1 when ``x`` is at or above ``x_threshold``, else 0.
+  - Advance the clipped logistic map one step.
 - **simulate**(n_steps, current, backend)
   - Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
 - **reset**()
-  - Restore the default state x = 0.1, y = 0.0.
+  - Restore the default state ``x = 0.1``, ``y = 0.0``.
 
 ---
 

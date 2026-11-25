@@ -21,10 +21,13 @@ The source-faithful Cazelles-Courbage-Rabinovich identity lives in
 
 from __future__ import annotations
 
+import ctypes
 import importlib as _importlib
+import math
 import os as _os
 from dataclasses import dataclass
-from typing import Callable, Optional
+from numbers import Integral, Real
+from typing import Any, Protocol, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -37,29 +40,64 @@ import numpy.typing as npt
 # (Rust PyO3, Julia juliacall, Go cgo, Mojo FFI) accelerates `simulate`
 # and reproduces the NumPy reference to the last bit.
 
-_RustSimulate = Callable[..., "tuple[list[float], int, float, float]"]
+_MAX_C_STEPS = (1 << 31) - 1
+
+
+class _RustSimulate(Protocol):
+    def __call__(self, *args: Any) -> tuple[list[float], int, float, float]: ...
+
+
+class _JuliaResult(Protocol):
+    trace: Any
+    spikes: int
+    xf: float
+    yf: float
+
+
+class _JuliaAccel(Protocol):
+    def simulate_trace(self, *args: Any) -> _JuliaResult: ...
 
 
 def _load_rust_simulate() -> _RustSimulate:
     engine = _importlib.import_module("sc_neurocore_engine")
-    return engine.py_sc_clipped_logistic_bursting_map_simulate  # type: ignore[no-any-return]
+    return cast(_RustSimulate, engine.py_sc_clipped_logistic_bursting_map_simulate)
 
 
 try:
-    _rust_simulate: Optional[_RustSimulate] = _load_rust_simulate()
+    _rust_simulate: _RustSimulate | None = _load_rust_simulate()
     _HAS_RUST = True
 except (ImportError, AttributeError):
     _rust_simulate = None
     _HAS_RUST = False
 
-_julia_module = None
+_julia_module: _JuliaAccel | None = None
 _HAS_JULIA = False
-_go_lib = None
+_go_lib: ctypes.CDLL | None = None
 _HAS_GO = False
-_mojo_lib = None
+_mojo_lib: ctypes.CDLL | None = None
 _HAS_MOJO = False
 
 _ACCEL_ROOT = _os.path.join(_os.path.dirname(__file__), "..", "..", "accel")
+
+
+def _require_finite_float(value: object, name: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise TypeError(f"{name} must be a real number")
+    result = float(value)
+    if not math.isfinite(result):
+        raise ValueError(f"{name} must be finite")
+    return result
+
+
+def _require_step_count(n_steps: object) -> int:
+    if isinstance(n_steps, bool) or not isinstance(n_steps, Integral):
+        raise TypeError("n_steps must be an integer")
+    steps = int(n_steps)
+    if steps < 0:
+        raise ValueError("n_steps must be non-negative")
+    if steps > _MAX_C_STEPS:
+        raise ValueError(f"n_steps must be at most {_MAX_C_STEPS}")
+    return steps
 
 
 def _ensure_julia_loaded() -> bool:
@@ -78,7 +116,7 @@ def _ensure_julia_loaded() -> bool:
     juliacall = _importlib.import_module("juliacall")
     jl = juliacall.Main
     jl.include(jl_path)
-    _julia_module = jl.SCClippedLogisticBurstingMapAccel
+    _julia_module = cast(_JuliaAccel, jl.SCClippedLogisticBurstingMapAccel)
     _HAS_JULIA = True
     return True
 
@@ -87,7 +125,6 @@ def _ensure_go_loaded() -> bool:
     global _go_lib, _HAS_GO
     if _go_lib is not None:
         return True
-    import ctypes
 
     so_path = _os.path.abspath(
         _os.path.join(
@@ -124,7 +161,6 @@ def _ensure_mojo_loaded() -> bool:
     global _mojo_lib, _HAS_MOJO
     if _mojo_lib is not None:
         return True
-    import ctypes
 
     so_path = _os.path.abspath(
         _os.path.join(_ACCEL_ROOT, "mojo", "neurons", "libsc_clipped_logistic_bursting_map.so")
@@ -168,14 +204,94 @@ class SCClippedLogisticBurstingMapNeuron:
     sigma: float = 0.5
     x_threshold: float = 0.9
 
+    def __post_init__(self) -> None:
+        """Validate initial state and parameters.
+
+        Raises
+        ------
+        TypeError
+            If any state or parameter is a boolean or non-real value.
+        ValueError
+            If any state or parameter is NaN or infinite.
+        """
+        self.x = _require_finite_float(self.x, "x")
+        self.y = _require_finite_float(self.y, "y")
+        self.a = _require_finite_float(self.a, "a")
+        self.epsilon = _require_finite_float(self.epsilon, "epsilon")
+        self.sigma = _require_finite_float(self.sigma, "sigma")
+        self.x_threshold = _require_finite_float(self.x_threshold, "x_threshold")
+
+    def _validated_state_and_params(self) -> tuple[float, float, float, float, float, float]:
+        x = self.x
+        y = self.y
+        a = self.a
+        epsilon = self.epsilon
+        sigma = self.sigma
+        x_threshold = self.x_threshold
+        if (
+            type(x) is float
+            and type(y) is float
+            and type(a) is float
+            and type(epsilon) is float
+            and type(sigma) is float
+            and type(x_threshold) is float
+            and x - x == 0.0
+            and y - y == 0.0
+            and a - a == 0.0
+            and epsilon - epsilon == 0.0
+            and sigma - sigma == 0.0
+            and x_threshold - x_threshold == 0.0
+        ):
+            return x, y, a, epsilon, sigma, x_threshold
+        return (
+            _require_finite_float(x, "x"),
+            _require_finite_float(y, "y"),
+            _require_finite_float(a, "a"),
+            _require_finite_float(epsilon, "epsilon"),
+            _require_finite_float(sigma, "sigma"),
+            _require_finite_float(x_threshold, "x_threshold"),
+        )
+
     def step(self, current: float) -> int:
-        """Advance the clipped logistic map one step; return 1 when ``x`` is at or above ``x_threshold``, else 0."""
-        f = self.a * self.x * (1.0 - self.x)
-        x_new = f - self.y + current
-        y_new = self.y + self.epsilon * (self.x - self.sigma)
-        self.x = min(2.0, max(-2.0, x_new))
+        """Advance the clipped logistic map one step.
+
+        Parameters
+        ----------
+        current : float
+            Finite external input drive.
+
+        Returns
+        -------
+        int
+            ``1`` when the updated ``x`` is at or above ``x_threshold``,
+            else ``0``.
+
+        Raises
+        ------
+        TypeError
+            If ``current`` or any model state or parameter is a boolean or
+            non-real value.
+        ValueError
+            If ``current``, any model state or parameter, or a candidate next
+            state is NaN or infinite. Rejected updates leave ``(x, y)``
+            unchanged.
+        """
+        if type(current) is float and current - current == 0.0:
+            drive = current
+        else:
+            drive = _require_finite_float(current, "current")
+        x, y, a, epsilon, sigma, x_threshold = self._validated_state_and_params()
+        f = a * x * (1.0 - x)
+        x_new = f - y + drive
+        y_new = y + epsilon * (x - sigma)
+        if not (x_new - x_new == 0.0 and y_new - y_new == 0.0):
+            raise ValueError(
+                "SCClippedLogisticBurstingMapNeuron update overflowed to non-finite state"
+            )
+        x_next = min(2.0, max(-2.0, x_new))
+        self.x = x_next
         self.y = y_new
-        return 1 if self.x >= self.x_threshold else 0
+        return 1 if x_next >= x_threshold else 0
 
     def simulate(
         self, n_steps: int, current: float = 0.0, backend: str = "auto"
@@ -183,14 +299,51 @@ class SCClippedLogisticBurstingMapNeuron:
         """Advance ``n_steps`` from the current state, returning ``(trace, spikes)``.
 
         ``trace[t]`` is the membrane variable ``x`` after step ``t``; ``spikes``
-        counts the steps whose ``x`` crossed ``x_threshold``. The instance state
-        ``(x, y)`` is advanced to the final step. Every backend reproduces the
-        pure-NumPy reference bit-for-bit.
+        counts the steps whose ``x`` reached ``x_threshold``. The instance state
+        ``(x, y)`` is advanced to the final step only after finite results are
+        verified. Rust, Julia, and Go reproduce the Python reference bit-for-bit;
+        Mojo agrees within ULP bounds.
+
+        Parameters
+        ----------
+        n_steps : int
+            Number of simulation steps to run (``0 <= n_steps <= 2**31 - 1``).
+        current : float, optional
+            Finite constant external input drive (default ``0.0``).
+        backend : str, optional
+            Execution backend: ``"auto"``, ``"rust"``, ``"julia"``, ``"go"``,
+            ``"mojo"``, or ``"python"`` (default ``"auto"``).
+
+        Returns
+        -------
+        tuple[numpy.typing.NDArray[numpy.float64], int]
+            ``(trace, spikes)`` pair for the simulated horizon.
+
+        Raises
+        ------
+        TypeError
+            If ``n_steps`` is a boolean or non-integer, or if ``current`` or
+            any state or parameter is a boolean or non-real value.
+        ValueError
+            If ``n_steps`` is negative or exceeds ``2**31 - 1``, ``backend`` is
+            unknown, ``current`` or any state or parameter is non-finite, or the
+            trajectory overflows to a non-finite state. Rejected calls leave
+            ``(x, y)`` unchanged.
+        RuntimeError
+            If an explicitly requested compiled backend is unavailable.
         """
-        if n_steps < 0:
-            raise ValueError("n_steps must be non-negative")
-        if backend not in ("auto", "rust", "julia", "go", "mojo", "python"):
+        steps = _require_step_count(n_steps)
+        drive = _require_finite_float(current, "current")
+        if not isinstance(backend, str) or backend not in (
+            "auto",
+            "rust",
+            "julia",
+            "go",
+            "mojo",
+            "python",
+        ):
             raise ValueError(f"backend must be auto/rust/julia/go/mojo/python, got {backend!r}")
+        self._validated_state_and_params()
 
         if backend == "rust" and not _HAS_RUST:
             raise RuntimeError(
@@ -213,35 +366,47 @@ class SCClippedLogisticBurstingMapNeuron:
                 "-o libsc_clipped_logistic_bursting_map.so sc_clipped_logistic_bursting_map.mojo`."
             )
 
-        params = (self.x, self.y, self.a, self.epsilon, self.sigma, self.x_threshold)
         if backend == "rust" or (backend == "auto" and _HAS_RUST):
-            trace, spikes, xf, yf = self._simulate_rust(n_steps, current)
+            trace, spikes, xf, yf = self._simulate_rust(steps, drive)
         elif backend == "julia":
-            trace, spikes, xf, yf = self._simulate_julia(n_steps, current)
+            trace, spikes, xf, yf = self._simulate_julia(steps, drive)
         elif backend == "go":
-            trace, spikes, xf, yf = self._simulate_go(n_steps, current)
+            trace, spikes, xf, yf = self._simulate_go(steps, drive)
         elif backend == "mojo":
-            trace, spikes, xf, yf = self._simulate_mojo(n_steps, current)
+            trace, spikes, xf, yf = self._simulate_mojo(steps, drive)
         else:
-            trace, spikes, xf, yf = self._simulate_python(n_steps, current)
-        _ = params
+            trace, spikes, xf, yf = self._simulate_python(steps, drive)
+
+        if not (
+            math.isfinite(xf)
+            and math.isfinite(yf)
+            and (steps == 0 or math.isfinite(float(trace.sum())))
+        ):
+            raise ValueError(
+                "SCClippedLogisticBurstingMapNeuron simulation overflowed to non-finite state"
+            )
         self.x, self.y = xf, yf
         return trace, spikes
 
     def _simulate_python(
         self, n_steps: int, current: float
     ) -> tuple[npt.NDArray[np.float64], int, float, float]:
+        x, y, a, epsilon, sigma, x_threshold = self._validated_state_and_params()
+        drive = _require_finite_float(current, "current")
         trace = np.empty(n_steps, dtype=np.float64)
-        x, y = self.x, self.y
         spikes = 0
         for t in range(n_steps):
-            f = self.a * x * (1.0 - x)
-            x_new = f - y + current
-            y_new = y + self.epsilon * (x - self.sigma)
+            f = a * x * (1.0 - x)
+            x_new = f - y + drive
+            y_new = y + epsilon * (x - sigma)
+            if not (x_new - x_new == 0.0 and y_new - y_new == 0.0):
+                raise ValueError(
+                    "SCClippedLogisticBurstingMapNeuron update overflowed to non-finite state"
+                )
             x = min(2.0, max(-2.0, x_new))
             y = y_new
             trace[t] = x
-            if x >= self.x_threshold:
+            if x >= x_threshold:
                 spikes += 1
         return trace, spikes, x, y
 
@@ -249,8 +414,9 @@ class SCClippedLogisticBurstingMapNeuron:
         self, n_steps: int, current: float
     ) -> tuple[npt.NDArray[np.float64], int, float, float]:
         assert _rust_simulate is not None
+        x, y, a, epsilon, sigma, x_threshold = self._validated_state_and_params()
         trace_list, spikes, xf, yf = _rust_simulate(
-            self.x, self.y, self.a, self.epsilon, self.sigma, self.x_threshold, n_steps, current
+            x, y, a, epsilon, sigma, x_threshold, n_steps, current
         )
         return np.asarray(trace_list, dtype=np.float64), int(spikes), float(xf), float(yf)
 
@@ -258,13 +424,14 @@ class SCClippedLogisticBurstingMapNeuron:
         self, n_steps: int, current: float
     ) -> tuple[npt.NDArray[np.float64], int, float, float]:
         assert _julia_module is not None
+        x, y, a, epsilon, sigma, x_threshold = self._validated_state_and_params()
         result = _julia_module.simulate_trace(
-            float(self.x),
-            float(self.y),
-            float(self.a),
-            float(self.epsilon),
-            float(self.sigma),
-            float(self.x_threshold),
+            x,
+            y,
+            a,
+            epsilon,
+            sigma,
+            x_threshold,
             int(n_steps),
             float(current),
         )
@@ -275,21 +442,20 @@ class SCClippedLogisticBurstingMapNeuron:
         self, n_steps: int, current: float
     ) -> tuple[npt.NDArray[np.float64], int, float, float]:
         assert _go_lib is not None
-        import ctypes
-
+        x, y, a, epsilon, sigma, x_threshold = self._validated_state_and_params()
         trace = np.zeros(n_steps + 2, dtype=np.float64, order="C")
         spikes = _go_lib.sc_clipped_logistic_bursting_map_simulate_c(
-            ctypes.c_double(self.x),
-            ctypes.c_double(self.y),
-            ctypes.c_double(self.a),
-            ctypes.c_double(self.epsilon),
-            ctypes.c_double(self.sigma),
-            ctypes.c_double(self.x_threshold),
+            ctypes.c_double(x),
+            ctypes.c_double(y),
+            ctypes.c_double(a),
+            ctypes.c_double(epsilon),
+            ctypes.c_double(sigma),
+            ctypes.c_double(x_threshold),
             ctypes.c_int(n_steps),
             ctypes.c_double(current),
             trace.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
         )
-        xf = float(trace[n_steps]) if n_steps > 0 else self.x
+        xf = float(trace[n_steps]) if n_steps > 0 else x
         yf = float(trace[n_steps + 1])
         return np.ascontiguousarray(trace[:n_steps]), int(spikes), xf, yf
 
@@ -297,23 +463,24 @@ class SCClippedLogisticBurstingMapNeuron:
         self, n_steps: int, current: float
     ) -> tuple[npt.NDArray[np.float64], int, float, float]:
         assert _mojo_lib is not None
+        x, y, a, epsilon, sigma, x_threshold = self._validated_state_and_params()
         trace = np.zeros(n_steps + 2, dtype=np.float64, order="C")
         spikes = _mojo_lib.sc_clipped_logistic_bursting_map_simulate_c(
-            float(self.x),
-            float(self.y),
-            float(self.a),
-            float(self.epsilon),
-            float(self.sigma),
-            float(self.x_threshold),
+            x,
+            y,
+            a,
+            epsilon,
+            sigma,
+            x_threshold,
             int(n_steps),
             float(current),
             int(trace.ctypes.data),
         )
-        xf = float(trace[n_steps]) if n_steps > 0 else self.x
+        xf = float(trace[n_steps]) if n_steps > 0 else x
         yf = float(trace[n_steps + 1])
         return np.ascontiguousarray(trace[:n_steps]), int(spikes), xf, yf
 
     def reset(self) -> None:
-        """Restore the default state x = 0.1, y = 0.0."""
+        """Restore the default state ``x = 0.1``, ``y = 0.0``."""
         self.x = 0.1
         self.y = 0.0

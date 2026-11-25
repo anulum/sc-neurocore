@@ -488,6 +488,23 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- `SCClippedLogisticBurstingMapNeuron` now normalises `np.float32` (and other
+  NumPy scalar) drives to Python `float` (`float64`) before stepping so the
+  Python backend evaluates updates in `float64` identically to the Rust, Julia,
+  and Go backends; results for `float32` callers therefore change from the
+  previous release's NumPy 2 `float32` promotion path.
+
+- `SCClippedLogisticBurstingMapNeuron` now validates constructor state and
+  parameters, single-step drive, simulation step counts (rejecting booleans,
+  non-integers, negative counts, and counts above `2**31 - 1`), backend names,
+  and mutated runtime attributes before stepping or dispatching to compiled
+  backends, raising `TypeError` on booleans or non-real / non-integer values
+  and `ValueError` on non-finite values or non-finite overflow candidates
+  without mutating `(x, y)`. The five-backend local-regression benchmark
+  receipt (`benchmarks/results/bench_sc_clipped_logistic_bursting_map.json`,
+  non-isolated) is refreshed for the updated module hash with bit-exact parity
+  on Rust, Julia, and Go and identical spike counts across all five backends.
+
 - The coverage gate now measures the neuron model files it can hold at
   100 %. The single omission `*/neurons/models/*` kept all 177 model
   files out of the threshold; it is replaced by the 114 files that a full

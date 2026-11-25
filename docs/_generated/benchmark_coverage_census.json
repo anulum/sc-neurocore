@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 25,
-    "outdated": 130,
+    "current": 26,
+    "outdated": 129,
     "reviewed": 0,
     "unbound": 175
   },
@@ -13,8 +13,8 @@
   "catalogue_models": 185,
   "cited_records": 87,
   "record_currency_totals": {
-    "current": 1,
-    "outdated": 85,
+    "current": 2,
+    "outdated": 84,
     "reviewed": 0,
     "unbound": 1
   },
@@ -1710,11 +1710,7 @@
       "records": [
         {
           "attribution": "bound_script",
-          "changed": [
-            "engine/src/neurons/sc_clipped_logistic_bursting_map.rs",
-            "src/sc_neurocore/neurons/models/sc_clipped_logistic_bursting_map.py"
-          ],
-          "currency": "outdated",
+          "currency": "current",
           "name": "bench_sc_clipped_logistic_bursting_map.json",
           "script": "bench_sc_clipped_logistic_bursting_map.py"
         }
