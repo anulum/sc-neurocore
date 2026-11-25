@@ -52,6 +52,7 @@ SEEDED_MODELS: dict[str, tuple[int, int]] = {
     "GLMNeuron": NUMPY_SEED_DOMAIN,
     "QuantumInspiredLIFNeuron": NONZERO_SEED_DOMAIN,
     "SCStochasticRateAdaptationNeuron": NUMPY_SEED_DOMAIN,
+    "StochasticIFNeuron": NUMPY_SEED_DOMAIN,
     "StochasticLIFNeuron": NUMPY_SEED_DOMAIN,
 }
 
@@ -66,6 +67,8 @@ def _model(class_name: str) -> Any:
 
 
 class TestDeclarations:
+    """Every seeded catalogue model publishes the domain its constructor enforces."""
+
     def test_every_seeded_model_declares_a_domain(self) -> None:
         """A new seeded model must state what it takes, not leave it to be discovered."""
         import inspect
@@ -108,6 +111,8 @@ class TestDeclarations:
 
 
 class TestSeedDomainAccessor:
+    """``seed_domain`` falls back to the narrowest domain when nothing usable is declared."""
+
     def test_a_model_that_declares_nothing_gets_the_narrowest_domain(self) -> None:
         """An unknown model is given the value that is safe everywhere."""
 
@@ -135,6 +140,8 @@ class TestSeedDomainAccessor:
 
 
 class TestCheckSeed:
+    """``check_seed`` passes seeds inside a domain and refuses others with both bounds named."""
+
     def test_a_seed_inside_the_domain_is_returned(self) -> None:
         """The check is a pass-through when the domain admits the value."""
         assert check_seed("Probe", 5, (0, 10)) == 5
@@ -156,6 +163,8 @@ class TestCheckSeed:
 
 
 class TestDerivation:
+    """Derived population seeds stay inside the domain they are drawn for."""
+
     def test_derived_seeds_stay_inside_a_wide_domain(self) -> None:
         """A model with a wide domain no longer receives sixteen-bit seeds."""
         low, high = NUMPY_SEED_DOMAIN
@@ -201,6 +210,8 @@ class TestDerivation:
 
 
 class TestPopulationUsesTheDeclaration:
+    """A population derives its per-neuron seeds from its model's declared domain."""
+
     def test_a_narrow_model_receives_narrow_seeds(self) -> None:
         """A sixteen-bit model's population stays inside sixteen bits."""
         population = Population("PoissonNeuron", 8)
@@ -219,6 +230,8 @@ class TestPopulationUsesTheDeclaration:
 
 
 class TestTheContractRefusesBeforeConstruction:
+    """The experiment contract refuses an out-of-domain seed before any model is built."""
+
     @pytest.mark.parametrize(
         ("class_name", "seed"),
         [

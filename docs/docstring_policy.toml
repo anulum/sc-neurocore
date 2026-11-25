@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5125
+expected_file_count = 5127
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20544,3 +20544,10 @@ rationale = "Document stochastic-computing recurrent reservoir layer and input v
 [[file]]
 path = "tests/test_bitstream_encoder_and_layers_nonfinite_refusal.py"
 rationale = "Verify non-finite and shape refusals across BitstreamEncoder and SC layers."
+[[file]]
+path = "tests/test_neurons_seed_domain.py"
+rationale = "Pin every seeded catalogue model to the seed domain it declares and its constructor enforces, and check that populations and the experiment contract use that domain."
+
+[[file]]
+path = "tests/test_studio_generator_state_visibility.py"
+rationale = "Show the mutation audit seeing a generator advance, and pin the catalogue models holding a generator with whether each declares it."

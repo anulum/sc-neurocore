@@ -42,10 +42,10 @@ from sc_neurocore.studio.state_layout import (
 )
 
 # Every catalogue model that holds a random generator, and whether it publishes
-# that generator's state through the declared `rng_state` variable. The five
+# that generator's state through the declared `rng_state` variable. Those
 # that do not are DISCOVERED-PRIVATE-REGISTERS-OUTSIDE-LAYOUT and
 # DISCOVERED-DESCRIPTORS-WITHOUT-STATE; this pin keeps the set from growing
-# while those rows are open.
+# silently while those rows are open: an entry is added only with its reason.
 GENERATOR_MODELS: dict[str, bool] = {
     "EscapeRateNeuron": True,
     "PoissonNeuron": True,
@@ -54,6 +54,11 @@ GENERATOR_MODELS: dict[str, bool] = {
     "GammaRenewalNeuron": False,
     "QuantumInspiredLIFNeuron": False,
     "SCStochasticRateAdaptationNeuron": False,
+    # Listed on purpose as undeclared generator state: since its explicit seed, a seeded
+    # StochasticIFNeuron holds its own NumPy generator in `_rng`, which nothing declares while
+    # DISCOVERED-PRIVATE-REGISTERS-OUTSIDE-LAYOUT and DISCOVERED-DESCRIPTORS-WITHOUT-STATE are
+    # open (a PCG64 state has no scalar descriptor form). The audit reports its movement.
+    "StochasticIFNeuron": False,
     "StochasticLIFNeuron": False,
 }
 
@@ -65,6 +70,9 @@ DRIVE = 1.0
 # deterministic and its generator correctly never advances. The audit is asked
 # about the configuration where it does.
 DRAWING_PARAMETERS: dict[str, dict[str, float]] = {
+    # Unseeded, StochasticIFNeuron draws from the global generator and holds `_rng = None`;
+    # seeded, its own generator advances every step.
+    "StochasticIFNeuron": {"seed": 1},
     "StochasticLIFNeuron": {"noise_std": 0.5},
 }
 
@@ -118,6 +126,8 @@ def _run_and_audit(class_name: str) -> tuple[Any, tuple[str, ...]]:
 
 
 class TestFingerprintSeesAGenerator:
+    """The audit fingerprint of a generator changes when the generator draws."""
+
     def test_a_numpy_generator_fingerprint_changes_with_a_draw(self) -> None:
         """The defect: a drawn-from generator fingerprinted identically before."""
         generator = np.random.default_rng(7)
@@ -180,6 +190,8 @@ class TestFingerprintSeesAGenerator:
 
 
 class TestCatalogueGenerators:
+    """The catalogue's generator-holding models are pinned and each one is accounted for."""
+
     def test_the_models_holding_a_generator_are_the_pinned_set(self) -> None:
         """A new stochastic model must be considered, not silently added."""
         holders = sorted(

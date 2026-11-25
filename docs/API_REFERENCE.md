@@ -37669,7 +37669,8 @@ With ``seed`` set, the noise comes from the neuron's own ``numpy.random.Generato
 seeded with it, so two neurons with the same seed give the same spike train whatever
 else draws random numbers, and ``reset`` restarts the stream. Without a seed the noise
 comes from NumPy's process-wide generator (``np.random.randn``), as before, so
-``np.random.seed`` still governs it.
+``np.random.seed`` still governs it. The seeds it accepts are ``SEED_DOMAIN``, the
+non-negative range a NumPy ``SeedSequence`` takes up to the signed 64-bit bound.
 
 - **__post_init__**()
   - Refuse non-finite voltages and drift, non-positive time constants, negative sigma and a bad seed.

@@ -12,8 +12,11 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
+from typing import ClassVar
 
 import numpy as np
+
+from sc_neurocore.neurons.seed_domain import NUMPY_SEED_DOMAIN, SeedDomain
 
 
 @dataclass
@@ -26,8 +29,11 @@ class StochasticIFNeuron:
     seeded with it, so two neurons with the same seed give the same spike train whatever
     else draws random numbers, and ``reset`` restarts the stream. Without a seed the noise
     comes from NumPy's process-wide generator (``np.random.randn``), as before, so
-    ``np.random.seed`` still governs it.
+    ``np.random.seed`` still governs it. The seeds it accepts are ``SEED_DOMAIN``, the
+    non-negative range a NumPy ``SeedSequence`` takes up to the signed 64-bit bound.
     """
+
+    SEED_DOMAIN: ClassVar[SeedDomain] = NUMPY_SEED_DOMAIN
 
     v: float = -70.0
     v_rest: float = -70.0

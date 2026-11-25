@@ -776,6 +776,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- StochasticIFNeuron, which takes a `seed` since it gained its own noise
+  generator, now declares its seed domain (`SEED_DOMAIN`, the NumPy range
+  0 to 2^63-1 its constructor already enforced), and the catalogue pin of
+  models holding a generator lists it on purpose as undeclared generator
+  state: a seeded neuron's NumPy generator has no descriptor form yet, and
+  the mutation audit reports its movement. The two catalogue-wide tests that
+  check these declarations failed after the seed was added.
+
 - `BitstreamEncoder` (`bernoulli`, `bipolar`, `sobol`, `chaotic`), the probability/value conversion helpers in `sc_neurocore.utils.bitstreams`, and `SCDenseLayer`, `SCRecurrentLayer`, `SCLearningLayer`, `PredictiveCodingSCLayer`, and `SCFusionLayer` now reject `NaN`, `±Inf`, boolean scalars, and mismatched input shapes before clamping or mutating RNG, membrane, or synaptic state.
 
 - `SpikeServer` now refuses unlabelled or duplicate-label population networks at construction and validates all population inputs (names, finite real numeric scalars rejecting booleans and complex numbers, and exact `pop.n` vector lengths) before any population steps, answering malformed population drives with HTTP 400 `ServeRefusal` instead of advancing earlier populations or raising HTTP 500 `IndexError`/`TypeError`.
