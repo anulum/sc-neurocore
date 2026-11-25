@@ -99,6 +99,15 @@ else:
     print(f"Options: reduce hidden size, use compression, or target larger FPGA")
 ```
 
+`fits_on_target` requires all three budgets: the LUTs, the block RAM and the clock
+(`clock_mhz` at most the target's `max_freq_mhz`). Targets list block RAM in kilobits
+(`FPGATarget.total_bram_kbits`), while reports give `total_bram_kb` in kilobytes; the fit
+compares the two in bits. `utilization_pct` is the LUT utilisation, and `summary()` names
+the budget that is exceeded. An unknown target, a clock that is not finite and positive,
+`neuron_type` other than `"lif"` or `"event"`, or a non-positive layer size or bitstream
+length raises `ValueError`. `neuron_type="event"` selects the event-driven architecture,
+like `event_driven=True`, and the dynamic power includes the AXI/AER infrastructure LUTs.
+
 ## How Estimates Are Computed
 
 | Resource | Formula | Calibration |

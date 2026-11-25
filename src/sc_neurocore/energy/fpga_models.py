@@ -19,16 +19,30 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class FPGATarget:
-    """FPGA target specification."""
+    """FPGA target specification.
+
+    Block RAM is held in kilobits, as vendors list it; ``total_bram_bits`` and
+    ``total_bram_kb`` (kilobytes, the unit of the estimate reports) are derived from it.
+    """
 
     name: str
     family: str
     total_luts: int
-    total_bram_kb: int
+    total_bram_kbits: int  # block RAM in kilobits (1024 bits), as vendors list it
     total_dsp: int
     voltage: float  # core voltage (V)
     max_freq_mhz: float  # typical max frequency
     c_eff_per_lut_ff: float  # effective capacitance per LUT toggle (fF)
+
+    @property
+    def total_bram_bits(self) -> int:
+        """Return the block RAM in bits."""
+        return self.total_bram_kbits * 1024
+
+    @property
+    def total_bram_kb(self) -> float:
+        """Return the block RAM in kilobytes (8192 bits), the unit the estimate reports use."""
+        return self.total_bram_kbits / 8.0
 
 
 # Calibrated against Yosys synthesis reports
@@ -36,7 +50,7 @@ ICE40_HX8K = FPGATarget(
     name="ice40_hx8k",
     family="ice40",
     total_luts=7680,
-    total_bram_kb=128,
+    total_bram_kbits=128,
     total_dsp=0,
     voltage=1.2,
     max_freq_mhz=150.0,
@@ -47,7 +61,7 @@ ECP5_85K = FPGATarget(
     name="ecp5_85k",
     family="ecp5",
     total_luts=83640,
-    total_bram_kb=3744,
+    total_bram_kbits=3744,
     total_dsp=156,
     voltage=1.1,
     max_freq_mhz=400.0,
@@ -58,7 +72,7 @@ ARTIX7_100T = FPGATarget(
     name="artix7_100t",
     family="xc7a",
     total_luts=63400,
-    total_bram_kb=4860,
+    total_bram_kbits=4860,
     total_dsp=240,
     voltage=1.0,
     max_freq_mhz=450.0,
@@ -69,7 +83,7 @@ ZYNQ_7020 = FPGATarget(
     name="zynq_7020",
     family="xc7z",
     total_luts=53200,
-    total_bram_kb=4480,
+    total_bram_kbits=4480,
     total_dsp=220,
     voltage=1.0,
     max_freq_mhz=400.0,

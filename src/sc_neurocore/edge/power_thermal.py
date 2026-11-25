@@ -25,7 +25,7 @@ from typing import Any
 from sc_neurocore.energy.estimator import EnergyReport, estimate
 from sc_neurocore.energy.fpga_models import TARGETS
 
-SCHEMA_VERSION = "sc-neurocore.fpga.power-thermal.v1"
+SCHEMA_VERSION = "sc-neurocore.fpga.power-thermal.v2"
 
 _DEFAULT_THETA_JA_C_PER_W = {
     "ice40": 38.0,
@@ -52,6 +52,7 @@ class PowerThermalConfig:
     artefact_name: str = "power_thermal_model.json"
 
     def __post_init__(self) -> None:
+        """Refuse an unknown target, empty or non-positive layer sizes and invalid run settings."""
         if self.target not in TARGETS:
             raise ValueError(f"unknown FPGA target '{self.target}'")
         if not self.layer_sizes:
@@ -118,7 +119,6 @@ class VivadoUtilizationReport:
 
 def build_power_thermal_model(config: PowerThermalConfig) -> dict[str, Any]:
     """Build a deterministic JSON-compatible FPGA power/thermal model."""
-
     report = estimate(
         list(config.layer_sizes),
         target=config.target,
@@ -191,7 +191,6 @@ def build_power_thermal_model_from_vivado_reports(
     context, but replaces headline power and thermal values with the routed
     report values from Vivado.
     """
-
     report_root = Path(report_dir)
     power = parse_vivado_power_report(report_root / power_report)
     utilisation = parse_vivado_utilization_report(report_root / utilization_report)
@@ -259,7 +258,6 @@ def build_power_thermal_model_from_vivado_reports(
 
 def parse_vivado_power_report(path: str | Path) -> VivadoPowerReport:
     """Parse headline power and thermal fields from a Vivado report_power file."""
-
     report_path = Path(path)
     text = report_path.read_text(encoding="utf-8", errors="replace")
     return VivadoPowerReport(
@@ -280,7 +278,6 @@ def parse_vivado_power_report(path: str | Path) -> VivadoPowerReport:
 
 def parse_vivado_utilization_report(path: str | Path) -> VivadoUtilizationReport:
     """Parse FPGA resource counts from a Vivado report_utilization file."""
-
     report_path = Path(path)
     text = report_path.read_text(encoding="utf-8", errors="replace")
     slice_luts = _extract_utilisation_row(text, "Slice LUTs")
@@ -310,7 +307,6 @@ def parse_vivado_utilization_report(path: str | Path) -> VivadoUtilizationReport
 
 def write_power_thermal_model(output_dir: str | Path, config: PowerThermalConfig) -> Path:
     """Write `power_thermal_model.json` beside generated FPGA artefacts."""
-
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
     destination = output / config.artefact_name
@@ -330,7 +326,6 @@ def write_power_thermal_model_from_vivado_reports(
     utilization_report: str = "system_wrapper_utilization_placed.rpt",
 ) -> Path:
     """Write report-derived FPGA power/thermal JSON beside deployable artefacts."""
-
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
     destination = output / config.artefact_name
@@ -354,6 +349,7 @@ def _target_payload(target: str) -> dict[str, Any]:
         "family": spec.family,
         "total_luts": spec.total_luts,
         "total_bram_kb": spec.total_bram_kb,
+        "total_bram_kbits": spec.total_bram_kbits,
         "total_dsp": spec.total_dsp,
         "voltage": spec.voltage,
         "max_freq_mhz": spec.max_freq_mhz,

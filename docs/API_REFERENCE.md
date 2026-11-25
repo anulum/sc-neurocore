@@ -22517,6 +22517,7 @@ Memory footprint estimate for a tinySC network.
 Inputs for an FPGA power and thermal deployment estimate.
 
 - **__post_init__**()
+  - Refuse an unknown target, empty or non-positive layer sizes and invalid run settings.
 
 ### Class `VivadoPowerReport`
 Power and thermal values parsed from a routed Vivado power report.
@@ -22829,6 +22830,7 @@ Resource estimate for one layer.
 Complete pre-silicon energy estimate for an SNN on an FPGA target.
 
 - **__post_init__**()
+  - Derive the totals and the fit against the target's LUT, BRAM and clock budgets.
 - **summary**()
   - Human-readable summary.
 
@@ -22844,7 +22846,8 @@ target : str
 bitstream_length : int
     SC bitstream length L (affects latency and precision).
 neuron_type : str
-    'lif' (clock-driven) or 'event' (event-driven).
+    'lif' (clock-driven) or 'event' (event-driven); 'event' is the same as
+    ``event_driven=True``.
 event_driven : bool
     Use event-driven architecture (AER).
 clock_mhz : float
@@ -22855,7 +22858,14 @@ include_infra : bool
 Returns
 -------
 EnergyReport
-    Complete resource and power estimate.
+    Complete resource and power estimate. Its ``fits_on_target`` requires the LUTs, the
+    block RAM and the clock to be within the target's budgets.
+
+Raises
+------
+ValueError
+    If the target or ``neuron_type`` is unknown, a layer size or ``bitstream_length`` is
+    not a positive integer, or ``clock_mhz`` is not finite and positive.
 
 ---
 
@@ -22935,6 +22945,13 @@ ValueError
 ### Class `FPGATarget`
 FPGA target specification.
 
+Block RAM is held in kilobits, as vendors list it; ``total_bram_bits`` and
+``total_bram_kb`` (kilobytes, the unit of the estimate reports) are derived from it.
+
+- **total_bram_bits**()
+  - Return the block RAM in bits.
+- **total_bram_kb**()
+  - Return the block RAM in kilobytes (8192 bits), the unit the estimate reports use.
 
 ### Class `ModuleCost`
 Resource cost for one SC module instance.

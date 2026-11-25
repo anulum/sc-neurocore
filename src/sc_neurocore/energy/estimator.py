@@ -61,6 +61,7 @@ class EnergyReport:
     total_ffs: int = field(init=False)
     total_bram_kb: float = field(init=False)
     infra_luts: int = 0
+    infra_dynamic_power_mw: float = 0.0
     total_dynamic_power_mw: float = field(init=False)
     total_latency_cycles: int = field(init=False)
     energy_per_inference_nj: float = field(init=False)
@@ -69,22 +70,40 @@ class EnergyReport:
     utilization_pct: float = field(init=False)
 
     def __post_init__(self) -> None:
+        """Derive the totals and the fit against the target's LUT, BRAM and clock budgets.
+
+        ``total_bram_kb`` is in kilobytes (8192 bits); the target's block RAM is compared in
+        bits. ``utilization_pct`` is the LUT utilisation.
+
+        Raises
+        ------
+        ValueError
+            If ``target`` is not a known FPGA target or ``clock_freq_mhz`` is not finite and
+            positive.
+        """
+        target_info = TARGETS.get(self.target)
+        if target_info is None:
+            raise ValueError(f"Unknown target '{self.target}'. Options: {list(TARGETS)}")
+        if not np.isfinite(self.clock_freq_mhz) or self.clock_freq_mhz <= 0.0:
+            raise ValueError("clock_freq_mhz must be finite and positive")
         self.total_luts = sum(l.luts for l in self.layers) + self.infra_luts
         self.total_ffs = sum(l.ffs for l in self.layers)
-        self.total_bram_kb = sum(l.bram_bits for l in self.layers) / 8192.0
-        self.total_dynamic_power_mw = sum(l.dynamic_power_mw for l in self.layers)
+        bram_bits = sum(l.bram_bits for l in self.layers)
+        self.total_bram_kb = bram_bits / 8192.0
+        self.total_dynamic_power_mw = (
+            sum(l.dynamic_power_mw for l in self.layers) + self.infra_dynamic_power_mw
+        )
         self.total_latency_cycles = sum(l.latency_cycles for l in self.layers)
 
         latency_s = self.total_latency_cycles / (self.clock_freq_mhz * 1e6)
         self.energy_per_inference_nj = self.total_dynamic_power_mw * latency_s * 1e6
 
-        target_info = TARGETS.get(self.target)
-        if target_info:
-            self.fits_on_target = self.total_luts <= target_info.total_luts
-            self.utilization_pct = (self.total_luts / target_info.total_luts) * 100
-        else:  # pragma: no cover — unknown target fallback
-            self.fits_on_target = True
-            self.utilization_pct = 0.0
+        self.fits_on_target = (
+            self.total_luts <= target_info.total_luts
+            and bram_bits <= target_info.total_bram_bits
+            and self.clock_freq_mhz <= target_info.max_freq_mhz
+        )
+        self.utilization_pct = (self.total_luts / target_info.total_luts) * 100
 
     def summary(self) -> str:
         """Human-readable summary."""
@@ -112,10 +131,22 @@ class EnergyReport:
                 f"  Energy/inf:     {self.energy_per_inference_nj:.2f} nJ",
                 f"  Clock:          {self.clock_freq_mhz:.0f} MHz",
                 f"  Utilization:    {self.utilization_pct:.1f}%",
-                f"  Fits on target: {'YES' if self.fits_on_target else 'NO — exceeds LUT budget'}",
+                f"  Fits on target: {'YES' if self.fits_on_target else 'NO — ' + self._overrun()}",
             ]
         )
         return "\n".join(lines)
+
+    def _overrun(self) -> str:
+        """Name the budgets the estimate exceeds on its target."""
+        target_info = TARGETS[self.target]
+        reasons = []
+        if self.total_luts > target_info.total_luts:
+            reasons.append("LUT")
+        if self.total_bram_kb > target_info.total_bram_kb:
+            reasons.append("BRAM")
+        if self.clock_freq_mhz > target_info.max_freq_mhz:
+            reasons.append("clock")
+        return "exceeds the " + " and ".join(reasons) + " budget"
 
 
 def estimate(
@@ -138,7 +169,8 @@ def estimate(
     bitstream_length : int
         SC bitstream length L (affects latency and precision).
     neuron_type : str
-        'lif' (clock-driven) or 'event' (event-driven).
+        'lif' (clock-driven) or 'event' (event-driven); 'event' is the same as
+        ``event_driven=True``.
     event_driven : bool
         Use event-driven architecture (AER).
     clock_mhz : float
@@ -149,11 +181,33 @@ def estimate(
     Returns
     -------
     EnergyReport
-        Complete resource and power estimate.
+        Complete resource and power estimate. Its ``fits_on_target`` requires the LUTs, the
+        block RAM and the clock to be within the target's budgets.
+
+    Raises
+    ------
+    ValueError
+        If the target or ``neuron_type`` is unknown, a layer size or ``bitstream_length`` is
+        not a positive integer, or ``clock_mhz`` is not finite and positive.
     """
     target_info = TARGETS.get(target)
     if target_info is None:
         raise ValueError(f"Unknown target '{target}'. Options: {list(TARGETS)}")
+    if neuron_type not in ("lif", "event"):
+        raise ValueError("neuron_type must be 'lif' or 'event'")
+    if not np.isfinite(clock_mhz) or clock_mhz <= 0.0:
+        raise ValueError("clock_mhz must be finite and positive")
+    if (
+        isinstance(bitstream_length, bool)
+        or not isinstance(bitstream_length, int)
+        or bitstream_length < 1
+    ):
+        raise ValueError("bitstream_length must be a positive integer")
+    for n_in, n_out in layer_sizes:
+        for size in (n_in, n_out):
+            if isinstance(size, bool) or not isinstance(size, int) or size < 1:
+                raise ValueError("layer sizes must be positive integers")
+    event_driven = event_driven or neuron_type == "event"
 
     neuron_cost = EVENT_NEURON if event_driven else LIF_NEURON
 
@@ -205,16 +259,28 @@ def estimate(
             )
         )
 
-    # Infrastructure cost
+    # Infrastructure cost, powered at the same activity and clock as the layers
     infra_luts = 0
     if include_infra:
         infra_luts = AXI_LITE.luts
         if event_driven:
             infra_luts += AER_ENCODER.luts + AER_ROUTER.luts
+    activity = 0.1 if event_driven else 0.5
+    infra_power_mw = (
+        target_info.c_eff_per_lut_ff
+        * 1e-15
+        * target_info.voltage**2
+        * clock_mhz
+        * 1e6
+        * infra_luts
+        * activity
+        * 1e3
+    )
 
     return EnergyReport(
         target=target,
         layers=layers,
         infra_luts=infra_luts,
+        infra_dynamic_power_mw=infra_power_mw,
         clock_freq_mhz=clock_mhz,
     )

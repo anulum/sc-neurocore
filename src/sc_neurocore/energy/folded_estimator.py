@@ -130,7 +130,23 @@ class FoldedAreaEstimate:
     lut_utilisation_pct: float = field(init=False)
 
     def __post_init__(self) -> None:
-        """Derive the totals, the energy per tick and the fit against the target budget."""
+        """Derive the totals, the energy per tick and the fit against the target budget.
+
+        ``total_bram_kb`` is in kilobytes (8192 bits); the target's block RAM is compared in
+        bits. The fit requires the LUTs, DSPs, block RAM and clock to be within the target's
+        budgets.
+
+        Raises
+        ------
+        ValueError
+            If ``target`` is not a known FPGA target or ``clock_freq_mhz`` is not finite and
+            positive.
+        """
+        target_info = TARGETS.get(self.target)
+        if target_info is None:
+            raise ValueError(f"Unknown target '{self.target}'. Options: {list(TARGETS)}")
+        if not math.isfinite(self.clock_freq_mhz) or self.clock_freq_mhz <= 0.0:
+            raise ValueError("clock_freq_mhz must be finite and positive")
         self.total_luts = self.pe_luts + self.multiplier_luts + self.rom_luts + self.infra_luts
         self.total_ffs = self.spike_bus_ffs + self.sequencer_ffs
         self.total_bram_kb = self.bram_bits / 8192.0
@@ -138,17 +154,13 @@ class FoldedAreaEstimate:
         latency_s = self.latency_cycles / (self.clock_freq_mhz * 1e6)
         self.energy_per_tick_nj = self.dynamic_power_mw * latency_s * 1e6
 
-        target_info = TARGETS.get(self.target)
-        if target_info is not None:
-            self.fits_on_target = (
-                self.total_luts <= target_info.total_luts
-                and self.dsps <= target_info.total_dsp
-                and self.total_bram_kb <= target_info.total_bram_kb
-            )
-            self.lut_utilisation_pct = (self.total_luts / target_info.total_luts) * 100.0
-        else:  # pragma: no cover — guarded by the caller (estimate_folded_area validates)
-            self.fits_on_target = True
-            self.lut_utilisation_pct = 0.0
+        self.fits_on_target = (
+            self.total_luts <= target_info.total_luts
+            and self.dsps <= target_info.total_dsp
+            and self.bram_bits <= target_info.total_bram_bits
+            and self.clock_freq_mhz <= target_info.max_freq_mhz
+        )
+        self.lut_utilisation_pct = (self.total_luts / target_info.total_luts) * 100.0
 
     def as_dict(self) -> dict[str, float | int | str | bool]:
         """Return a plain mapping of the estimate (for JSON artefacts)."""

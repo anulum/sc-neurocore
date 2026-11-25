@@ -441,6 +441,11 @@ write_power_thermal_model_from_vivado_reports(
 )
 ```
 
+Both paths write `schema_version = "sc-neurocore.fpga.power-thermal.v2"`. In v2
+`target.total_bram_kb` is in kilobytes and `target.total_bram_kbits` gives the
+target's block RAM in kilobits; v1 files carried the kilobit figure under
+`total_bram_kb`, so a reader must check the version before using that field.
+
 The emitted JSON uses `source_mode = "vivado_report_derived"`. It is still not
 a substitute for physical PYNQ board measurement; it is the reproducible bridge
 between routed Vivado reports and the deployment artefact directory.

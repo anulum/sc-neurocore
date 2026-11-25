@@ -463,6 +463,32 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- FPGA energy estimator migration notes. `FPGATarget.total_bram_kb` is
+  renamed to the field `total_bram_kbits`, so `FPGATarget(total_bram_kb=...)`
+  now raises TypeError; `.total_bram_kb` is now a read-only property in
+  kilobytes, one eighth of the old value (the iCE40 HX8K gives 16, not
+  128), and `.total_bram_bits` gives bits. `EnergyReport` gains
+  `infra_dynamic_power_mw`, and `total_dynamic_power_mw` now includes it.
+  `estimate()` refuses a `neuron_type` other than "lif" or "event", a
+  non-positive or non-integer layer size or `bitstream_length`, and a
+  clock that is not finite and positive, all of which it used to accept.
+  The power/thermal JSON is now `sc-neurocore.fpga.power-thermal.v2`: its
+  `target.total_bram_kb` is in kilobytes, `target.total_bram_kbits` is
+  new, and `fits_on_target` and the dynamic power follow the estimator; a
+  v1 reader must not take the v2 `total_bram_kb` as kilobits.
+
+- The FPGA energy estimators compare block RAM in like units: targets
+  list it in kilobits (`FPGATarget.total_bram_kbits`), the reports give
+  `total_bram_kb` in kilobytes, and the folded estimator had compared
+  the two directly, accepting designs 8 times too large. The fit of both
+  estimators now requires the LUTs, the block RAM (in bits) and the
+  clock to be within the target budgets, an unknown target or a clock
+  that is not finite and positive raises ValueError instead of being
+  reported as fitting, `estimate()` honours `neuron_type` ("event" is
+  the event-driven architecture) and refuses invalid sizes, and the
+  dynamic power includes the AXI and AER infrastructure LUTs. The edge
+  power report also carries the target block RAM in kilobits.
+
 - `sc_neurocore.neurons` now exports every class in
   `neurons.models.__all__` (46 were missing, among them ATypeKNeuron,
   IhNeuron and UpperMotorNeuron), and its Rust auto-dispatch is an

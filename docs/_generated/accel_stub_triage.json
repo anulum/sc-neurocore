@@ -3060,7 +3060,7 @@
           "numpy calls",
           "multiplicative operators"
         ],
-        "operators": 24,
+        "operators": 32,
         "basis": "a"
       },
       "stubs": [
@@ -3068,7 +3068,7 @@
           "lane": "mojo",
           "path": "src/sc_neurocore/accel/mojo/kernels/estimator.mojo",
           "rule": "header_stem",
-          "verbatim_line_share": "73/91",
+          "verbatim_line_share": "72/91",
           "loaders": [],
           "named_by": [],
           "declared": "mirror"
