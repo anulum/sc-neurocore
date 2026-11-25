@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5128
+expected_file_count = 5129
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20555,3 +20555,7 @@ rationale = "Show the mutation audit seeing a generator advance, and pin the cat
 [[file]]
 path = "tests/test_sc_clipped_logistic_bursting_map_domain_guards.py"
 rationale = "Verify constructor, runtime, multi-backend, and overflow-rollback guards for the clipped-logistic map."
+
+[[file]]
+path = "tests/test_equation_neuron_transactional_rollback.py"
+rationale = "Verify atomic rollback of EquationNeuron state, graded spike value and RNG streams."

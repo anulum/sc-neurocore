@@ -548,6 +548,23 @@ class EquationNeuron:
         env.update(kwargs)
         return env
 
+    def _apply_spike_and_reset(self, previous_state: dict[str, float], **kwargs: float) -> None:
+        """Evaluate ``spike_value`` and ``reset_rules`` atomically on a firing step."""
+        reset_env = self._build_env(**kwargs)
+        reset_env.update(_previous_state_aliases(previous_state))
+        if self._compiled_spike_value is not None:
+            graded = evaluate_scalar(self._compiled_spike_value, reset_env)
+            if not math.isfinite(graded):
+                raise EquationStateFailure("spike_value must remain finite")
+            self.last_spike_value = graded
+        updates: dict[str, float] = {}
+        for var, code in self._compiled_reset.items():
+            reset_value = evaluate_scalar(code, reset_env)
+            if not math.isfinite(reset_value):
+                raise EquationStateFailure(f"{var!r} became non-finite ({reset_value}) after reset")
+            updates[var] = reset_value
+        self.state.update(updates)
+
     def step(self, I: float = 0.0, **kwargs: float) -> int:
         """Advance the neuron by one macro timestep; return 1 if it spikes.
 
@@ -561,7 +578,9 @@ class EquationNeuron:
         repetitively firing oscillator counts one spike per action potential rather than
         one per sub-step it stays above threshold. With the default ``substeps == 1`` this
         is a plain single integration step and every existing model is bit-for-bit
-        unchanged.
+        unchanged. Any fault during integration, threshold evaluation, graded spike
+        computation or state reset restores the pre-step state, graded spike value,
+        edge-crossing flag and random streams before re-raising.
         """
         kwargs["I"] = convert_runtime_value(
             strict_units=self._strict_units,
@@ -580,28 +599,29 @@ class EquationNeuron:
                 for name, value in kwargs.items()
             }
         previous_state = dict(self.state)
+        previous_spike_value = self.last_spike_value
+        previous_threshold_active = self._prev_threshold_active
+        previous_xi_substep = self._xi_substep
+        stochastic_rng = self._stochastic_rng
+        previous_stochastic_rng = stochastic_rng.state if stochastic_rng is not None else 0
+        noise_rng = self._noise_rng
+        previous_noise_rng_state = (
+            deepcopy(noise_rng.bit_generator.state) if noise_rng is not None else {}
+        )
         try:
             for substep in range(self.substeps):
                 # The threshold, reset and spike value read the last sub-step's xi.
                 self._xi_substep = substep
                 self._integrate_once(**kwargs)
-        except Exception:
-            if self._stochastic_threshold_enabled:
-                self.state = previous_state
-            raise
 
-        spike = 0
-        previous_spike_value = self.last_spike_value
-        self.last_spike_value = 0.0
-        if self._stochastic_threshold_enabled:
-            stochastic_rng = self._stochastic_rng
-            compiled_stochastic = (
-                self._compiled_rate if self._escape_rate_enabled else self._compiled_probability
-            )
-            if stochastic_rng is None or compiled_stochastic is None:
-                raise RuntimeError("stochastic-threshold runtime was not initialised")
-            previous_rng = stochastic_rng.state
-            try:
+            spike = 0
+            self.last_spike_value = 0.0
+            if self._stochastic_threshold_enabled:
+                compiled_stochastic = (
+                    self._compiled_rate if self._escape_rate_enabled else self._compiled_probability
+                )
+                if stochastic_rng is None or compiled_stochastic is None:
+                    raise RuntimeError("stochastic-threshold runtime was not initialised")
                 env_post = self._build_env(**kwargs)
                 env_post.update(_previous_state_aliases(previous_state))
                 if self._escape_rate_enabled:
@@ -622,46 +642,31 @@ class EquationNeuron:
                     raise EquationStateFailure(
                         "stochastic spike probability must remain finite and bounded"
                     )
-                fired = stochastic_rng.trial(probability)
+                if stochastic_rng.trial(probability):
+                    spike = 1
+                    self._apply_spike_and_reset(previous_state, **kwargs)
+            elif self._compiled_threshold:
+                env_post = self._build_env(**kwargs)
+                env_post.update(_previous_state_aliases(previous_state))
+                active = evaluate_condition(self._compiled_threshold, env_post)
+                if self._edge_detection:
+                    fired = active and not self._prev_threshold_active
+                    self._prev_threshold_active = active
+                else:
+                    fired = active
                 if fired:
                     spike = 1
-                    reset_env = self._build_env(**kwargs)
-                    reset_env.update(_previous_state_aliases(previous_state))
-                    if self._compiled_spike_value is not None:
-                        self.last_spike_value = evaluate_scalar(
-                            self._compiled_spike_value, reset_env
-                        )
-                    for var, code in self._compiled_reset.items():
-                        self.state[var] = evaluate_scalar(code, reset_env)
-            except Exception:
-                self.state = previous_state
-                stochastic_rng.restore(previous_rng)
-                self.last_spike_value = previous_spike_value
-                raise
-        elif self._compiled_threshold:
-            env_post = self._build_env(**kwargs)
-            env_post.update(_previous_state_aliases(previous_state))
-            active = evaluate_condition(self._compiled_threshold, env_post)
-            # ``crossing`` fires once on the inactive -> active transition (a rising
-            # threshold crossing, matching the hand oscillator models' ``v >= thr and
-            # v_prev < thr`` edge test); ``level`` fires on every step the condition
-            # holds. The tracked flag is the pre-reset condition on the just-integrated
-            # state, which equals the committed state for a non-resetting oscillator and
-            # is cleared by any reset that drops the state back below threshold, so a
-            # reset-based level model behaves identically under either detection mode.
-            if self._edge_detection:
-                fired = active and not self._prev_threshold_active
-                self._prev_threshold_active = active
-            else:
-                fired = active
-            if fired:
-                spike = 1
-                reset_env = self._build_env(**kwargs)
-                reset_env.update(_previous_state_aliases(previous_state))
-                if self._compiled_spike_value is not None:
-                    self.last_spike_value = evaluate_scalar(self._compiled_spike_value, reset_env)
-                for var, code in self._compiled_reset.items():
-                    self.state[var] = evaluate_scalar(code, reset_env)
+                    self._apply_spike_and_reset(previous_state, **kwargs)
+        except Exception:
+            self.state = previous_state
+            self.last_spike_value = previous_spike_value
+            self._prev_threshold_active = previous_threshold_active
+            self._xi_substep = previous_xi_substep
+            if stochastic_rng is not None:
+                stochastic_rng.restore(previous_stochastic_rng)
+            if noise_rng is not None:
+                noise_rng.bit_generator.state = previous_noise_rng_state
+            raise
 
         self._random.step += 1
         return spike

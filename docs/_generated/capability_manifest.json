@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5602
+    "test_files": 5603
   },
   "documentation": {
     "public_pages": [
@@ -4995,6 +4995,7 @@
       "tests/test_equation_evaluation.py",
       "tests/test_equation_ir_compiler.py",
       "tests/test_equation_namespace.py",
+      "tests/test_equation_neuron_transactional_rollback.py",
       "tests/test_equation_program.py",
       "tests/test_equation_random.py",
       "tests/test_equation_random_and_seed_alias_edges.py",

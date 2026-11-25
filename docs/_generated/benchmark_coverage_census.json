@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 26,
-    "outdated": 129,
+    "current": 25,
+    "outdated": 130,
     "reviewed": 0,
     "unbound": 175
   },
@@ -2483,16 +2483,14 @@
       "name": "bench_cordic_q8_8.json"
     },
     {
-      "changed": [
-        "benchmarks/_benchmark_context.py",
-        "src/sc_neurocore/neurons/equation_builder.py",
-        "src/sc_neurocore/neurons/equation_safety.py"
-      ],
-      "currency": "outdated",
+      "currency": "current",
       "name": "bench_equation_program.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "src/sc_neurocore/neurons/equation_builder.py"
+      ],
+      "currency": "outdated",
       "name": "bench_function_call_domains.json"
     },
     {
@@ -2599,7 +2597,10 @@
       "name": "bench_sc_stochastic_rate_adaptation.json"
     },
     {
-      "currency": "current",
+      "changed": [
+        "src/sc_neurocore/neurons/equation_builder.py"
+      ],
+      "currency": "outdated",
       "name": "bench_verilog_compiler.json"
     },
     {
@@ -2971,7 +2972,8 @@
     {
       "changed": [
         "Cargo.lock",
-        "engine/Cargo.toml"
+        "engine/Cargo.toml",
+        "src/sc_neurocore/neurons/equation_builder.py"
       ],
       "currency": "outdated",
       "name": "local_python_2026-10-29_equation_ir.json"
@@ -2979,7 +2981,8 @@
     {
       "changed": [
         "Cargo.lock",
-        "engine/Cargo.toml"
+        "engine/Cargo.toml",
+        "src/sc_neurocore/neurons/equation_builder.py"
       ],
       "currency": "outdated",
       "name": "local_python_2026-10-29_initial_state_equation_ir.json"

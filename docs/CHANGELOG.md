@@ -793,6 +793,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- `EquationNeuron.step` now rolls back atomically across deterministic as
+  well as stochastic-threshold runs. A fault during sub-step integration,
+  threshold evaluation, graded `spike_value` evaluation or multi-variable
+  reset restores the pre-step state, `last_spike_value`, edge-crossing
+  flag, diffusion sub-step index and stochastic or caller `noise_rng`
+  streams before re-raising, non-finite `spike_value` or reset values
+  fail closed with `EquationStateFailure`, the refreshed
+  `benchmarks/results/bench_equation_program.json` receipt places checked
+  equation programs at between 0.9 and 2.8 times the reference function,
+  and the four compiler-bound co-simulation readiness receipts and
+  derived readiness views are re-recorded against the updated compiler.
+
 - StochasticIFNeuron takes a NumPy integer seed (`np.int64(7)` and the
   like), which it refused with a `TypeError`. Any integral seed except a
   bool is accepted, stored as a Python `int` and seeds the same stream as
