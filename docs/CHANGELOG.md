@@ -945,6 +945,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   compares the engine and Python bit for bit over constant, mixed and
   suprathreshold drives and through a reset.
 
+- The engine's SFANeuron takes the Python model's step. It took a
+  forward-Euler step of the membrane and then decayed the adaptation
+  conductance by its exact exponential, while the Python model takes a
+  candidate-first fourth-order Runge-Kutta step of the coupled membrane
+  and conductance equations, so the same public name gave different
+  trajectories. The engine now takes that coupled RK4 step, in the same
+  order of operations, and on a spike adds `delta_g` to the candidate
+  conductance as Python does; an engine test pins a Python value and a
+  new test compares the engine and Python bit for bit over constant and
+  mixed drives and through a reset.
+
 - The eight AI-optimised neuron models in `sc_neurocore.neurons.models.ai_optimized`
   (`MultiTimescaleNeuron`, `AttentionGatedNeuron`, `PredictiveCodingNeuron`,
   `SelfReferentialNeuron`, `CompositionalBindingNeuron`,

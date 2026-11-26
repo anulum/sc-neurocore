@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5201
+expected_file_count = 5202
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20846,3 +20846,7 @@ rationale = "Exercise SC-NeuroCore: SelfReferentialNeuron has one warm-up rule i
 [[file]]
 path = "tests/test_nonlinear_lif_rust_python_parity.py"
 rationale = "Exercise SC-NeuroCore: the engine NonlinearLIF takes the Python model's RK4 step."
+
+[[file]]
+path = "tests/test_sfa_rust_python_parity.py"
+rationale = "Exercise SC-NeuroCore: the engine SFANeuron takes the Python model's coupled RK4 step."

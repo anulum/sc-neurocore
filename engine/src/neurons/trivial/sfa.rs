@@ -54,25 +54,53 @@ impl SFANeuron {
         }
     }
 
-    /// Advance one step with the input `current` and return 1 on a spike, else 0.
+    /// Advance one fourth-order Runge-Kutta step with the input `current` and return 1 on a
+    /// spike, else 0.
     ///
-    /// `v` takes a forward-Euler step of
-    /// `tau_m dv/dt = -(v - v_rest) - g_sfa * (v - e_k) + resistance * current`; then
-    /// `g_sfa` decays by `exp(-dt / tau_sfa)`. Reaching `v_threshold` sets `v` to `v_reset`
-    /// and adds `delta_g` to `g_sfa`. The input is not validated.
+    /// The derivatives are `dv = (-(v - v_rest) - g_sfa * (v - e_k) + resistance * current) /
+    /// tau_m` and `dg_sfa = -g_sfa / tau_sfa`. The candidate `(v, g_sfa)` is the classic RK4
+    /// combination of the four coupled slopes, evaluated in the same order of operations as
+    /// the Python model, so the engine follows it bit for bit. When the candidate `v` reaches
+    /// `v_threshold`, `v` is set to `v_reset` and `g_sfa` becomes the candidate plus `delta_g`;
+    /// otherwise the candidate becomes the state. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
-        self.v += (-(self.v - self.v_rest) - self.g_sfa * (self.v - self.e_k)
-            + self.resistance * current)
-            / self.tau_m
-            * self.dt;
-        self.g_sfa *= (-self.dt / self.tau_sfa).exp();
-        if self.v >= self.v_threshold {
+        let (v_candidate, g_candidate) = self.rk4_candidate(current);
+        if v_candidate >= self.v_threshold {
             self.v = self.v_reset;
-            self.g_sfa += self.delta_g;
+            self.g_sfa = g_candidate + self.delta_g;
             1
         } else {
+            self.v = v_candidate;
+            self.g_sfa = g_candidate;
             0
         }
+    }
+
+    fn derivatives(&self, v: f64, g_sfa: f64, current: f64) -> (f64, f64) {
+        let dv =
+            (-(v - self.v_rest) - g_sfa * (v - self.e_k) + self.resistance * current) / self.tau_m;
+        let dg = -g_sfa / self.tau_sfa;
+        (dv, dg)
+    }
+
+    fn rk4_candidate(&self, current: f64) -> (f64, f64) {
+        let (k1v, k1g) = self.derivatives(self.v, self.g_sfa, current);
+        let (k2v, k2g) = self.derivatives(
+            self.v + 0.5 * self.dt * k1v,
+            self.g_sfa + 0.5 * self.dt * k1g,
+            current,
+        );
+        let (k3v, k3g) = self.derivatives(
+            self.v + 0.5 * self.dt * k2v,
+            self.g_sfa + 0.5 * self.dt * k2g,
+            current,
+        );
+        let (k4v, k4g) =
+            self.derivatives(self.v + self.dt * k3v, self.g_sfa + self.dt * k3g, current);
+        (
+            self.v + (self.dt / 6.0) * (k1v + 2.0 * k2v + 2.0 * k3v + k4v),
+            self.g_sfa + (self.dt / 6.0) * (k1g + 2.0 * k2g + 2.0 * k3g + k4g),
+        )
     }
 
     /// Return `v` to `v_rest` and clear `g_sfa`; the parameters are kept.
@@ -91,6 +119,18 @@ impl Default for SFANeuron {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sfa_rk4_matches_the_python_model_bit_for_bit() {
+        // Python's SFANeuron after 50 steps of 30.0 from its defaults: one spike (step 11),
+        // v = -52.00976080767626 and g_sfa = 0.41141732902842876.
+        let mut n = SFANeuron::new();
+        let spikes: Vec<i32> = (0..50).map(|_| n.step(30.0)).collect();
+        assert_eq!(spikes.iter().sum::<i32>(), 1);
+        assert_eq!(spikes[10], 1);
+        assert_eq!(n.v, -52.00976080767626);
+        assert_eq!(n.g_sfa, 0.41141732902842876);
+    }
 
     #[test]
     fn sfa_fires_then_adapts() {
