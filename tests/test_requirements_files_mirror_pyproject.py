@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — pip requirements files mirror the package metadata
 
-"""Keep the pip requirements files that the README offers in step with pyproject."""
+"""Keep the pip requirements files that the installation guide offers in step with pyproject."""
 
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ def _requirement_file_entries(path: Path) -> tuple[list[str], list[Requirement]]
 
 
 def test_requirements_files_mirror_pyproject_dependencies() -> None:
-    """The pip requirements files offered in the README mirror pyproject.
+    """The pip requirements files offered in the installation guide mirror pyproject.
 
     Each file lists exactly the names pyproject declares, with the same
     extras and markers, and keeps every version clause pyproject states;
