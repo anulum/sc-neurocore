@@ -964,6 +964,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   new test compares the engine and Python bit for bit over constant and
   mixed drives and through a reset.
 
+- The engine's ShermanRinzelKeizerNeuron takes the Python model's step.
+  It took a forward-Euler step of the voltage and the `n` and `s` gates
+  with unclamped steady-state sigmoids, while the Python model takes a
+  fourth-order Runge-Kutta step with the sigmoid arguments clamped to
+  [-80, 80], so the same public name gave different bursts. The engine
+  now takes that RK4 step in the same order of operations; it still
+  reports an upward crossing of `v_threshold` and still does not
+  validate its input. An engine test pins a Python value and a new test
+  compares the engine and Python bit for bit over constant and mixed
+  drives and through a reset.
+
 - The eight AI-optimised neuron models in `sc_neurocore.neurons.models.ai_optimized`
   (`MultiTimescaleNeuron`, `AttentionGatedNeuron`, `PredictiveCodingNeuron`,
   `SelfReferentialNeuron`, `CompositionalBindingNeuron`,

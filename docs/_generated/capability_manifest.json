@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5610
+    "test_files": 5611
   },
   "documentation": {
     "public_pages": [
@@ -7655,6 +7655,7 @@
       "tests/test_shd_int_network.py",
       "tests/test_shd_int_reference.py",
       "tests/test_shd_iterative_prune_protocol.py",
+      "tests/test_sherman_rinzel_keizer_rust_python_parity.py",
       "tests/test_short_term_plasticity_contracts.py",
       "tests/test_side_channel_docs.py",
       "tests/test_sigma_delta_backend_configuration.py",
