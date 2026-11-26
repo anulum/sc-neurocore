@@ -122,7 +122,7 @@ def test_the_union_is_shown_on_every_run_and_excepts_only_registered_gpu_lines()
     job = ci_job("gpu-software-adapter-refusal")
     runs = "\n".join(str(step.get("run", "")) for step in job["steps"])
     assert "maturin build --release --locked --features gpu" in runs
-    assert "mesa-vulkan-drivers=25.2.8-0ubuntu0.24.04.4" in runs
+    assert "mesa-vulkan-drivers=25.2.8-0ubuntu0.24.04.5" in runs
     assert "tests/test_waveform_gpu_software_adapter_refusal.py" in runs
     refusal = next(
         step for step in job["steps"] if "test_waveform_gpu_software" in step.get("run", "")

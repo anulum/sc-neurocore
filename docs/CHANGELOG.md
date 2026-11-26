@@ -922,6 +922,15 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The CI job that checks the GPU encoder's refusal on a software Vulkan
+  adapter installs Mesa again. It pinned `mesa-vulkan-drivers`
+  `25.2.8-0ubuntu0.24.04.4`, which Ubuntu 24.04 replaced in its updates
+  pocket with `25.2.8-0ubuntu0.24.04.5` on 2026-11-17 and no longer
+  serves, so `apt-get install` stopped the job before any test ran. The
+  job and the coverage-gate contract test now name `.5`, the same Mesa
+  25.2.8 release with Ubuntu's later packaging; `libvulkan1` stays at
+  `1.3.275.0-1build1`, which is still published.
+
 - GLMNeuron, QuantumInspiredLIFNeuron, SCStochasticRateAdaptationNeuron
   and StochasticLIFNeuron refuse a seed above their declared `SEED_DOMAIN`
   with a `ValueError` naming it; two of them took any seed up to 2**64-1
