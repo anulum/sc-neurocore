@@ -62,7 +62,7 @@ jobs:
           python-version: "3.12.16"
           cache: pip
 
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version: "1.27.4"
           cache: false
@@ -734,7 +734,7 @@ jobs:
       # `go 1.27.4` (and release.yml / security-scanners.yml). A mismatched
       # version makes `go build` reject the module under GOTOOLCHAIN=local.
       # The builder also sets GOTOOLCHAIN=auto. TIER 0: real builds.
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version: "1.27.4"
           cache-dependency-path: |
@@ -1938,7 +1938,7 @@ jobs:
       - name: Install hashlocked native Go Windows test dependencies
         run: python -m pip install --require-hashes -r requirements/ci-dev.txt
       - name: Install the maintained Go compiler for real platform-refusal inputs
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version: "1.27.4"
           cache-dependency-path: src/sc_neurocore/accel/go/go.mod
