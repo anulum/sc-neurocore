@@ -975,6 +975,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   compares the engine and Python bit for bit over constant and mixed
   drives and through a reset.
 
+- The engine's SpiNNakerLIFNeuron takes the Python model's step. It
+  took a forward-Euler step of the membrane, while the Python model
+  advances it by the exact solution under a constant input over the
+  step, so the same public name gave different trajectories; its
+  refractory count could also end below 0 when `dt` does not divide
+  `tau_refrac`. The engine now takes the exact flow, computed as Python
+  computes it, and stops the count at 0. Engine tests pin a Python
+  value and the count's floor, and a new test compares the engine and
+  Python bit for bit over constant and mixed drives and through a reset.
+
 - The eight AI-optimised neuron models in `sc_neurocore.neurons.models.ai_optimized`
   (`MultiTimescaleNeuron`, `AttentionGatedNeuron`, `PredictiveCodingNeuron`,
   `SelfReferentialNeuron`, `CompositionalBindingNeuron`,

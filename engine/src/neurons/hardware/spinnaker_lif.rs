@@ -46,23 +46,28 @@ impl SpiNNakerLIFNeuron {
             dt: 1.0,
         }
     }
-    /// Advance one forward-Euler step and return 1 on a spike, else 0.
+    /// Advance one exact-flow step and return 1 on a spike, else 0.
     ///
-    /// While `refrac_count` is positive, the step counts it down by `dt`, leaves `v`
-    /// unchanged and returns 0. Otherwise `v` gains
-    /// `(-(v - v_rest) + current + i_offset) / tau_m * dt`, and reaching `v_threshold` sets
-    /// `v` to `v_reset` and starts the refractory period. The input is not validated.
+    /// While `refrac_count` is positive, the step counts it down by `dt`, never below 0,
+    /// leaves `v` unchanged and returns 0. Otherwise `v` follows the exact solution of
+    /// `tau_m dv/dt = -(v - v_rest) + current + i_offset` over `dt` under a constant input,
+    /// `steady + (v - steady) * exp(-dt / tau_m)` with `steady = v_rest + current + i_offset`,
+    /// as the Python model computes it; reaching `v_threshold` sets `v` to `v_reset` and
+    /// starts the refractory period. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         if self.refrac_count > 0.0 {
-            self.refrac_count -= self.dt;
+            self.refrac_count = (self.refrac_count - self.dt).max(0.0);
             return 0;
         }
-        self.v += (-(self.v - self.v_rest) + current + self.i_offset) / self.tau_m * self.dt;
-        if self.v >= self.v_threshold {
+        let steady = self.v_rest + current + self.i_offset;
+        let decay = (-self.dt / self.tau_m).exp();
+        let next_v = steady + (self.v - steady) * decay;
+        if next_v >= self.v_threshold {
             self.v = self.v_reset;
             self.refrac_count = self.tau_refrac;
             1
         } else {
+            self.v = next_v;
             0
         }
     }
