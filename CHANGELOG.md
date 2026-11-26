@@ -1966,6 +1966,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The qualified engine interface reference,
+  `tests/fixtures/engine_abi_default.json`, records the signature
+  `ParametricLIFNeuron(v=0.0, a=0.0, threshold=1.0)` that the engine's
+  sign-split sigmoid change gave the class. The Linux CPython 3.12 wheel
+  job compares the installed wheel with this reference and refused the
+  new signature. The reference is recaptured from that job's run and
+  source commit; an independent installation of the same wheel under
+  CPython 3.12.3 and NumPy 2.5.4 matches it in both directions, and the
+  signature is the only interface change.
+
 - The fuzz workflow's contract test is `tests/test_ci_fuzz_workflow_contract.py`,
   no longer `tests/test_fuzz_workflow_contract.py`. `SECURITY.md` names
   `tests/test_fuzz_*.py` as the Python `hypothesis` fuzz suites, and its

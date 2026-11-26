@@ -26474,7 +26474,7 @@
           "__module__": "sc_neurocore_engine.sc_neurocore_engine",
           "__name__": "ParametricLIFNeuron",
           "__qualname__": "ParametricLIFNeuron",
-          "__text_signature__": "()",
+          "__text_signature__": "(v=0.0, a=0.0, threshold=1.0)",
           "aliases": [
             "sc_neurocore_engine.ParametricLIFNeuron",
             "sc_neurocore_engine.sc_neurocore_engine.ParametricLIFNeuron"
@@ -26726,7 +26726,7 @@
               "signature_error": null
             }
           },
-          "signature": "()",
+          "signature": "(v=0.0, a=0.0, threshold=1.0)",
           "signature_error": null
         },
         "PerfectIntegratorNeuron": {
@@ -79251,7 +79251,7 @@
           "__module__": "sc_neurocore_engine.sc_neurocore_engine",
           "__name__": "ParametricLIFNeuron",
           "__qualname__": "ParametricLIFNeuron",
-          "__text_signature__": "()",
+          "__text_signature__": "(v=0.0, a=0.0, threshold=1.0)",
           "aliases": [
             "sc_neurocore_engine.ParametricLIFNeuron",
             "sc_neurocore_engine.sc_neurocore_engine.ParametricLIFNeuron"
@@ -79503,7 +79503,7 @@
               "signature_error": null
             }
           },
-          "signature": "()",
+          "signature": "(v=0.0, a=0.0, threshold=1.0)",
           "signature_error": null
         },
         "PerfectIntegratorNeuron": {
@@ -109299,11 +109299,11 @@
   },
   "provenance": {
     "capture_artifact": {
-      "archive_sha256": "d10ee6e4386ab28de7b86c9423013e53fdf865c3563a24f89b68769eb150bd2d",
-      "id": 14652165045,
-      "inventory_sha256": "2ffc3684b49ba3af4cd5b81e8629dbcbb6f85acb2e5de945f74a6218e21f5678",
-      "job_id": 136426852978,
-      "run_id": 44772237184
+      "archive_sha256": "63042dff689539d568e9a6aa9d9606fbb658f76976d644bef9c22f7261405314",
+      "id": 15106890612,
+      "inventory_sha256": "495b24f9a3b96dc1d1fa6b9b029b43f26ac9aae26707393274a7f7b88e684e42",
+      "job_id": 139832279715,
+      "run_id": 45793282895
     },
     "capture_tool_sha256": "df64297da3082737e76e795a7e4975d6321f247f618df967f5eed6a02fd900de",
     "modules": {
@@ -109315,11 +109315,11 @@
       "sc_neurocore_engine.sc_neurocore_engine": {
         "installed": true,
         "relative_installation_path": "sc_neurocore_engine/sc_neurocore_engine.cpython-312-x86_64-linux-gnu.so",
-        "sha256": "863bcd0012db0df2398252b086fbbbc3932e80bb8c1d5b049b3ff9654713fbdf"
+        "sha256": "4db0c152dcb2ebc208aa8ca8b06e419357e70677ccacdaab9564cca7d38e4bba"
       }
     },
     "python": "3.12.16",
-    "qualification_scope": "Installed default release wheel on Ubuntu 24.04 Linux x86-64. The complete interface matches an independent installation of the same wheel under CPython 3.12.3 and NumPy 2.5.4. The only additions since the prior reference are the native WFC2 container functions waveform_container_encode and waveform_container_decode, the WAVEFORM_CONTAINER_ZSTD flag, and reset on SpikeEventEncoder, SpikeEventDecoder, WaveformLosslessEncoder and WaveformLosslessDecoder.",
+    "qualification_scope": "Installed default release wheel on Ubuntu 24.04 Linux x86-64. The complete interface matches an independent installation of the same wheel under CPython 3.12.3 and NumPy 2.5.4. The only change since the prior reference is the signature of ParametricLIFNeuron, which takes the optional keyword arguments v=0.0, a=0.0 and threshold=1.0 instead of none.",
     "reference_profile": {
       "architecture": "x86_64",
       "build_profile": "release",
@@ -109332,10 +109332,10 @@
       "operating_system": "Linux",
       "python_minor": "3.12"
     },
-    "source_base_sha": "dea43810aba58beea6e9ed20aec97f3e247cdaf6",
+    "source_base_sha": "f7aa2464e87a1c85676ce15c3dc1965a3527b0b7",
     "source_files_sha256": {
       ".github/workflows/v3-wheels.yml": "857e18c5f93c0c8b555836dd129056f567992638260e687baf35a2c19f4ced7b",
-      "Cargo.lock": "3b39bb1fc7094818c8b888d5ecd41995175973e7baf65006edafab86ba722ac1",
+      "Cargo.lock": "038ed19cb06ed9ef503dccc6a322cac9e8773abf0b6281b5a14d69a4a241a544",
       "Cargo.toml": "7d28e2c778189f4e90d13c7665199e08f630dbff00f79f3dad9fe7b4f3266827",
       "bridge/.cargo/config.toml": "41a0cf98caba4b36d392af91ff1968990d09e8c5c361149e1110e60d3cd45585",
       "bridge/pyproject.toml": "fd32c256e4abedfa03a839d7dec7cb4e06e4a0400b6d1574015b4e103aa753ff",
@@ -109359,7 +109359,7 @@
       "bridge/sc_neurocore_engine/scpn.py": "027b9bf124562cd748a2dd245933e92206d1b79d0bb84177b611c60607083588",
       "bridge/sc_neurocore_engine/studio.py": "ca4afc68c69609826eac0e6fc41b364e86b9bc22d4ca0847e36f7f593dc6616e",
       "bridge/sc_neurocore_engine/world_model.py": "ba54bf0ac3d41487b93e702fce3744764711a41d606b8834a33884d74cb27fe2",
-      "engine/Cargo.toml": "ce9de85225c2d0024fee419d72e6098c7515588ba9d0e495c61226f350b0f05e",
+      "engine/Cargo.toml": "dc91f41555d960496c010cb61564212b0de71718be08bf007486a02f92221f7e",
       "engine/src/adc_to_spike.rs": "1e8ccc32cf7686197739aca5140810e64e24278a95780f60d14e50a228bf6e34",
       "engine/src/address_events.rs": "1b9f27e8c643d3bf911bf40a67460c9f7421ab4433ed56121b3572240eb7fc95",
       "engine/src/address_events/bindings.rs": "cf3be9589de974893d0d4768396324fce153518c8b3360d796381e5f34712e3f",
@@ -109566,7 +109566,7 @@
       "engine/src/bindings/quantum_inspired_lif_neuron.rs": "f5d3956c5d37884cf005af3a271038cc58c6fcd3f5bae06094f05f5abb421e77",
       "engine/src/bindings/rall_dendrite.rs": "571628d2f61f0d4d2ac13532993c940bd9d1979577624b9eedf605adff0b5f42",
       "engine/src/bindings/rate/amari_neural_field.rs": "dcf7be38d7729d518398157b800731400a734e59fbaf482ce6f0c12d2a18f5d4",
-      "engine/src/bindings/rate/astrocyte_model.rs": "f6386fdbd5f62142e0b2f57fdeb96fda1fc3d1dc443110faa5bde12746820a21",
+      "engine/src/bindings/rate/astrocyte_model.rs": "fdb83614092a14beae441353237647a04ca348e6642f0f11e8e8358fdf6cea24",
       "engine/src/bindings/rate/compte_wm.rs": "ec578985d8570b5c66da551f714410dfd965272999ccb23ee1761e515d51370a",
       "engine/src/bindings/rate/fractional_lif.rs": "b9ac15503fa337394033aa8f31026dcec5e334acc656122267157e76cc559101",
       "engine/src/bindings/rate/leaky_compete_fire.rs": "2826f260f53dd44ff7861688df7770f634f276ae03b04946563049c203bf6988",
@@ -109644,7 +109644,7 @@
       "engine/src/bindings/trivial/mod.rs": "b672951abfce747b9dd15c9d5b282b20260a42f6991f2d0b4132b1a04130a325",
       "engine/src/bindings/trivial/non_resetting_lif.rs": "274c4cb9ae43fe6c2fce802f4a343cb3251f391daed7ac9bf4a0479e3f387f60",
       "engine/src/bindings/trivial/nonlinear_lif.rs": "582f6fd4b2b963cc1ca6ce8f752c4a35de709e74c6ab83333bba7add403b1a12",
-      "engine/src/bindings/trivial/parametric_lif.rs": "6cd67773c20badc86de2588755e097a3d2815da13a9c3a388da653286e82423e",
+      "engine/src/bindings/trivial/parametric_lif.rs": "d988b03aa35714ddb6cf22588e16d60cac244c10022507b80c3d5f91dbf1adb4",
       "engine/src/bindings/trivial/perfect_integrator.rs": "a490b48d658e4e3bbcb7685a5607aba97d211247b2684e69e29ace8669902b4b",
       "engine/src/bindings/trivial/quadratic_if.rs": "57e873939d17d875b96bba52ff75813a10512b40c8535fb48a040ab9831eda1d",
       "engine/src/bindings/trivial/sc_non_resetting_adaptive_lif.rs": "eea1ddcc9a25d60504cee16e385b06bd84eaa7d82e9535db5ec7c24cfd0543fe",
@@ -109666,7 +109666,7 @@
       "engine/src/codecs/delta.rs": "2b5b59d6fdc7850d516fed61764da5322a1c6a3cbb91663cffa9d4876987a48b",
       "engine/src/codecs/isi.rs": "c75fcc320ce7e64ef9381320fe8ac0022d6daa91137ec8e6e8fd1c9215f128f8",
       "engine/src/codecs/isi/framing.rs": "de9e8fd70ae92685f2a2686ee1fdd45a4ccf53a2a6b9b8a0f4ee8e95b0a72e4f",
-      "engine/src/codecs/isi/huffman.rs": "3c5d3e4efe70dd1da7196e1f1cd36969e23851aab0f8bc6625a48bf52e1819f4",
+      "engine/src/codecs/isi/huffman.rs": "7a557f9dc5593629c21e747a6c094eef1bb8108e344c0813617d76065b2562b3",
       "engine/src/codecs/mod.rs": "5598ca16105888646b4d87bec727053fccc14f51ed536da0ce91226e3d3723bc",
       "engine/src/codecs/waveform_container/background.rs": "6d606ce17f5a4467b04ccae6ac67441e96d24f979d0a875bf642578ad9265e49",
       "engine/src/codecs/waveform_container/compression.rs": "e2edc5c6577330ef94472a5e668a1e4719d6442e859c56dacfdfff5aa196fec1",
@@ -109749,16 +109749,16 @@
       "engine/src/layer.rs": "603cb56084a4ec13106ec80937eeeff6e973ddfaca16a33a19bf972bfa2e2fd4",
       "engine/src/learning_bindings.rs": "215cbeb17fac59eaa5924bead913c1ad2e2e1490cdc7178ffd855c9ea3b4cc05",
       "engine/src/lgssm.rs": "654ea16b17f35e2ca27c8e35a8903e2c206c8f041f22a55f9651449e2d4c8145",
-      "engine/src/lib.rs": "f6b74e8acbf3e8684d32c9cb14d5789c4fdb0f29332b493bc8cbed945ef92b67",
+      "engine/src/lib.rs": "d8e2ed0646edd3353ad4fa82742189356c3edeb7e7d77b8a19c2d02f43b86723",
       "engine/src/network_runner.rs": "aebc603b06925a43456beabef437d6eaeb08f3cdbf7ead092fd25132d2a2c020",
-      "engine/src/network_runner/input_adapters.rs": "02d15b8b382ef13f1c22aeb2e10ed91e6d7ed798b80295931ffe9cc1455c4604",
+      "engine/src/network_runner/input_adapters.rs": "a85933aab46d7d758322766b69a88b70edb303ff6d4082874126aa7c7a6cbfe0",
       "engine/src/network_runner/model_catalogue.rs": "ff7c94c717011a7c1868d365ad91cb5b24382e52685005ac582a088d260cc8e3",
       "engine/src/network_runner/model_factory.rs": "8e7b9409ee0469282eea7555a17301ce480428ed5ae96dbac5614872db37312d",
-      "engine/src/network_runner/network_execution.rs": "f755de87e65867dc65970fb7c076e039936baf6323138710cc299cc786f8ddfd",
+      "engine/src/network_runner/network_execution.rs": "897e81c9eb83d23c023bf7dfcefea48d0b5c242a8dce822c97385af9a7552cbf",
       "engine/src/network_runner/neuron_variant.rs": "13499f7e02fc5026f97a9f71d0cb1b15a608342b436edf0ba799c35d201c274e",
-      "engine/src/network_runner/population_runner.rs": "3681bf89dc8f3a9ed9a8508b31777bc065c3e38154367728962edc4d75ed9215",
-      "engine/src/network_runner/projection_runner.rs": "ea5373660d77057cdca2543ec6c9b1ead3e4c5660f2607bcaff6d9489a81f32e",
-      "engine/src/network_runner/simulation_results.rs": "8a2f0def161db86c591f2d19ab35db0beac7db73e2eb79955da5a0a95329ae27",
+      "engine/src/network_runner/population_runner.rs": "ce8fa20d5981946ba68008d680a1ef85175e6a692bcd902bfc8681fefc52527a",
+      "engine/src/network_runner/projection_runner.rs": "8568187e2cad3c95a238d305811bdd8834e83542b079741791d82cbcc83ac721",
+      "engine/src/network_runner/simulation_results.rs": "f5a24887b1aa42367b071cc61edcbd22da175d4d54f932507c96a50be2cf82c8",
       "engine/src/network_runner/wrapped_model_factory.rs": "b6fc07e78d180f70a90aae1abee7cd3c8de27744bf06922062d091d4d5f00ff6",
       "engine/src/neuron.rs": "fdaee31c90e1e4711439eb0eed452863d1e7f7faa3aa66c90cfffaef84845691",
       "engine/src/neuron/adex.rs": "b12fc55c1971ab564dfcf41e77f3458ce1fa0d5f9645a6dafde2d425b6a90928",
@@ -109777,7 +109777,7 @@
       "engine/src/neuron/lapicque_tests.rs": "6c3dfd57eac1dfee3fe1e56ea231867a342e4856961109df0f20ed00ad5e0243",
       "engine/src/neurons/ai_optimized.rs": "c62c7ea0b45cd7b997cf5ed9ce67554827a6365b22619b94404ff2bcd961bf8e",
       "engine/src/neurons/ai_optimized/adaptive_threshold_moe_neuron.rs": "daf9ba02dc140ada2af6a62e88219817e239d38c59c12a1feac09d509d3772ff",
-      "engine/src/neurons/ai_optimized/arcane_neuron.rs": "5c025bc74cd36bc85c666ce66bd95b738700f98ca5aa39ff1b8ae2beaf38a68e",
+      "engine/src/neurons/ai_optimized/arcane_neuron.rs": "3728c29d2e42541d385b948dead9bfdf60e9852345d1c4ff4742e650ca64abf1",
       "engine/src/neurons/ai_optimized/attention_gated_neuron.rs": "311706f8bdf261da42dc7cc314a2acbc0688f9675cf91827def3207629ae912f",
       "engine/src/neurons/ai_optimized/compositional_binding_neuron.rs": "73317d0894b9da091a6ee12adaf17c372eb9e2b3e895ad816573ccafd9b1c844",
       "engine/src/neurons/ai_optimized/continuous_attractor_neuron.rs": "13dd707cb42078760ffde55cce5fa240a058ee5db13eb88d4e0ff6014d9f9d60",
@@ -109787,7 +109787,7 @@
       "engine/src/neurons/ai_optimized/multi_timescale_neuron.rs": "a1a292a356db8c7882217d4c1157328c8d94fa6a8b3b2e1283e4b1d24de0718e",
       "engine/src/neurons/ai_optimized/predictive_coding_neuron.rs": "1679e07c4dcee9ad80ea164e144c2c87bce7fb61d359ca1a721280d76f6026b9",
       "engine/src/neurons/ai_optimized/quantum_inspired_lif_neuron.rs": "5daab365c9bf62080e9e611a7af19eed77ee5351e59972b18575f0f947121939",
-      "engine/src/neurons/ai_optimized/self_referential_neuron.rs": "3414ce06d4318e09e5cfc00beec243316d4f951e444a6e8945395ea8f0034266",
+      "engine/src/neurons/ai_optimized/self_referential_neuron.rs": "ce34b2116687521bc4f29899f4fdb9c26d65e2713edaa09402aaf37a5eb8d8be",
       "engine/src/neurons/aihara_map.rs": "e701d8cf48e4f8d504bf56348f6797db0a2aa7f1f698e8708941cc0983773c17",
       "engine/src/neurons/biophysical.rs": "ae7408c51670edf54d35477c7698122f78d619ea45e7874355d731d7a0157a61",
       "engine/src/neurons/biophysical/av_ron_cardiac.rs": "6a59fac0e79ea93b0740f66f6715a5411b6eb1b15694e2707ce98d04cd78bd70",
@@ -109811,8 +109811,8 @@
       "engine/src/neurons/biophysical/sc_four_state_glif.rs": "94f1230b24e40a0131772edd911b1b63e329bc714aadf9870ace6b982e5d5fe7",
       "engine/src/neurons/biophysical/sc_scaled_reset_adaptive_if.rs": "97416580cd800f3200edaf97c3dada12a95bc72c756e8a03b2158fad64d1ad86",
       "engine/src/neurons/biophysical/sc_six_state_thalamocortical.rs": "3cf428fb1837d4bdb6a0b424d2024ff15774d57ca5ff89ab9fd4bd6a9657a1a9",
-      "engine/src/neurons/biophysical/sc_three_state_phantom.rs": "c8a292a7a1463c38e6eef839c26d858492b5c1ac43eff9084093068474f273b1",
-      "engine/src/neurons/biophysical/traub_miles.rs": "43111ecbbc26bbab4d88605f10beb8c1020dc5fbff6e7dd9cee0798db2882aa3",
+      "engine/src/neurons/biophysical/sc_three_state_phantom.rs": "615d4d71be36f3d7bd787d5e7da8077c03acfd426eca3816f28fd3edc145f725",
+      "engine/src/neurons/biophysical/traub_miles.rs": "929e34b08017abaecd9c0eb123ae0f262e1fe6af2f2186d525c9f10eaf94916c",
       "engine/src/neurons/biophysical/wang_buzsaki.rs": "5f02ba3382cb3ed97ca300d52a9246b4039115f2e172da6497d70da7c3270f58",
       "engine/src/neurons/biophysical/yamada.rs": "0cc804688db5b1178fe54d0a46bdd10ee4f106c1d7a9b57c832c86609e653726",
       "engine/src/neurons/cazelles_map.rs": "0d0367cbe658f6fb07a73bbddf84d40f2d44faf01603b3ef7924a012db145603",
@@ -109846,7 +109846,7 @@
       "engine/src/neurons/hardware/loihi_cuba.rs": "3100ac9657e82cfcbabc013136e493f611fbcb709344a4ddd0c6fad78bcf1d4e",
       "engine/src/neurons/hardware/neurogrid.rs": "5dd538477ba1d7e93ac3a45110c8570c7bc36f23de4445a056e122d1d9af4be7",
       "engine/src/neurons/hardware/spinnaker2.rs": "84d6605e1d9b1bcccac98fef840cee34356a433c93b91a044fe69983e67ff29c",
-      "engine/src/neurons/hardware/spinnaker_lif.rs": "0f885034a4e2051890f42bc88a80184c025e7ce764fc174eedbb9e2b4815ae5a",
+      "engine/src/neurons/hardware/spinnaker_lif.rs": "13e93d8f8e6b0bc4618cac4dac9435041a162b136b8c50e747e7725f647bfc19",
       "engine/src/neurons/hardware/truenorth.rs": "b5903236ce2a53294f3bf6e3ebff90101178a08b23d7466add3e7850c46c0a4f",
       "engine/src/neurons/ibarz_tanaka_map.rs": "48bc5281c95c25ff33d46d9ccf5d2e3fdd404c8c526147171dac33a9be03e784",
       "engine/src/neurons/interneurons.rs": "bc2708bc55614350bc188975b9f9715b05568659e19990ee586581496e72a387",
@@ -109892,7 +109892,7 @@
       "engine/src/neurons/population/tum_network.rs": "6cbb8e493faed3af09988010864cbea4dbdee964a31b3196ae973f5f379407a7",
       "engine/src/neurons/rate.rs": "ffc2e20510b247c7e16862827fb687acd03dd1f6b9cf5b39eca496e27eb08746",
       "engine/src/neurons/rate/amari_neural_field.rs": "0bd4a53e840b2ae3ae75b189153ef20d2390b95fff9a0927cdf7942489b9c183",
-      "engine/src/neurons/rate/astrocyte_model.rs": "c7438f4a91fe6d8ae712d22b4b17d005b7c4996b0345bd8694826dc0233dc267",
+      "engine/src/neurons/rate/astrocyte_model.rs": "85089c8c5613e715b2c94fbb55120ca60233c20a234312a98d0a1206c7a90da0",
       "engine/src/neurons/rate/compte_wm.rs": "548a7d09096043f8909c463efd362db393af5b7287aa77ad76c58ba16a6feb1f",
       "engine/src/neurons/rate/fractional_lif.rs": "63f2cac99f0b34ae26dca773042c9a381e4e681ed003a544b1aa8390637d739a",
       "engine/src/neurons/rate/leaky_compete_fire.rs": "98bda995820ed181792ef1c3242cd799b65f6e0427936bae46b3a4510a503acb",
@@ -109946,7 +109946,7 @@
       "engine/src/neurons/simple_spiking/sc_stochastic_rate_adaptation.rs": "1e828a84a803c813f1e76da038bda71420feadd70ee85fa360de50a1dd8470a5",
       "engine/src/neurons/simple_spiking/sc_triangular_mckean.rs": "1ffd43029867fb72cef1c4f7001306973b3232abcea0d4f399230ff1923fbf46",
       "engine/src/neurons/simple_spiking/sc_unit_capacitance_respiratory.rs": "c987b5416a5a0083db5ba0518e05c41a972182ac9f3ea34b1b0ff9f4c71c4d21",
-      "engine/src/neurons/simple_spiking/sherman_rinzel_keizer.rs": "bcb0211f9852ca7274e56337ab7631fb520387594100cd30cebc61bc795ad389",
+      "engine/src/neurons/simple_spiking/sherman_rinzel_keizer.rs": "bb1baf4c7cce9f0c0629024b04645f8218cb3072594669965faee88c13670972",
       "engine/src/neurons/simple_spiking/superspike_neuron.rs": "ccbba703f0e1343369a37e43bb592c1db57b265405ce83884a5963664c806e05",
       "engine/src/neurons/simple_spiking/terman_wang.rs": "2043402eb81e335ad559d05f85d66ef2fcfbf0c5094b929fe54986bde54bf2e6",
       "engine/src/neurons/simple_spiking/wilson_hr.rs": "6eb8926b905a3f22456c143699c74941afb47451dc454a20d8bb9b353e7eb6a8",
@@ -109971,8 +109971,8 @@
       "engine/src/neurons/trivial/klif.rs": "b8dc44d569a502174f0b94d3980d8cc523ecff5b2a7128d32cbb62bbc823d480",
       "engine/src/neurons/trivial/mat.rs": "31ea1e28073d7726b6fe11a71d508c72e6f9013cda9946820dbff0b62cb1fd23",
       "engine/src/neurons/trivial/non_resetting_lif.rs": "1abc0877676d2993da7447dc68fc95fdec9b2db4970d9764ebd4158c0da04ecf",
-      "engine/src/neurons/trivial/nonlinear_lif.rs": "7af455073576306bd725c3f61abb4a2b32f47bfb3337d89dac2ebfc4f783e3ab",
-      "engine/src/neurons/trivial/parametric_lif.rs": "11b1523d28b88f5222cc9fb4c49be1f341f0d853561da9778f421aad4f05f47a",
+      "engine/src/neurons/trivial/nonlinear_lif.rs": "3773a52636cc29ba8664023360ac26fbb3543867a7a3bc47fe7ab6ce94a985ee",
+      "engine/src/neurons/trivial/parametric_lif.rs": "2e1fa6747402f55f3a623ef4e937f5b0d55c6008dd8be3f95e374152c26ea9be",
       "engine/src/neurons/trivial/perfect_integrator.rs": "827edfa7ad81cf0d8df3462628acbe5cc856b13dd886439aa2720f16b343546a",
       "engine/src/neurons/trivial/quadratic_if.rs": "dd3067cdbf032c4000e900fb6726cb6c83186263f3a82fe143f4a6554ee2878a",
       "engine/src/neurons/trivial/reexports.rs": "49bb73b569ad65d4ee9757599aee6e566f350b1990ccb6c6ef9350738626a6b6",
@@ -109980,7 +109980,7 @@
       "engine/src/neurons/trivial/sc_normalized_energy_lif.rs": "dc09edba018c375377949b53fe479ca0b79bfbf92ba575a41f9029eeaef7612a",
       "engine/src/neurons/trivial/sc_resetting_mat.rs": "5b159c3740f6f9f19af9b3741042e3f372fda993b26b72a7087f126814a2b914",
       "engine/src/neurons/trivial/sc_sigma_delta_accumulator.rs": "839f78aedb6af3f6211469530c3dbd50a2aead4f17d61a2e340a05f7f86e7df6",
-      "engine/src/neurons/trivial/sfa.rs": "0ab7fe539063bb21381ff7aa3be289cfcc3bbed84a67b3198220cecf374741a8",
+      "engine/src/neurons/trivial/sfa.rs": "0bf79d4b36a24c3fa7c6b43dabf29879c2f2cbfcb5edf523ece9afd264254e18",
       "engine/src/neurons/trivial/sigma_delta.rs": "34d62039c041568ca272a19519fe6be979bcb6482ae54d6cc77e50ec3c7bd8af",
       "engine/src/neurons/trivial/stochastic_lif.rs": "c729029f1608286240d03b36e88bbdb906cddcfb911e4495528df5a2735719a1",
       "engine/src/neurons/trivial/theta.rs": "ea65e0fec62c0350dab572ecea2af9832c670ed9fc93e4afdaf79cdf25e5642e",
@@ -110002,7 +110002,7 @@
       "engine/src/raster_stream/frame.rs": "1f8a502b8c7eeec821d82fb4f9664d871bdcfd76b3041a2d382b8d393e91d842",
       "engine/src/recorder.rs": "181e563b4fc189cefeadb13921c8189b2c8add3ead3cb3161358d8dba385e7ed",
       "engine/src/recurrent.rs": "631e5324d3584cc954251b16ea8e9523ee44b5205278866f7eb453174dc62337",
-      "engine/src/rk4_neurons.rs": "e9e86d2935a22d47b3ad223d0085a8147ff9672b87484ff66b85aceb10a23202",
+      "engine/src/rk4_neurons.rs": "dfa141d06eda2bdc7b1b64ee187868dc32f45b7602799d33790aa7aac2b15ba9",
       "engine/src/sc_compte_wm_network.rs": "82e5fd767bdf6d217b03d63ed804108a2a9b8638d4870f84d104211ab23f0974",
       "engine/src/sc_inference.rs": "c17795fe3e61b614ac9857d1e4b50404122db7671957346ce8f642cc060a2ce7",
       "engine/src/scpn/dcls.rs": "ae166835526d09b64d514d32699dee365dc08d7051aab67b09f0c4b1f8620519",
@@ -110017,7 +110017,7 @@
       "engine/src/simd/sve.rs": "519052f48cc89f686bea841a0c1d718ad79b69fe8546f63ffa50bb9efac47ab7",
       "engine/src/sobol.rs": "8c103466daf5734cd80199edd5c0e02dcd647965ebd31f5b3216bb38d025db25",
       "engine/src/spike_events.rs": "cc2987dd6d84c1277f68c5dadf5abb56c01285cd943d44073204ee524d7a2891",
-      "engine/src/supervisor.rs": "f9be3fa0a304b48db985bb00ecd4c73d29ce026d3b0e3044a740c0c56d18f172",
+      "engine/src/supervisor.rs": "904d3a14837bcdf0a7ff3a6826f3a54259200cad7f5a3093e392dc063e4bd42b",
       "engine/src/synapses/mod.rs": "6693c7619ebdf18af85bb13c9b8a65e86a93e88c446316c4538aab988cfcfa61",
       "engine/src/topology.rs": "177592142138f29565125e38c798c7007a342a759e1c1d2ec406a94aaa1e3815",
       "engine/src/waveform_codec.rs": "5f2e9da2fc4c17c2bf7ba45fadc50742c3ef831fbd46c1ce4ccb1bac4f9257d0",
@@ -110030,14 +110030,14 @@
       "tools/engine_abi_contracts.py": "65b03223948b078b3ceb651b7f22297b67a00ce172d911adff9ffc1bbd34c307",
       "tools/engine_abi_inventory.py": "df64297da3082737e76e795a7e4975d6321f247f618df967f5eed6a02fd900de"
     },
-    "source_manifest_sha256": "d109127195ed71173fb49161138b71f25d466d734012407d61aba95f64c895a2",
-    "source_tree_sha": "d8eecc30d2e700ce98988d990e1e06a08a10b2f7",
+    "source_manifest_sha256": "ef5a4330b5df1559c8ae04f2e714b69c2f4802b53941d36fe4d4d21bdc6049df",
+    "source_tree_sha": "c49729edab936f8da52b17ff260be054bca04d7a",
     "wheel_artifact": {
-      "archive_sha256": "1ef1619c96320361eb6640443a927171fa19bfaa68533279d38430b8dfbc52e7",
-      "id": 14648767136
+      "archive_sha256": "4dd5497f3d42279f0f517803cf2f9e3ed6ed8672d2427c6dc9d2c22b165d5728",
+      "id": 15105630823
     },
     "wheel_filename": "sc_neurocore_engine-4.2.0-cp312-cp312-manylinux_2_39_x86_64.whl",
-    "wheel_sha256": "f11c396687e40da81f72d734257a56c4ad3206d9eeddd1d07d8bae37d4b3cd58"
+    "wheel_sha256": "22017fd0406fb4408f2941bd41611e0b25565773dd9fef64ce0bc9c2f630661e"
   },
   "schema": 1
 }

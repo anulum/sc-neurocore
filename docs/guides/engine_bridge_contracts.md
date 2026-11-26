@@ -609,7 +609,8 @@ Dense default endpoint `y_max=256`, and `py_predict_xor_context`,
 `waveform_container_encode`, `waveform_container_decode`,
 `WAVEFORM_CONTAINER_ZSTD` and `reset` on `SpikeEventEncoder`,
 `SpikeEventDecoder`, `WaveformLosslessEncoder` and `WaveformLosslessDecoder`
-to the preceding interface. Its provenance
+to the preceding interface, and `ParametricLIFNeuron` takes the optional
+keyword arguments `v=0.0`, `a=0.0` and `threshold=1.0`. Its provenance
 identifies the source base, exact source hashes, wheel, capture tool and
 loaded modules. The same wheel was captured independently with CPython
 3.12.3 and 3.12.16.
