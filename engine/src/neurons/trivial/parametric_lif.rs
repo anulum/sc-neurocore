@@ -37,13 +37,25 @@ impl ParametricLIFNeuron {
     /// `S[t] = 1` if `H[t] >= threshold`, else 0 (Fang et al. 2021, Eq. 2-3), as in the
     /// Python model and the Go, Julia and safety-Rust lanes. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
-        let alpha = 1.0 / (1.0 + (-self.a).exp());
+        let alpha = self.alpha();
         let previous = if self.v >= self.threshold { 1.0 } else { 0.0 };
         self.v = alpha * self.v * (1.0 - previous) + current;
         if self.v >= self.threshold {
             1
         } else {
             0
+        }
+    }
+
+    /// The membrane decay `sigmoid(a)`, in the sign-split form the Python model and the Go,
+    /// Julia and safety-Rust lanes use: `1 / (1 + exp(-a))` for `a >= 0` and
+    /// `exp(a) / (1 + exp(a))` below, which never overflows and gives the same bits as they do.
+    pub fn alpha(&self) -> f64 {
+        if self.a >= 0.0 {
+            1.0 / (1.0 + (-self.a).exp())
+        } else {
+            let z = self.a.exp();
+            z / (1.0 + z)
         }
     }
 
@@ -104,6 +116,23 @@ mod tests {
             n.step(100.0);
         }
         assert!(n.v.is_finite());
+    }
+    #[test]
+    fn plif_alpha_takes_the_sign_split_form() {
+        // Below zero the decay is exp(a) / (1 + exp(a)), not 1 / (1 + exp(-a)): at a = -3 the
+        // two differ in the last bit, and the Python model and the other lanes use the former.
+        let n = ParametricLIFNeuron::new(-3.0, 1.0);
+        let z = (-3.0_f64).exp();
+        assert_eq!(n.alpha().to_bits(), (z / (1.0 + z)).to_bits());
+        assert_ne!(n.alpha().to_bits(), (1.0 / (1.0 + 3.0_f64.exp())).to_bits());
+        let m = ParametricLIFNeuron::new(2.0, 1.0);
+        assert_eq!(
+            m.alpha().to_bits(),
+            (1.0 / (1.0 + (-2.0_f64).exp())).to_bits()
+        );
+        let far = ParametricLIFNeuron::new(-800.0, 1.0);
+        assert_eq!(far.alpha(), 0.0);
+        assert!(ParametricLIFNeuron::new(800.0, 1.0).alpha() == 1.0);
     }
     #[test]
     fn plif_nan_no_panic() {

@@ -23,6 +23,13 @@ negative learnable parameters saturate to `alpha=0` without overflow. Runtime
 state is revalidated before every step, and the candidate voltage is computed
 before mutation so overflowing finite drives preserve the previous state.
 
+The sign-split form is `1 / (1 + exp(-a))` for `a >= 0` and
+`exp(a) / (1 + exp(a))` below. The Rust engine
+(`sc_neurocore_engine.ParametricLIFNeuron(v=0.0, a=0.0, threshold=1.0)`, which
+checks `v`, `a` and `threshold` as the Python model does and has no `dt`, since
+the step does not use it) takes the same form, so its decay, potential and
+spikes equal the Python model's bit for bit for any `a`.
+
 ## Parameters
 
 | Parameter | Default | Description |
@@ -61,6 +68,7 @@ ParametricLIFNeuron
 ├── step(current) → int {0,1} (deterministic)
 ├── Population: PoissonInput(weight=1.5, rate=500Hz)
 ├── Verilog: multiply-accumulate + sigmoid LUT, ~40 LUTs
+├── Rust engine: same step and sign-split sigmoid, bit-identical to Python
 └── Go / Julia / Rust safety: candidate-first state preservation
 ```
 

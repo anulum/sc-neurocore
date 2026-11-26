@@ -819,6 +819,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The engine's ParametricLIFNeuron takes the decay `sigmoid(a)` in the
+  sign-split form the Python model and the Go, Julia and safety-Rust lanes
+  use (`exp(a) / (1 + exp(a))` below zero); it took `1 / (1 + exp(-a))`
+  everywhere, which differs in the last bit for about half of `a` in
+  -20..0, so its potential drifted from the Python model's. The engine
+  class now takes `v`, `a` and `threshold` and checks them as the Python
+  model does; it took no arguments, so a non-default `a` could not be set.
+
 - `EquationNeuron.step` now rolls back atomically across deterministic as
   well as stochastic-threshold runs. A fault during sub-step integration,
   threshold evaluation, graded `spike_value` evaluation or multi-variable

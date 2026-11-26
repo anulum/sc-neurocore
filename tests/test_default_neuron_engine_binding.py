@@ -117,7 +117,6 @@ _DEFAULT_NEURONS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("OlfactoryReceptorNeuron", ("v", "camp", "adapt", "pde4")),
     ("PVFastSpikingNeuron", ("v", "h", "n", "p")),
     ("PacinianCorpuscle", ("v", "prev_pressure", "adapt")),
-    ("ParametricLIFNeuron", ("v",)),
     ("PernarowskiNeuron", ("v", "w", "z")),
     ("PlantR15Neuron", ("v", "m", "h", "n", "ca")),
     ("PospischilNeuron", ("v", "m", "h", "n", "p")),
