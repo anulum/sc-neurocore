@@ -61,14 +61,14 @@ report_union() {
     fi
     if [[ "${SCN_COVERAGE_EXCEPTION_GATE:-}" == 1 ]]; then
         python -m coverage report --skip-empty --show-missing --precision=2 --fail-under=0
-        python -m coverage json -o coverage.json
+        python -m coverage json -o coverage.json --fail-under=0
         python tools/coverage_exception_gate.py --coverage-json coverage.json
     else
         python -m coverage report --skip-empty --show-missing --precision=2 --fail-under="$cov_fail_under"
     fi
-    python -m coverage xml -o coverage.xml
+    python -m coverage xml -o coverage.xml --fail-under=0
     if $write_html; then
-        python -m coverage html -d htmlcov
+        python -m coverage html -d htmlcov --fail-under=0
     fi
 }
 

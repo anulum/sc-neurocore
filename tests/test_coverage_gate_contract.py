@@ -128,6 +128,10 @@ def test_the_union_is_shown_on_every_run_and_excepts_only_registered_gpu_lines()
         step for step in job["steps"] if "test_waveform_gpu_software" in step.get("run", "")
     )
     assert refusal["env"]["SC_NEUROCORE_REQUIRE_SOFTWARE_GPU_REFUSAL"] == "1"
+    # The leg records data only and the union gates it: `coverage run` writes the data and applies
+    # no threshold, where pytest-cov would apply the repository threshold to these two files alone.
+    assert "python -m coverage run -m pytest -q -p no:cacheprovider" in refusal["run"]
+    assert "--cov" not in refusal["run"]
     upload = next(
         step
         for step in job["steps"]

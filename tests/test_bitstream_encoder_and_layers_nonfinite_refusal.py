@@ -208,6 +208,23 @@ def test_sc_dense_layer_rejects_nonfinite_inputs_and_bounds(bad_val: float) -> N
         )
 
 
+@pytest.mark.parametrize("dt_ms", [0.0, -0.5])
+def test_sc_dense_layer_refuses_a_finite_step_that_is_not_positive(dt_ms: float) -> None:
+    """A finite dt_ms of zero or below is refused at construction, with the value named."""
+    with pytest.raises(ValueError, match=r"dt_ms must be positive, got "):
+        SCDenseLayer(
+            n_neurons=2,
+            x_inputs=[0.5, 0.2],
+            weight_values=[0.4, 0.6],
+            x_min=0.0,
+            x_max=1.0,
+            w_min=0.0,
+            w_max=1.0,
+            dt_ms=dt_ms,
+            length=32,
+        )
+
+
 @pytest.mark.parametrize("bad_val", [float("nan"), float("inf"), float("-inf")])
 def test_sc_recurrent_layer_refuses_nonfinite_or_mismatched_input_without_mutating_state(
     bad_val: float,

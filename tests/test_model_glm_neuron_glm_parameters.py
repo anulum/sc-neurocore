@@ -14,6 +14,7 @@ import pytest
 from sc_neurocore.neurons.models.glm_neuron import (
     GLMNeuron,
 )
+from sc_neurocore.neurons.seed_domain import NUMPY_SEED_DOMAIN
 from tests.model_glm_neuron_support import (
     _run,
 )
@@ -21,6 +22,18 @@ from tests.model_glm_neuron_support import (
 
 class TestGLMParameters:
     """Parameter behaviour of the GLMNeuron."""
+
+    @pytest.mark.parametrize("seed", [NUMPY_SEED_DOMAIN[0] - 1, NUMPY_SEED_DOMAIN[1] + 1])
+    def test_a_seed_outside_the_declared_domain_is_refused(self, seed: int) -> None:
+        """A seed outside SEED_DOMAIN is refused at construction, with the domain named."""
+        with pytest.raises(ValueError, match="the declared SEED_DOMAIN"):
+            GLMNeuron(seed=seed)
+
+    def test_the_domain_bounds_are_accepted(self) -> None:
+        """Both ends of SEED_DOMAIN construct a model."""
+        low, high = NUMPY_SEED_DOMAIN
+        assert GLMNeuron(seed=low).seed == low
+        assert GLMNeuron(seed=high).seed == high
 
     @pytest.mark.parametrize("mu", [-5.0, -3.0, 0.0])
     def test_mu_sweep(self, mu: float) -> None:

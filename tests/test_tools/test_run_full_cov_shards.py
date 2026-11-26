@@ -44,6 +44,7 @@ branch = true
 
 [tool.coverage.report]
 include = ["src/sc_neurocore/*"]
+fail_under = 100
 """
 
 _PACKAGE = """\

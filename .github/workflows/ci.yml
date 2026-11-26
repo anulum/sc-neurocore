@@ -590,7 +590,7 @@ jobs:
           COVERAGE_FILE: ${{ runner.temp }}/gpu-software-adapter-coverage/.coverage.gpu-software-adapter
         run: |
           mkdir -p "$RUNNER_TEMP/gpu-software-adapter-coverage"
-          python -m pytest -q -p no:cacheprovider --cov=sc_neurocore --cov-report= \
+          python -m coverage run -m pytest -q -p no:cacheprovider \
             tests/test_waveform_gpu_software_adapter_refusal.py \
             tests/test_spike_codec_catalogue_availability.py
       - name: Preserve the software-adapter coverage

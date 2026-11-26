@@ -922,6 +922,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The hosted coverage union now reaches its exception gate. The
+  repository's 100 % threshold also applied to the commands that only
+  write the union's JSON, XML and HTML reports, so the JSON step ended
+  the job before the registered platform exception could be checked;
+  those commands now write the reports with no threshold of their own,
+  the report or the exception gate stays the gate, and the runner's test
+  project carries the repository's threshold so the case is witnessed.
+  The software-adapter GPU leg records coverage for the union without
+  applying the threshold to its two test files alone. The GLM
+  exact-coverage files now witness the refusal of a seed outside the
+  declared domain, and the dense layer's refusal of a finite step that
+  is not positive has a test.
+
 - The engine crate's public Rust API is compatible with the published
   `sc_neurocore_engine` 4.2.0 again, so the next 4.x release can carry
   it; `cargo semver-checks` against 4.2.0 had found two major changes.
