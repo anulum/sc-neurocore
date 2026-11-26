@@ -6747,10 +6747,9 @@
       "markers": {
         "app": [],
         "numeric": [
-          "pure numeric calls with multiplicative operators",
-          "multiplicative operators"
+          "pure numeric calls with multiplicative operators"
         ],
-        "operators": 10,
+        "operators": 9,
         "basis": "b"
       },
       "stubs": [

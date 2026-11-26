@@ -64,6 +64,7 @@ class QuantumInspiredLIFNeuron:
     _rng_state: int = field(default=0, repr=False)
 
     def __post_init__(self) -> None:
+        """Validate the parameters and the seed against ``SEED_DOMAIN`` and seed the xorshift state."""
         for name in ("tau", "theta", "dt"):
             value = getattr(self, name)
             if not math.isfinite(value) or value <= 0.0:
@@ -74,8 +75,9 @@ class QuantumInspiredLIFNeuron:
             if not math.isfinite(value):
                 raise ValueError(f"{name} must be finite")
 
-        if type(self.seed) is not int or not (0 < self.seed < 2**64):
-            raise ValueError("seed must be an integer in [1, 2**64)")
+        low, high = self.SEED_DOMAIN
+        if type(self.seed) is not int or not low <= self.seed <= high:
+            raise ValueError(f"seed must be in [{low}, {high}], the declared SEED_DOMAIN")
 
         self._rng_state = self.seed
 

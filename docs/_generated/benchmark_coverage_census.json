@@ -2488,7 +2488,8 @@
     },
     {
       "changed": [
-        "src/sc_neurocore/neurons/equation_builder.py"
+        "src/sc_neurocore/neurons/equation_builder.py",
+        "src/sc_neurocore/neurons/stochastic_lif.py"
       ],
       "currency": "outdated",
       "name": "bench_function_call_domains.json"
@@ -2591,7 +2592,8 @@
     },
     {
       "changed": [
-        "benchmarks/bench_model_sc_stochastic_rate_adaptation.py"
+        "benchmarks/bench_model_sc_stochastic_rate_adaptation.py",
+        "src/sc_neurocore/neurons/models/sc_stochastic_rate_adaptation.py"
       ],
       "currency": "outdated",
       "name": "bench_sc_stochastic_rate_adaptation.json"

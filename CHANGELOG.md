@@ -922,6 +922,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- GLMNeuron, QuantumInspiredLIFNeuron, SCStochasticRateAdaptationNeuron
+  and StochasticLIFNeuron refuse a seed above their declared `SEED_DOMAIN`
+  with a `ValueError` naming it; two of them took any seed up to 2**64-1
+  and two had no upper check at all. A seed-domain test now checks the
+  upper end of every seeded model's declaration as it checked the lower.
+
 - HuberBraunNeuron and StochasticIFNeuron refuse a seed above their
   declared `SEED_DOMAIN` (0 to 2**63-1, the bound the request and receipt
   surfaces carry) with a `ValueError`; they refused only negative seeds,

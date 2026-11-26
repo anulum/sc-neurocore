@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5222
+expected_file_count = 5225
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20929,3 +20929,14 @@ rationale = "Verify require_engine()-gated bit-exact Huber-Braun Rust/Python lib
 [[file]]
 path = "tests/test_readme_landing_page.py"
 rationale = "Exercise SC-NeuroCore: the README stays a landing page whose Documentation links reach site pages, including every page that took a README reference section."
+[[file]]
+path = "src/sc_neurocore/neurons/models/glm_neuron.py"
+rationale = "Generalised linear model neuron with stimulus and spike-history filters and a seed checked against its declared domain."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/quantum_inspired_lif.py"
+rationale = "Quantum-inspired LIF neuron with an xorshift stream whose seed is checked against its declared nonzero domain."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/sc_stochastic_rate_adaptation.py"
+rationale = "Stochastic rate-adaptation neuron with an RK4 adaptation step and a seed checked against its declared domain."

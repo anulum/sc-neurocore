@@ -41,6 +41,7 @@ class SCStochasticRateAdaptationNeuron:
     _rng: np.random.Generator = field(init=False)
 
     def __post_init__(self) -> None:
+        """Validate the parameters and the seed against ``SEED_DOMAIN`` and start the generator."""
         if not math.isfinite(self.a) or self.a < 0.0:
             raise ValueError("a must be finite and non-negative")
         for name in ("f_max", "beta", "tau_a", "dt"):
@@ -55,10 +56,12 @@ class SCStochasticRateAdaptationNeuron:
             if (
                 isinstance(self.seed, bool)
                 or not isinstance(self.seed, (int, np.integer))
-                or self.seed < 0
-                or self.seed > 2**64 - 1
+                or not self.SEED_DOMAIN[0] <= int(self.seed) <= self.SEED_DOMAIN[1]
             ):
-                raise ValueError("seed must be None or a uint64-compatible integer")
+                low, high = self.SEED_DOMAIN
+                raise ValueError(
+                    f"seed must be None or an integer in [{low}, {high}], the declared SEED_DOMAIN"
+                )
         self._rng = np.random.default_rng(self.seed)
 
     def _f_onset(self, x: float) -> float:
@@ -110,7 +113,9 @@ class SCStochasticRateAdaptationNeuron:
         return int(uniform < probability)
 
     def step(self, current: float) -> int:
+        """Advance one step with a uniform draw from the neuron's generator; see ``step_with_uniform``."""
         return self.step_with_uniform(current, float(self._rng.random()))
 
     def reset(self) -> None:
+        """Return the adaptation variable to zero; the generator is kept."""
         self.a = 0.0

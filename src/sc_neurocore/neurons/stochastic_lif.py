@@ -92,6 +92,10 @@ class StochasticLIFNeuron(BaseNeuron):
             raise ValueError("resistance must be finite and non-negative")
         if type(self.refractory_period) is not int or self.refractory_period < 0:
             raise ValueError("refractory_period must be a non-negative integer")
+        if self.seed is not None and not isinstance(self.seed, bool):
+            low, high = self.SEED_DOMAIN
+            if isinstance(self.seed, (int, np.integer)) and not low <= int(self.seed) <= high:
+                raise ValueError(f"seed must be in [{low}, {high}], the declared SEED_DOMAIN")
         self._rng = RNG(self.seed)
         self.v = self.v_rest
         self.refractory_counter = 0

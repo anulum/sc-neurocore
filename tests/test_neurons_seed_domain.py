@@ -104,6 +104,22 @@ class TestDeclarations:
         with pytest.raises(ValueError):
             model(seed=low - 1)
 
+    @pytest.mark.parametrize(
+        "class_name", sorted(name for name in SEEDED_MODELS if name != UNVALIDATED_MODEL)
+    )
+    def test_the_constructor_refuses_above_its_declaration(self, class_name: str) -> None:
+        """A declaration narrower than the constructor would admit a seed it excludes, at either end.
+
+        Parameters
+        ----------
+        class_name : str
+            A seeded catalogue model that validates its seed.
+        """
+        model = _model(class_name)
+        _, high = seed_domain(model)
+        with pytest.raises(ValueError):
+            model(seed=high + 1)
+
     def test_the_one_model_that_validates_nothing_is_recorded_as_such(self) -> None:
         """Its declaration is the only thing standing between a caller and a bad seed."""
         model = _model(UNVALIDATED_MODEL)

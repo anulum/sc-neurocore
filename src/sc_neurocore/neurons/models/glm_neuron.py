@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Pillow et al. 2008 — generalized linear model
 
+"""Generalised linear model neuron (Pillow et al. 2008) with stimulus and spike-history filters."""
+
 from __future__ import annotations
 
 import math
@@ -50,6 +52,7 @@ class GLMNeuron:
     _rng: np.random.Generator = field(init=False)
 
     def __post_init__(self) -> None:
+        """Validate the filters and the seed, build the default filters and start a fresh generator."""
         if not isinstance(self.n_k, int) or isinstance(self.n_k, bool):
             raise TypeError("n_k must be an integer")
         if not isinstance(self.n_h, int) or isinstance(self.n_h, bool):
@@ -65,6 +68,10 @@ class GLMNeuron:
         self.h = np.asarray(self.h, dtype=np.float64)
         self._stim_buf = np.zeros(self.n_k)
         self._spike_buf = np.zeros(self.n_h)
+        if self.seed is not None and not isinstance(self.seed, bool):
+            low, high = self.SEED_DOMAIN
+            if isinstance(self.seed, (int, np.integer)) and not low <= int(self.seed) <= high:
+                raise ValueError(f"seed must be in [{low}, {high}], the declared SEED_DOMAIN")
         self._rng = np.random.default_rng(self.seed)
         self._validate_configuration()
 
@@ -83,6 +90,26 @@ class GLMNeuron:
             raise ValueError("history buffers must be finite")
 
     def step(self, stimulus: float, uniform: float | None = None) -> int:
+        """Advance one bin: filter the stimulus and spike history, draw, and record the spike.
+
+        Parameters
+        ----------
+        stimulus : float
+            Finite stimulus for this bin.
+        uniform : float or None
+            A draw in ``[0, 1)`` to use instead of the neuron's generator.
+
+        Returns
+        -------
+        int
+            ``1`` if the bin spikes, else ``0``.
+
+        Raises
+        ------
+        ValueError
+            If ``stimulus`` or ``uniform`` is out of domain or the configuration is invalid; the
+            history buffers are unchanged then.
+        """
         if not math.isfinite(stimulus):
             raise ValueError("stimulus must be finite")
         if uniform is not None and not (math.isfinite(uniform) and 0.0 <= uniform < 1.0):
@@ -104,5 +131,6 @@ class GLMNeuron:
         return spike
 
     def reset(self) -> None:
+        """Clear the stimulus and spike-history buffers; the filters and the generator are kept."""
         self._stim_buf = np.zeros(self.n_k)
         self._spike_buf = np.zeros(self.n_h)

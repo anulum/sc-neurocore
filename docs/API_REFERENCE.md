@@ -35480,8 +35480,11 @@ reproducible generator, and ``uniform`` to :meth:`step` to supply
 the Bernoulli sample explicitly (exact cross-backend parity).
 
 - **__post_init__**()
+  - Validate the filters and the seed, build the default filters and start a fresh generator.
 - **step**(stimulus, uniform)
+  - Advance one bin: filter the stimulus and spike history, draw, and record the spike.
 - **reset**()
+  - Clear the stimulus and spike-history buffers; the filters and the generator are kept.
 
 ---
 
@@ -37326,6 +37329,7 @@ seed : int
     Initial RNG state for xorshift64. Default: 12345.
 
 - **__post_init__**()
+  - Validate the parameters and the seed against ``SEED_DOMAIN`` and seed the xorshift state.
 - **step_complex**(i_re, i_im)
   - Step with real and imaginary current components.
 - **step**(current)
@@ -37833,10 +37837,13 @@ behavior. It is not attributed to the deterministic Benda–Herz phase
 generator.
 
 - **__post_init__**()
+  - Validate the parameters and the seed against ``SEED_DOMAIN`` and start the generator.
 - **step_with_uniform**(current, uniform)
   - Advance using an explicit uniform variate for backend parity.
 - **step**(current)
+  - Advance one step with a uniform draw from the neuron's generator; see ``step_with_uniform``.
 - **reset**()
+  - Return the adaptation variable to zero; the generator is kept.
 
 ---
 
