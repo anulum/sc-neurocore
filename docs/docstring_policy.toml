@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5226
+expected_file_count = 5227
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20944,3 +20944,7 @@ rationale = "Stochastic rate-adaptation neuron with an RK4 adaptation step and a
 [[file]]
 path = "tests/test_adaptive_length.py"
 rationale = "adaptive_length: power-of-two lengths, the three bounds, min and max length, and the refused epsilon, method and confidence."
+
+[[file]]
+path = "tests/test_studio_platform_facade.py"
+rationale = "Studio platform facade: lazy sources match TYPE_CHECKING and __all__, names are the defining objects, unknown names raise, the narrow import and star import."

@@ -1966,6 +1966,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- `tests/test_studio_platform_facade.py` admits `sc_neurocore._version`
+  among the modules that importing the jobs-ledger supervisor loads. The
+  package root has read its version from that module, which imports
+  nothing from the package, since the version moved into it; the test
+  still listed the earlier set and failed in CI. The module is enrolled
+  in the docstring policy.
+
 - `tests/test_adaptive_length.py` expects the messages `adaptive_length`
   raises since it refuses non-finite inputs: "epsilon must be finite and
   positive" and "confidence must be in (0.0, 1.0)". Its three refusal

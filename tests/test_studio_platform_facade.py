@@ -99,10 +99,15 @@ def _loaded_after(statement: str) -> list[str]:
 
 
 def test_narrow_import_loads_only_its_own_dependencies() -> None:
-    """The worker guard's liveness module loads no other Studio subsystem."""
+    """The worker guard's liveness module loads no other Studio subsystem.
+
+    Besides its parent packages it loads only ``sc_neurocore._version``, which the
+    package root reads its version from and which imports nothing from the package.
+    """
     loaded = _loaded_after("import sc_neurocore.studio.platform.jobs_ledger_supervisor")
     assert loaded == [
         "sc_neurocore",
+        "sc_neurocore._version",
         "sc_neurocore.studio",
         "sc_neurocore.studio.platform",
         "sc_neurocore.studio.platform.jobs_ledger_supervisor",
