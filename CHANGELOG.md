@@ -1966,6 +1966,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The fuzz workflow's contract test is `tests/test_ci_fuzz_workflow_contract.py`,
+  no longer `tests/test_fuzz_workflow_contract.py`. `SECURITY.md` names
+  `tests/test_fuzz_*.py` as the Python `hypothesis` fuzz suites, and its
+  command `pytest tests/test_fuzz_*.py` runs them; the contract test, which
+  checks the workflow and uses no `hypothesis`, matched that pattern, so
+  the test that holds the policy to the repository failed in CI.
+
 - The function-call domain guide gives the timings of the recorded
   benchmark again. The result was measured anew on 2026-11-24, when its
   bound sources changed, but the guide's table kept the earlier figures,

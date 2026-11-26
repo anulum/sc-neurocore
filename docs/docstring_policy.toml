@@ -20470,7 +20470,7 @@ path = "tests/test_security_policy_fuzzing_statement.py"
 rationale = "Exercise SC-NeuroCore: the security policy states the fuzzing that exists."
 
 [[file]]
-path = "tests/test_fuzz_workflow_contract.py"
+path = "tests/test_ci_fuzz_workflow_contract.py"
 rationale = "Exercise SC-NeuroCore: fuzz workflow target list, crash collection and reproducer upload."
 
 [[file]]
