@@ -34781,8 +34781,52 @@ a supralinear calcium plateau when input exceeds d_threshold.
 
 Reference: Pagkalos, M. et al. (2023). Nat. Commun. 14:3234.
 
+Parameters
+----------
+v_s : float, default=-65.0
+    Initial somatic membrane potential in millivolts.
+v_d : float, default=-65.0
+    Initial dendritic membrane potential in millivolts.
+d_active : bool, default=False
+    Whether the dendritic plateau is initially active.
+tau_s : float, default=10.0
+    Somatic membrane time constant in milliseconds; must be strictly positive.
+tau_d : float, default=20.0
+    Dendritic membrane time constant in milliseconds; must be strictly positive.
+g_c : float, default=0.8
+    Soma-dendrite coupling conductance; must be non-negative.
+d_threshold : float, default=-35.0
+    Dendritic plateau initiation threshold in millivolts.
+d_amplitude : float, default=30.0
+    Dendritic plateau current injection amplitude.
+d_duration : float, default=10.0
+    Dendritic plateau duration in milliseconds; must be non-negative.
+d_timer : float, default=0.0
+    Remaining plateau timer in milliseconds.
+v_rest : float, default=-65.0
+    Resting potential in millivolts.
+v_threshold : float, default=-50.0
+    Somatic firing threshold in millivolts.
+v_reset : float, default=-65.0
+    Somatic post-spike reset potential in millivolts.
+dt : float, default=0.1
+    Discrete integration timestep in milliseconds; must be strictly positive.
+
+Raises
+------
+TypeError
+    If any numeric parameter is a boolean or not a real number, or if
+    ``d_active`` is not a boolean.
+ValueError
+    If any parameter is non-finite or violates its positivity or
+    non-negativity domain.
+
+- **__post_init__**()
+  - Validate and normalise all compartment states and parameters.
 - **step**(current)
+  - Advance the dendritic and somatic compartments by one Euler timestep.
 - **reset**()
+  - Reset somatic, dendritic, and plateau states to rest.
 
 ---
 
@@ -34836,8 +34880,53 @@ Reference: Destexhe, Bal, McCormick & Sejnowski (1996). Ionic mechanisms
 underlying synchronized oscillations and propagating waves in a model of
 ferret thalamic slices. J Neurophysiol 76:2049-2070.
 
+Parameters
+----------
+v : float, default=-65.0
+    Initial membrane potential in millivolts.
+h_na : float, default=0.6
+    Initial sodium inactivation gate.
+n_k : float, default=0.3
+    Initial potassium activation gate.
+m_t : float, default=0.0
+    Initial T-current activation gate.
+h_t : float, default=1.0
+    Initial T-current inactivation gate.
+g_na : float, default=100.0
+    Maximal sodium conductance; must be non-negative.
+g_k : float, default=10.0
+    Maximal potassium conductance; must be non-negative.
+g_t : float, default=2.0
+    Low-threshold T-type calcium conductance; must be non-negative.
+g_l : float, default=0.05
+    Leak conductance; must be non-negative.
+e_na : float, default=50.0
+    Sodium reversal potential in millivolts.
+e_k : float, default=-90.0
+    Potassium reversal potential in millivolts.
+e_ca : float, default=120.0
+    Calcium reversal potential in millivolts.
+e_l : float, default=-70.0
+    Leak reversal potential in millivolts.
+dt : float, default=0.02
+    Substep integration interval in milliseconds; must be strictly positive.
+v_threshold : float, default=-20.0
+    Upward spike-detection threshold in millivolts.
+
+Raises
+------
+TypeError
+    If any parameter is a boolean or not a real number.
+ValueError
+    If any parameter is non-finite or violates its positivity or
+    non-negativity domain.
+
+- **__post_init__**()
+  - Validate and normalise all initial state variables and parameters.
 - **step**(current)
+  - Advance the thalamocortical relay neuron by five Euler substeps.
 - **reset**()
+  - Reset membrane potential and ionic gating variables to defaults.
 
 ---
 
@@ -35695,8 +35784,51 @@ Braun, Huber et al. 1998 — cold receptor, temperature-dependent.
 
 Reference: Braun, H.A. et al. (1998). Int. J. Bifurcation Chaos 8:881–889.
 
+Parameters
+----------
+v : float, default=-50.0
+    Initial membrane potential in millivolts.
+a_sd : float, default=0.0
+    Initial slow depolarising activation variable.
+a_sr : float, default=0.0
+    Initial slow repolarising activation variable.
+g_sd : float, default=1.5
+    Slow depolarising maximal conductance; must be non-negative.
+g_sr : float, default=0.4
+    Slow repolarising maximal conductance; must be non-negative.
+g_l : float, default=0.1
+    Leak conductance; must be non-negative.
+e_sd : float, default=50.0
+    Slow depolarising reversal potential in millivolts.
+e_sr : float, default=-90.0
+    Slow repolarising reversal potential in millivolts.
+e_l : float, default=-60.0
+    Leak reversal potential in millivolts.
+tau_sd : float, default=10.0
+    Slow depolarising time constant in milliseconds; must be strictly positive.
+tau_sr : float, default=20.0
+    Slow repolarising time constant in milliseconds; must be strictly positive.
+eta : float, default=0.012
+    Gaussian membrane noise amplitude; must be non-negative.
+dt : float, default=0.1
+    Discrete integration timestep in milliseconds; must be strictly positive.
+v_threshold : float, default=-20.0
+    Upward spike-detection threshold in millivolts.
+
+Raises
+------
+TypeError
+    If any parameter is a boolean or not a real number.
+ValueError
+    If any parameter is non-finite or violates its positivity or
+    non-negativity domain.
+
+- **__post_init__**()
+  - Validate and normalise all initial state and parameter fields.
 - **step**(current)
+  - Advance slow gates and membrane potential by one Euler timestep.
 - **reset**()
+  - Reset membrane potential and slow gating variables to defaults.
 
 ---
 
@@ -36885,8 +37017,61 @@ dCa/dt = -k_Ca * I_Ca - Ca / tau_Ca
 
 Reference: Plant, R.E. & Kim, M. (1976). Biophys. J. 16:227–244.
 
+Parameters
+----------
+v : float, default=-50.0
+    Initial membrane potential in millivolts.
+m : float, default=0.05
+    Initial sodium activation gate.
+h : float, default=0.6
+    Initial sodium inactivation gate.
+n : float, default=0.3
+    Initial potassium activation gate.
+ca : float, default=0.1
+    Initial intracellular calcium concentration; must be non-negative.
+g_na : float, default=4.0
+    Maximal sodium conductance; must be non-negative.
+g_k : float, default=0.3
+    Maximal potassium conductance; must be non-negative.
+g_ca : float, default=0.004
+    Maximal calcium conductance; must be non-negative.
+g_l : float, default=0.003
+    Leak conductance; must be non-negative.
+g_kca : float, default=0.03
+    Maximal calcium-activated potassium conductance; must be non-negative.
+e_na : float, default=30.0
+    Sodium reversal potential in millivolts.
+e_k : float, default=-75.0
+    Potassium reversal potential in millivolts.
+e_ca : float, default=140.0
+    Calcium reversal potential in millivolts.
+e_l : float, default=-40.0
+    Leak reversal potential in millivolts.
+c_m : float, default=1.0
+    Membrane capacitance; must be strictly positive.
+k_ca : float, default=0.0085
+    Calcium influx scaling factor; must be non-negative.
+tau_ca : float, default=500.0
+    Calcium decay time constant in milliseconds; must be strictly positive.
+dt : float, default=0.05
+    Substep integration interval in milliseconds; must be strictly positive.
+v_threshold : float, default=-10.0
+    Upward spike-detection threshold in millivolts.
+
+Raises
+------
+TypeError
+    If any parameter is a boolean or not a real number.
+ValueError
+    If any parameter is non-finite or violates its positivity or
+    non-negativity domain.
+
+- **__post_init__**()
+  - Validate and normalise all state variables and parameters.
 - **step**(current)
+  - Advance the five-ODE Plant R15 model by five Euler substeps.
 - **reset**()
+  - Reset membrane, gating, and calcium states to rest.
 
 ---
 
@@ -38260,8 +38445,48 @@ I_syn = A * u * x on presynaptic spike
 
 Reference: Tsodyks, M. et al. (1998). Neural Comput. 10:821–835.
 
+Parameters
+----------
+v : float, default=-65.0
+    Initial membrane potential in millivolts.
+x : float, default=1.0
+    Initial available synaptic resource fraction.
+u : float, default=0.2
+    Initial utilisation (release probability) variable.
+v_rest : float, default=-65.0
+    Resting potential in millivolts.
+v_reset : float, default=-65.0
+    Post-spike reset potential in millivolts.
+v_threshold : float, default=-50.0
+    Firing threshold in millivolts.
+tau_m : float, default=20.0
+    Membrane time constant in milliseconds; must be strictly positive.
+tau_d : float, default=200.0
+    Depression recovery time constant in milliseconds; must be strictly positive.
+tau_f : float, default=600.0
+    Facilitation decay time constant in milliseconds; must be strictly positive.
+u_se : float, default=0.2
+    Baseline synaptic utilisation in ``&#91;0, 1&#93;``.
+a_se : float, default=50.0
+    Absolute synaptic efficacy.
+r_m : float, default=1.0
+    Membrane resistance; must be non-negative.
+dt : float, default=0.1
+    Discrete integration timestep in milliseconds; must be strictly positive.
+
+Raises
+------
+TypeError
+    If any parameter is a boolean or not a real number.
+ValueError
+    If any parameter is non-finite or violates its domain bounds.
+
+- **__post_init__**()
+  - Validate and normalise all membrane and short-term plasticity fields.
 - **step**(current, presynaptic_spike)
+  - Advance short-term synaptic variables and LIF membrane by one timestep.
 - **reset**()
+  - Reset membrane potential and short-term plasticity variables.
 
 ---
 

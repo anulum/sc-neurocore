@@ -581,6 +581,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   four models validate candidate state updates before writing so numeric
   overflow leaves prior state unchanged.
 
+- `HuberBraunNeuron` now evaluates its slow-gate Boltzmann sigmoids via Python's
+  C math library (`math.exp`) rather than scalar `numpy.exp`, matching the Rust
+  engine bit-for-bit in the deterministic (`eta = 0`) limit; outputs at voltages
+  where scalar NumPy SIMD `exp` differed from `libm` can move by 1 ULP from the
+  previous release.
+
+- `DendrifyNeuron`, `HuberBraunNeuron`, `TsodyksMarkramNeuron`, `PlantR15Neuron`,
+  and `DestexheThalamicNeuron` now reject boolean, non-real, non-finite, and
+  out-of-domain inputs, parameters, and mutated state fields with `TypeError` or
+  `ValueError` before mutating state or drawing RNG samples. `HuberBraunNeuron`
+  and `DestexheThalamicNeuron` evaluate Boltzmann sigmoids and voltage-dependent
+  time constants without exponential overflow warnings on extreme finite voltages,
+  `TsodyksMarkramNeuron` enforces boolean `presynaptic_spike` inputs (accepting
+  NumPy booleans), `PlantR15Neuron` and `DestexheThalamicNeuron` preserve their
+  existing `np.exp` substep ODEs verbatim while guarding non-finite divergence,
+  and all five models validate candidate updates before writing so numeric
+  overflow leaves prior state unchanged.
+
 - FPGA energy estimator migration notes. `FPGATarget.total_bram_kb` is
   renamed to the field `total_bram_kbits`, so `FPGATarget(total_bram_kb=...)`
   now raises TypeError; `.total_bram_kb` is now a read-only property in

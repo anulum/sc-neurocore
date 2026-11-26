@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5213
+expected_file_count = 5220
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20894,3 +20894,31 @@ rationale = "Verify engine-free finiteness, domain, overflow-safety, and rollbac
 [[file]]
 path = "tests/test_surrogate_adaptive_resonator_rust_python_parity.py"
 rationale = "Verify require_engine()-gated bit-exact C libm and Rust engine parity across surrogate and adaptive neurons."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/dendrify.py"
+rationale = "Document Dendrify two-compartment parameters, plateau state, and fail-closed guards."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/huber_braun.py"
+rationale = "Document Huber-Braun cold-receptor parameters, overflow-safe sigmoids, and state guards."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/tsodyks_markram.py"
+rationale = "Document Tsodyks-Markram STP parameters, boolean spike checks, and state rollback."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/plant_r15.py"
+rationale = "Document Plant R15 parameters and fail-closed finite-domain substep guards."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/destexhe_thalamic.py"
+rationale = "Document Destexhe thalamic relay parameters, overflow-safe kinetics, and substep guards."
+
+[[file]]
+path = "tests/test_biophysical_synaptic_neuron_domain_guards.py"
+rationale = "Verify engine-free finiteness, domain, overflow-safety, rollback guards, and Plant/Destexhe 200k-step base bit-identity."
+
+[[file]]
+path = "tests/test_huber_braun_rust_python_parity.py"
+rationale = "Verify require_engine()-gated bit-exact Huber-Braun Rust/Python libm parity."

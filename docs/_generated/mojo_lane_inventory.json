@@ -1250,7 +1250,7 @@
       "loaders": [],
       "transcribed_module": "src/sc_neurocore/neurons/models/destexhe_thalamic.py",
       "transcription_rule": "header_stem",
-      "verbatim_line_share": "7/29",
+      "verbatim_line_share": "18/29",
       "transcription_candidates": []
     },
     {
@@ -2089,7 +2089,7 @@
       "loaders": [],
       "transcribed_module": "src/sc_neurocore/neurons/models/huber_braun.py",
       "transcription_rule": "header_stem",
-      "verbatim_line_share": "0/11",
+      "verbatim_line_share": "1/11",
       "transcription_candidates": []
     },
     {
@@ -3285,7 +3285,7 @@
       "loaders": [],
       "transcribed_module": "src/sc_neurocore/neurons/models/plant_r15.py",
       "transcription_rule": "header_stem",
-      "verbatim_line_share": "1/23",
+      "verbatim_line_share": "9/23",
       "transcription_candidates": []
     },
     {
@@ -4703,7 +4703,7 @@
       "loaders": [],
       "transcribed_module": "src/sc_neurocore/neurons/models/tsodyks_markram.py",
       "transcription_rule": "header_stem",
-      "verbatim_line_share": "2/14",
+      "verbatim_line_share": "3/14",
       "transcription_candidates": []
     },
     {

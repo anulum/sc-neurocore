@@ -17,9 +17,9 @@
     "unmapped_julia": 133
   },
   "variant_a_only": {
-    "compute": 274,
+    "compute": 272,
     "application": 0,
-    "unclear": 64,
+    "unclear": 66,
     "application_modules": []
   },
   "originals": [
@@ -6346,18 +6346,17 @@
       "markers": {
         "app": [],
         "numeric": [
-          "numpy calls",
           "multiplicative operators"
         ],
-        "operators": 42,
-        "basis": "a"
+        "operators": 40,
+        "basis": "c"
       },
       "stubs": [
         {
           "lane": "mojo",
           "path": "src/sc_neurocore/accel/mojo/kernels/destexhe_thalamic.mojo",
           "rule": "header_stem",
-          "verbatim_line_share": "7/29",
+          "verbatim_line_share": "18/29",
           "loaders": [],
           "named_by": [],
           "declared": "mirror"
@@ -6492,7 +6491,7 @@
           "lane": "mojo",
           "path": "src/sc_neurocore/accel/mojo/kernels/huber_braun.mojo",
           "rule": "header_stem",
-          "verbatim_line_share": "0/11",
+          "verbatim_line_share": "1/11",
           "loaders": [],
           "named_by": [],
           "declared": "mirror"
@@ -6667,18 +6666,17 @@
       "markers": {
         "app": [],
         "numeric": [
-          "numpy calls",
           "multiplicative operators"
         ],
-        "operators": 44,
-        "basis": "a"
+        "operators": 45,
+        "basis": "c"
       },
       "stubs": [
         {
           "lane": "mojo",
           "path": "src/sc_neurocore/accel/mojo/kernels/plant_r15.mojo",
           "rule": "header_stem",
-          "verbatim_line_share": "1/23",
+          "verbatim_line_share": "9/23",
           "loaders": [],
           "named_by": [],
           "declared": "mirror"
@@ -6937,7 +6935,7 @@
         "numeric": [
           "multiplicative operators"
         ],
-        "operators": 11,
+        "operators": 12,
         "basis": "c"
       },
       "stubs": [
@@ -6945,7 +6943,7 @@
           "lane": "mojo",
           "path": "src/sc_neurocore/accel/mojo/kernels/tsodyks_markram.mojo",
           "rule": "header_stem",
-          "verbatim_line_share": "2/14",
+          "verbatim_line_share": "3/14",
           "loaders": [],
           "named_by": [],
           "declared": "mirror"
@@ -11653,14 +11651,12 @@
     "src/sc_neurocore/network/topology.py",
     "src/sc_neurocore/neuro_symbolic/predictive_coding.py",
     "src/sc_neurocore/neurons/models/astrocyte.py",
-    "src/sc_neurocore/neurons/models/destexhe_thalamic.py",
     "src/sc_neurocore/neurons/models/galves_locherbach.py",
     "src/sc_neurocore/neurons/models/gamma_renewal.py",
     "src/sc_neurocore/neurons/models/glm_neuron.py",
     "src/sc_neurocore/neurons/models/huber_braun.py",
     "src/sc_neurocore/neurons/models/ilif.py",
     "src/sc_neurocore/neurons/models/mainen_sejnowski.py",
-    "src/sc_neurocore/neurons/models/plant_r15.py",
     "src/sc_neurocore/neurons/models/stochastic_if.py",
     "src/sc_neurocore/neurons/stochastic_lif.py",
     "src/sc_neurocore/nir_bridge/export.py",
@@ -11735,7 +11731,9 @@
     "src/sc_neurocore/neurons/dendritic.py",
     "src/sc_neurocore/neurons/fixed_point_lif.py",
     "src/sc_neurocore/neurons/models/av_ron_cardiac.py",
+    "src/sc_neurocore/neurons/models/destexhe_thalamic.py",
     "src/sc_neurocore/neurons/models/gif_population.py",
+    "src/sc_neurocore/neurons/models/plant_r15.py",
     "src/sc_neurocore/neurons/models/spinnaker2.py",
     "src/sc_neurocore/neurons/models/tsodyks_markram.py"
   ],
