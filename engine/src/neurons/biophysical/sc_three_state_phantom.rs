@@ -92,31 +92,76 @@ impl SCThreeStatePhantomBurster {
             v_threshold: -20.0,
         }
     }
-    /// Advance the burster by one forward-Euler step of `dt` with the injected current `current`.
+    /// Advance the burster by one fourth-order Runge-Kutta step of `dt` with the injected
+    /// current `current`.
     ///
-    /// The calcium and the fast potassium activations are taken at their steady states.
-    /// Returns 1 when the membrane potential starts below `v_threshold` and ends at or
-    /// above it, else 0. The input and the state are not validated, so a non-finite
-    /// current propagates into the state.
+    /// The calcium and the fast potassium activations are taken at their steady states, from
+    /// the same sign-split Boltzmann function as the Python model, and the four slopes and
+    /// their combination are evaluated in the same order of operations, so the engine follows
+    /// it bit for bit. The slow gates of the candidate are clamped to [0, 1], as in Python.
+    /// Returns 1 when the membrane potential starts below `v_threshold` and ends at or above
+    /// it, else 0. The input and the state are not validated, so a non-finite current
+    /// propagates into the state.
     pub fn step(&mut self, current: f64) -> i32 {
         let v_prev = self.v;
-        let m_inf = 1.0 / (1.0 + (-(self.v - self.v_m) / self.s_m).exp());
-        let n_inf = 1.0 / (1.0 + (-(self.v - self.v_n) / self.s_n).exp());
-        let s1_inf = 1.0 / (1.0 + (-(self.v - self.v_s1) / self.s_s1).exp());
-        let s2_inf = 1.0 / (1.0 + (-(self.v - self.v_s2) / self.s_s2).exp());
-        let i_ca = self.g_ca * m_inf * (self.v - self.e_ca);
-        let i_k = self.g_k * n_inf * (self.v - self.e_k);
-        let i_s1 = self.g_s1 * self.s1 * (self.v - self.e_k);
-        let i_s2 = self.g_s2 * self.s2 * (self.v - self.e_k);
-        let i_l = self.g_l * (self.v - self.e_l);
-        self.v += (-i_ca - i_k - i_s1 - i_s2 - i_l + current) / self.c_m * self.dt;
-        self.s1 += (s1_inf - self.s1) / self.tau_s1 * self.dt;
-        self.s2 += (s2_inf - self.s2) / self.tau_s2 * self.dt;
+        let (v, s1, s2) = self.rk4_candidate(current);
+        self.v = v;
+        self.s1 = s1.clamp(0.0, 1.0);
+        self.s2 = s2.clamp(0.0, 1.0);
         if self.v >= self.v_threshold && v_prev < self.v_threshold {
             1
         } else {
             0
         }
+    }
+
+    fn boltz(v: f64, vh: f64, k: f64) -> f64 {
+        let z = (vh - v) / k;
+        if z >= 0.0 {
+            let exp_neg = (-z).exp();
+            exp_neg / (1.0 + exp_neg)
+        } else {
+            1.0 / (1.0 + z.exp())
+        }
+    }
+
+    fn derivatives(&self, v: f64, s1: f64, s2: f64, current: f64) -> (f64, f64, f64) {
+        let m_inf = Self::boltz(v, self.v_m, self.s_m);
+        let n_inf = Self::boltz(v, self.v_n, self.s_n);
+        let s1_inf = Self::boltz(v, self.v_s1, self.s_s1);
+        let s2_inf = Self::boltz(v, self.v_s2, self.s_s2);
+        let i_ca = self.g_ca * m_inf * (v - self.e_ca);
+        let i_k = self.g_k * n_inf * (v - self.e_k);
+        let i_s1 = self.g_s1 * s1 * (v - self.e_k);
+        let i_s2 = self.g_s2 * s2 * (v - self.e_k);
+        let i_l = self.g_l * (v - self.e_l);
+        let dv = (-i_ca - i_k - i_s1 - i_s2 - i_l + current) / self.c_m;
+        let ds1 = (s1_inf - s1) / self.tau_s1;
+        let ds2 = (s2_inf - s2) / self.tau_s2;
+        (dv, ds1, ds2)
+    }
+
+    fn rk4_candidate(&self, current: f64) -> (f64, f64, f64) {
+        let (v0, s10, s20, dt) = (self.v, self.s1, self.s2, self.dt);
+        let k1 = self.derivatives(v0, s10, s20, current);
+        let k2 = self.derivatives(
+            v0 + 0.5 * dt * k1.0,
+            s10 + 0.5 * dt * k1.1,
+            s20 + 0.5 * dt * k1.2,
+            current,
+        );
+        let k3 = self.derivatives(
+            v0 + 0.5 * dt * k2.0,
+            s10 + 0.5 * dt * k2.1,
+            s20 + 0.5 * dt * k2.2,
+            current,
+        );
+        let k4 = self.derivatives(v0 + dt * k3.0, s10 + dt * k3.1, s20 + dt * k3.2, current);
+        (
+            v0 + dt * (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0) / 6.0,
+            s10 + dt * (k1.1 + 2.0 * k2.1 + 2.0 * k3.1 + k4.1) / 6.0,
+            s20 + dt * (k1.2 + 2.0 * k2.2 + 2.0 * k3.2 + k4.2) / 6.0,
+        )
     }
     /// Return the membrane potential and the slow gates to their initial values; the
     /// parameters are kept.
@@ -135,6 +180,19 @@ impl Default for SCThreeStatePhantomBurster {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn phantom_rk4_matches_the_python_model_bit_for_bit() {
+        // Python's SCThreeStatePhantomBurster after 400 steps of 0.0 from its defaults: no
+        // crossing, v = -34.292638252736324, s1 = 0.10514955278165967 and
+        // s2 = 0.1016465239145123.
+        let mut n = SCThreeStatePhantomBurster::new();
+        let crossings: i32 = (0..400).map(|_| n.step(0.0)).sum();
+        assert_eq!(crossings, 0);
+        assert_eq!(n.v, -34.292638252736324);
+        assert_eq!(n.s1, 0.10514955278165967);
+        assert_eq!(n.s2, 0.1016465239145123);
+    }
 
     #[test]
     fn default_matches_constructor_state() {

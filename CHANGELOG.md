@@ -985,6 +985,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   value and the count's floor, and a new test compares the engine and
   Python bit for bit over constant and mixed drives and through a reset.
 
+- The engine's SCThreeStatePhantomBurster takes the Python model's step.
+  It took a forward-Euler step of the voltage and the two slow gates
+  with the direct logistic and no bound on the gates, while the Python
+  model takes a fourth-order Runge-Kutta step with a sign-split
+  Boltzmann function and clamps the slow gates of the candidate to
+  [0, 1], so the same public name gave different trajectories. The
+  engine now takes that RK4 step in the same order of operations, with
+  the same Boltzmann function and clamp; it still reports an upward
+  crossing and still does not validate its input. An engine test pins
+  a Python value and a new test compares the engine and Python bit for
+  bit over constant and mixed drives, a crossing and a reset.
+
 - The eight AI-optimised neuron models in `sc_neurocore.neurons.models.ai_optimized`
   (`MultiTimescaleNeuron`, `AttentionGatedNeuron`, `PredictiveCodingNeuron`,
   `SelfReferentialNeuron`, `CompositionalBindingNeuron`,

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5204
+expected_file_count = 5205
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20858,3 +20858,7 @@ rationale = "Exercise SC-NeuroCore: the engine Sherman-Rinzel-Keizer burster tak
 [[file]]
 path = "tests/test_spinnaker_lif_rust_python_parity.py"
 rationale = "Exercise SC-NeuroCore: the engine SpiNNakerLIF takes the Python model's exact flow."
+
+[[file]]
+path = "tests/test_sc_three_state_phantom_rust_python_parity.py"
+rationale = "Exercise SC-NeuroCore: the engine three-state phantom burster takes the Python model's RK4 step."
