@@ -25,12 +25,17 @@ _ROOT = Path(__file__).resolve().parents[1]
 
 
 def _copy_engine_inventory(destination: Path) -> None:
-    """Copy every maintained source without changing the active checkout."""
+    """Copy every maintained source without changing the active checkout.
+
+    The copy holds what the gate module imports at collection, including
+    ``tools/ci_workflow_inventory.py``, through which it reads the CI jobs.
+    """
     copied = set(_GUARDED_BINDING_FILES) | {
         "tests/test_engine_requirement_gate.py",
         "tests/engine_requirement.py",
         "tests/engine_gate_provenance.py",
         "tests/__init__.py",
+        "tools/ci_workflow_inventory.py",
     }
     for relative in copied:
         target = destination / relative

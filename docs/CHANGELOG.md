@@ -1966,6 +1966,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- `tests/test_engine_gate_provenance.py` copies
+  `tools/ci_workflow_inventory.py` into the private repository its
+  source sweeps run in. Since the engine requirement gate reads the CI
+  jobs through that module, the copied gate module failed to import there,
+  and every sweep case failed in CI.
+
 - `docs/_generated/julia_lane_inventory.json` is regenerated with Julia
   1.13.3. Later changes to the Python sources four Julia files are
   compared with (spike-train correlation, the identity decoder, the
