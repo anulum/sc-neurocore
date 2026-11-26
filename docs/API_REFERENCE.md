@@ -34162,7 +34162,34 @@ state ``q``. One scalar update computes:
 Reference: Higuchi, Kairat, Bohte, and Otte (2024), "Balanced
 Resonate-and-Fire Neurons", Proceedings of ICML 2024, Algorithm 1.
 
+Parameters
+----------
+x : float, default=0.0
+    Real component of the complex membrane state ``u``.
+y : float, default=0.0
+    Imaginary component of the complex membrane state ``u``.
+q : float, default=0.0
+    Refractory adaptation state.
+omega : float, default=10.0
+    Angular frequency of oscillation; must satisfy ``0 < dt * omega <= 1``.
+b_offset : float, default=1.0
+    Positive damping margin below ``p(omega)``.
+threshold : float, default=1.0
+    Positive base firing threshold ``theta_c``.
+gamma : float, default=0.9
+    Refractory decay factor in ``&#91;0, 1)``.
+dt : float, default=0.01
+    Positive integration timestep satisfying ``dt * omega <= 1``.
+
+Raises
+------
+TypeError
+    If any parameter is a boolean or not a real number.
+ValueError
+    If any parameter is non-finite or violates its domain or stability bound.
+
 - **__post_init__**()
+  - Validate and normalise initial state and parameters.
 - **p_omega**()
   - Current divergence boundary for ``omega`` and ``dt``.
 - **damping**()
@@ -34181,6 +34208,25 @@ Return the BRF divergence boundary ``p(omega)``.
 
 ``p(omega) = (-1 + sqrt(1 - (dt * omega)^2)) / dt``.
 The value is real only when ``0 < dt * omega <= 1``.
+
+Parameters
+----------
+omega : float
+    Resonator angular frequency; must be finite and strictly positive.
+dt : float
+    Discrete timestep; must be finite and strictly positive.
+
+Returns
+-------
+float
+    Critical damping boundary ``p(omega) <= 0``.
+
+Raises
+------
+TypeError
+    If ``omega`` or ``dt`` is a boolean or not a real number.
+ValueError
+    If ``omega`` or ``dt`` is non-finite or non-positive, or if ``dt * omega > 1``.
 
 ---
 
@@ -35885,9 +35931,34 @@ The scaling factor k is a trainable parameter for SNN backprop.
 
 Reference: Jiang, C. & Zhang, Y. (2024). Neural Comput. 36(8):1546–1564.
 
+Parameters
+----------
+v : float, default=0.0
+    Initial membrane potential.
+k : float, default=1.0
+    Trainable input scaling factor.
+tau : float, default=10.0
+    Membrane time constant in milliseconds; must be strictly positive.
+v_threshold : float, default=1.0
+    Firing threshold.
+v_reset : float, default=0.0
+    Post-spike reset potential.
+dt : float, default=1.0
+    Discrete integration timestep in milliseconds; must be strictly positive.
+
+Raises
+------
+TypeError
+    If any parameter is a boolean or not a real number.
+ValueError
+    If any parameter is non-finite, or if ``tau <= 0`` or ``dt <= 0``.
+
 - **__post_init__**()
+  - Validate initial fields and precompute exponential decay ``alpha``.
 - **step**(current)
+  - Advance the neuron by one discrete timestep.
 - **reset**()
+  - Reset membrane potential to rest.
 
 ---
 
@@ -36067,8 +36138,38 @@ adaptive and input-driven.
 
 Reference: Hasani, R. et al. (2021). Proc. AAAI Conf. Artif. Intell. 35(9):7657–7666.
 
+Parameters
+----------
+x : float, default=0.0
+    Initial hidden membrane state.
+tau_base : float, default=10.0
+    Baseline time constant in milliseconds; must be strictly positive.
+w_tau : float, default=-0.5
+    Input weight modulating the liquid time-constant sigmoid.
+w_x : float, default=0.8
+    Recurrent self-weight inside the target ``tanh``.
+w_in : float, default=1.0
+    Input weight inside the target ``tanh``.
+bias : float, default=0.0
+    Bias term inside the time-constant sigmoid.
+v_threshold : float, default=1.0
+    Spiking threshold on ``x``.
+dt : float, default=1.0
+    Discrete integration timestep in milliseconds; must be strictly positive.
+
+Raises
+------
+TypeError
+    If any parameter is a boolean or not a real number.
+ValueError
+    If any parameter is non-finite, or if ``tau_base <= 0`` or ``dt <= 0``.
+
+- **__post_init__**()
+  - Validate initial state and parameters.
 - **step**(current)
+  - Advance the LTC hidden state by one Euler timestep.
 - **reset**()
+  - Reset hidden state ``x`` to zero.
 
 ---
 
@@ -37963,10 +38064,41 @@ gradient sigma'(V) = 1/(beta * |V - V_th| + 1)^2.
 
 Reference: Zenke, F. & Ganguli, S. (2018). Neural Comput. 30:1514–1541.
 
+Parameters
+----------
+v : float, default=0.0
+    Initial membrane potential.
+trace : float, default=0.0
+    Initial Van Rossum eligibility trace.
+tau_m : float, default=10.0
+    Membrane time constant in milliseconds; must be strictly positive.
+tau_e : float, default=10.0
+    Eligibility filter time constant in milliseconds; must be strictly positive.
+v_threshold : float, default=1.0
+    Firing threshold.
+v_reset : float, default=0.0
+    Post-spike reset potential.
+beta_sg : float, default=10.0
+    Surrogate-gradient sharpness; must be non-negative.
+dt : float, default=1.0
+    Discrete integration timestep in milliseconds; must be strictly positive.
+
+Raises
+------
+TypeError
+    If any parameter is a boolean or not a real number.
+ValueError
+    If any parameter is non-finite, if ``tau_m <= 0``, ``tau_e <= 0``, or ``dt <= 0``,
+    or if ``beta_sg < 0``.
+
 - **__post_init__**()
+  - Validate initial fields and precompute membrane and trace decay factors.
 - **surrogate_grad**()
+  - Compute the SuperSpike fast-sigmoid surrogate derivative at current ``v``.
 - **step**(current)
+  - Advance membrane potential and eligibility trace by one timestep.
 - **reset**()
+  - Reset membrane potential and eligibility trace to zero.
 
 ---
 

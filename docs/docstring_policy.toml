@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5207
+expected_file_count = 5213
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20870,3 +20870,27 @@ rationale = "Exercise SC-NeuroCore: ArcaneNeuron takes one deterministic step in
 [[file]]
 path = "src/sc_neurocore/neurons/models/arcane_neuron.py"
 rationale = "ArcaneNeuron: the deterministic Python step the engine mirrors bit for bit."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/klif.py"
+rationale = "Document KLIF neuron parameters, step contract, and fail-closed numeric guards."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/superspike_neuron.py"
+rationale = "Document SuperSpike neuron parameters, overflow-safe surrogate gradient, and domain guards."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/ltc.py"
+rationale = "Document liquid time-constant neuron parameters, overflow-safe sigmoid, and state guards."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/balanced_resonate_and_fire.py"
+rationale = "Document balanced resonate-and-fire divergence boundary, properties, and step refusals."
+
+[[file]]
+path = "tests/test_surrogate_adaptive_resonator_neuron_domain_guards.py"
+rationale = "Verify engine-free finiteness, domain, overflow-safety, and rollback guards across surrogate, adaptive, and resonator neurons."
+
+[[file]]
+path = "tests/test_surrogate_adaptive_resonator_rust_python_parity.py"
+rationale = "Verify require_engine()-gated bit-exact C libm and Rust engine parity across surrogate and adaptive neurons."

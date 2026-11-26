@@ -2,12 +2,12 @@
   "generator": "tools/accel_stub_triage.py",
   "counts": {
     "originals": 338,
-    "compute": 337,
-    "compute_stubs": 607,
+    "compute": 336,
+    "compute_stubs": 606,
     "application": 0,
     "application_stubs": 0,
-    "unclear": 1,
-    "unclear_stubs": 2,
+    "unclear": 2,
+    "unclear_stubs": 3,
     "decided_by_reading": 20,
     "ambiguous_stubs_resolved": 2,
     "stubs_mojo": 309,
@@ -17,9 +17,9 @@
     "unmapped_julia": 133
   },
   "variant_a_only": {
-    "compute": 276,
+    "compute": 274,
     "application": 0,
-    "unclear": 62,
+    "unclear": 64,
     "application_modules": []
   },
   "originals": [
@@ -6529,23 +6529,21 @@
     },
     {
       "module": "src/sc_neurocore/neurons/models/ltc.py",
-      "class": "compute",
+      "class": "unclear",
       "decided_by": "rule",
       "reason": null,
       "markers": {
         "app": [],
-        "numeric": [
-          "numpy calls"
-        ],
-        "operators": 7,
-        "basis": "a"
+        "numeric": [],
+        "operators": 9,
+        "basis": null
       },
       "stubs": [
         {
           "lane": "mojo",
           "path": "src/sc_neurocore/accel/mojo/kernels/ltc.mojo",
           "rule": "header_stem",
-          "verbatim_line_share": "2/8",
+          "verbatim_line_share": "0/8",
           "loaders": [],
           "named_by": [],
           "declared": "mirror"
@@ -6883,10 +6881,11 @@
       "markers": {
         "app": [],
         "numeric": [
-          "numpy calls"
+          "pure numeric calls with multiplicative operators",
+          "multiplicative operators"
         ],
-        "operators": 7,
-        "basis": "a"
+        "operators": 10,
+        "basis": "b"
       },
       "stubs": [
         {
@@ -11660,11 +11659,9 @@
     "src/sc_neurocore/neurons/models/glm_neuron.py",
     "src/sc_neurocore/neurons/models/huber_braun.py",
     "src/sc_neurocore/neurons/models/ilif.py",
-    "src/sc_neurocore/neurons/models/ltc.py",
     "src/sc_neurocore/neurons/models/mainen_sejnowski.py",
     "src/sc_neurocore/neurons/models/plant_r15.py",
     "src/sc_neurocore/neurons/models/stochastic_if.py",
-    "src/sc_neurocore/neurons/models/superspike_neuron.py",
     "src/sc_neurocore/neurons/stochastic_lif.py",
     "src/sc_neurocore/nir_bridge/export.py",
     "src/sc_neurocore/physics/heat.py",
@@ -11708,6 +11705,7 @@
     "src/sc_neurocore/neurons/models/quantum_inspired_lif.py",
     "src/sc_neurocore/neurons/models/sherman_rinzel_keizer.py",
     "src/sc_neurocore/neurons/models/stellate_cell.py",
+    "src/sc_neurocore/neurons/models/superspike_neuron.py",
     "src/sc_neurocore/neurons/models/traub_miles.py",
     "src/sc_neurocore/synapses/dopamine_stdp.py",
     "src/sc_neurocore/synapses/short_term_plasticity.py",

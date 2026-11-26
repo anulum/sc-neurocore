@@ -563,6 +563,24 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   Five files are listed only because those lanes were absent; a file
   that the hosted union shows at 100 % leaves the list.
 
+- `KLIFNeuron`, `SuperSpikeNeuron`, and `LiquidTimeConstantNeuron` now evaluate
+  `exp` and `tanh` via Python's C math library (`math.exp` and `math.tanh`)
+  rather than scalar NumPy ufuncs, matching the Rust engine bit-for-bit; values
+  at inputs where NumPy's SIMD `exp` or `tanh` differed from `libm` can move by
+  1 ULP from the previous release. `sustain_oscillation_boundary` now raises
+  `ValueError` on non-finite arguments instead of returning `-100.0`.
+
+- `KLIFNeuron`, `SuperSpikeNeuron`, `LiquidTimeConstantNeuron`,
+  `sustain_oscillation_boundary`, and `BalancedResonateAndFireNeuron` now reject
+  boolean, non-real, non-finite, and out-of-domain inputs, parameters, and
+  mutated state fields with `TypeError` or `ValueError` instead of silently
+  propagating `NaN`, `inf`, or unvalidated domain values. `SuperSpikeNeuron`
+  evaluates `surrogate_grad` without squaring overflow on extreme membrane
+  distances, `LiquidTimeConstantNeuron` evaluates its adaptive time-constant
+  sigmoid without exponential overflow warnings on large finite drives, and all
+  four models validate candidate state updates before writing so numeric
+  overflow leaves prior state unchanged.
+
 - FPGA energy estimator migration notes. `FPGATarget.total_bram_kb` is
   renamed to the field `total_bram_kbits`, so `FPGATarget(total_bram_kb=...)`
   now raises TypeError; `.total_bram_kb` is now a read-only property in
