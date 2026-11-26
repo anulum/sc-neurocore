@@ -229,7 +229,10 @@ models — Ca²⁺ oscillations at 0.01–0.1 Hz vs neuronal spiking at 1–100 
   Python and the engine class raise `ValueError`, the safety crate and Go return an error, Julia
   returns `nothing`, and the engine's network-runner adapter keeps the calcium. Before 2026-11-24 the
   engine class used `k_er` as the leak rate, held IP3 constant, added the input to calcium and
-  validated nothing; the Go and safety lanes were stubs.
+  validated nothing; the Go and safety lanes were stubs. In the Rust engine class the rates `a2`,
+  `leak`, `ip3_prod` and `ip3_decay` are the associated constants `AstrocyteModel::A2`, `LEAK`,
+  `IP3_PROD` and `IP3_DECAY` at the Python defaults, not fields, so the crate's public struct keeps
+  the fields it was published with in 4.2.0; the Python binding builds only the defaults.
 - **Rounding and validation differences that parity tolerates:** Python's `**` and Rust's `powf` call
   the C `pow`, while Julia's literal power (`x ^ 3` as `x*x*x`, two roundings) and Go's `math.Pow` (its
   own Frexp-and-squaring implementation for integral exponents) do their own multiplications. Only

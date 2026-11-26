@@ -11,8 +11,14 @@
 /// Li-Rinzel IP3R astrocyte model: cytosolic Ca²⁺, the IP3-receptor gate and IP3.
 ///
 /// The same recurrence as the Python reference `sc_neurocore.neurons.models.astrocyte`:
-/// three forward-Euler ODEs, an ER leak at rate `leak`, and an input that drives IP3
-/// production (glutamate-driven), not calcium.
+/// three forward-Euler ODEs, an ER leak at rate [`AstrocyteModel::LEAK`], and an input that
+/// drives IP3 production (glutamate-driven), not calcium.
+///
+/// The four rates the 4.2.0 struct did not have, [`AstrocyteModel::A2`],
+/// [`AstrocyteModel::LEAK`], [`AstrocyteModel::IP3_PROD`] and [`AstrocyteModel::IP3_DECAY`],
+/// are associated constants at the Python reference's defaults rather than fields, so that a
+/// struct literal written against 4.2.0 still compiles. The Python binding constructs the
+/// defaults only, so no Python-visible parameter is lost.
 #[derive(Clone, Debug)]
 pub struct AstrocyteModel {
     /// Cytosolic calcium (uM).
@@ -35,23 +41,24 @@ pub struct AstrocyteModel {
     pub d3: f64,
     /// Calcium-activation dissociation constant (uM).
     pub d5: f64,
-    /// Calcium-inactivation rate of the receptor gate (1/(uM s)).
-    pub a2: f64,
     /// Total cell calcium (cytosol plus ER) (uM).
     pub c0: f64,
     /// ER-to-cytosol volume ratio (dimensionless).
     pub c1: f64,
-    /// ER leak rate (1/s).
-    pub leak: f64,
-    /// Constant external IP3 production (uM/s), added to the input.
-    pub ip3_prod: f64,
-    /// IP3 decay rate (1/s).
-    pub ip3_decay: f64,
     /// Euler step (s); the rates are per second.
     pub dt: f64,
 }
 
 impl AstrocyteModel {
+    /// Calcium-inactivation rate of the receptor gate (1/(uM s)), the Python default.
+    pub const A2: f64 = 0.2;
+    /// ER leak rate (1/s), the Python default.
+    pub const LEAK: f64 = 0.01;
+    /// Constant external IP3 production (uM/s), added to the input; the Python default.
+    pub const IP3_PROD: f64 = 0.0;
+    /// IP3 decay rate (1/s), the Python default.
+    pub const IP3_DECAY: f64 = 0.14;
+
     /// Create a cell with `ca` = 0.05 uM, `h` = 0.8 and `ip3` = 0.5 uM, the Python
     /// reference's default parameters, and `dt` = 0.01 s.
     pub fn new() -> Self {
@@ -66,12 +73,8 @@ impl AstrocyteModel {
             d2: 1.049,
             d3: 0.9434,
             d5: 0.08234,
-            a2: 0.2,
             c0: 2.0,
             c1: 0.185,
-            leak: 0.01,
-            ip3_prod: 0.0,
-            ip3_decay: 0.14,
             dt: 0.01,
         }
     }
@@ -87,18 +90,13 @@ impl AstrocyteModel {
             self.d2,
             self.d3,
             self.d5,
-            self.a2,
             self.c0,
             self.c1,
             self.dt,
         ];
-        let non_negative = [self.leak, self.ip3_prod, self.ip3_decay];
         positive
             .iter()
             .all(|value| value.is_finite() && *value > 0.0)
-            && non_negative
-                .iter()
-                .all(|value| value.is_finite() && *value >= 0.0)
             && self.ca.is_finite()
             && self.ca >= 0.0
             && self.ca <= self.c0
@@ -113,9 +111,9 @@ impl AstrocyteModel {
     ///
     /// With `ca_er = (c0 - ca) / c1`, the calcium change is the channel flux
     /// `v_er * (m_inf * n_inf * h)^3 * (ca_er - ca)` minus the pump
-    /// `v_serca * ca^2 / (ca^2 + k_er^2)` plus the leak `leak * (ca_er - ca)`. The gate relaxes
-    /// towards `q2 / (q2 + ca)` with time constant `1 / (a2 * (q2 + ca))` (at least 1e-6 s),
-    /// and `dip3 = current + ip3_prod - ip3_decay * ip3`. Every term uses the old state. Then
+    /// `v_serca * ca^2 / (ca^2 + k_er^2)` plus the leak `LEAK * (ca_er - ca)`. The gate relaxes
+    /// towards `q2 / (q2 + ca)` with time constant `1 / (A2 * (q2 + ca))` (at least 1e-6 s),
+    /// and `dip3 = current + IP3_PROD - IP3_DECAY * ip3`. Every term uses the old state. Then
     /// `ca` is floored at 0, `h` is clipped to 0 to 1 and `ip3` is floored at 0.
     ///
     /// # Errors
@@ -135,13 +133,13 @@ impl AstrocyteModel {
         let ca_er = (self.c0 - self.ca) / self.c1;
         let j_channel = self.v_er * (m_inf * n_inf * self.h).powf(3.0) * (ca_er - self.ca);
         let j_serca = self.v_serca * self.ca.powf(2.0) / (self.ca.powf(2.0) + self.k_er.powf(2.0));
-        let j_leak = self.leak * (ca_er - self.ca);
+        let j_leak = Self::LEAK * (ca_er - self.ca);
         let dca = j_channel - j_serca + j_leak;
         let q2 = self.d2 * (self.ip3 + self.d1) / (self.ip3 + self.d3);
         let h_inf = q2 / (q2 + self.ca);
-        let tau_h = 1.0 / (self.a2 * (q2 + self.ca));
+        let tau_h = 1.0 / (Self::A2 * (q2 + self.ca));
         let dh = (h_inf - self.h) / tau_h.max(1e-6);
-        let dip3 = current + self.ip3_prod - self.ip3_decay * self.ip3;
+        let dip3 = current + Self::IP3_PROD - Self::IP3_DECAY * self.ip3;
         let ca_next = self.ca + dca * self.dt;
         if !ca_next.is_finite() || ca_next > self.c0 {
             return Err("calcium update must remain finite and within the total calcium pool");
@@ -238,11 +236,42 @@ mod tests {
     #[test]
     fn astrocyte_refuses_invalid_parameters() {
         let mut n = AstrocyteModel::new();
-        n.leak = -1.0;
+        n.c1 = -1.0;
         assert!(n.try_step(0.0).is_err());
         let mut n = AstrocyteModel::new();
         n.dt = 0.0;
         assert!(n.try_step(0.0).is_err());
+    }
+
+    #[test]
+    fn astrocyte_rate_constants_are_the_python_defaults() {
+        assert_eq!(AstrocyteModel::A2, 0.2);
+        assert_eq!(AstrocyteModel::LEAK, 0.01);
+        assert_eq!(AstrocyteModel::IP3_PROD, 0.0);
+        assert_eq!(AstrocyteModel::IP3_DECAY, 0.14);
+    }
+
+    #[test]
+    fn astrocyte_literal_of_the_4_2_0_fields_still_builds() {
+        let mut a = AstrocyteModel {
+            ca: 0.05,
+            h: 0.8,
+            ip3: 0.5,
+            v_er: 0.9,
+            k_er: 0.15,
+            v_serca: 0.4,
+            d1: 0.13,
+            d2: 1.049,
+            d3: 0.9434,
+            d5: 0.08234,
+            c0: 2.0,
+            c1: 0.185,
+            dt: 0.01,
+        };
+        let mut b = AstrocyteModel::new();
+        for _ in 0..50 {
+            assert_eq!(a.step(0.3), b.step(0.3));
+        }
     }
 
     #[test]

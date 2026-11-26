@@ -922,6 +922,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- The engine crate's public Rust API is compatible with the published
+  `sc_neurocore_engine` 4.2.0 again, so the next 4.x release can carry
+  it; `cargo semver-checks` against 4.2.0 had found two major changes.
+  `rk4_neurons::py_rk4_neuron_simulate` is re-exported at the path
+  4.2.0 published, from the binding module it moved to. The four rates
+  the Li-Rinzel fix gave `AstrocyteModel` as new public fields (`a2`,
+  `leak`, `ip3_prod`, `ip3_decay`) are associated constants (`A2`,
+  `LEAK`, `IP3_PROD`, `IP3_DECAY`) at the Python reference's defaults,
+  because adding a field to a struct that callers can build with a
+  literal breaks those literals. The recurrence and its refusals are
+  unchanged, and the Python binding, which builds only the defaults,
+  loses nothing. A Rust test builds the struct from its 4.2.0 fields
+  and steps it equal to `AstrocyteModel::new()`.
+
 - The CI job that checks the GPU encoder's refusal on a software Vulkan
   adapter installs Mesa again. It pinned `mesa-vulkan-drivers`
   `25.2.8-0ubuntu0.24.04.4`, which Ubuntu 24.04 replaced in its updates

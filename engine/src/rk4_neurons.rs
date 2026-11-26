@@ -12,6 +12,10 @@
 
 pub(crate) mod bindings;
 
+/// The PyO3 simulator binding, kept at the path where 4.2.0 published it before it moved into
+/// [`bindings`]; see [`bindings::py_rk4_neuron_simulate`].
+pub use bindings::py_rk4_neuron_simulate;
+
 const IZH_SPIKE_THRESHOLD: f64 = 30.0;
 
 /// Izhikevich (2003) neuron, integrated with one classical RK4 step of `dt` per call.
