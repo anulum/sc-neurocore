@@ -22,6 +22,7 @@ from __future__ import annotations
 import pytest
 
 from sc_neurocore.neurons.models.fractional_lif import FractionalLIFNeuron
+from tests.engine_requirement import require_engine
 
 MAX_HIST = 50
 #: A spike, a long sub-threshold stretch, a second spike, and a weaker stretch.
@@ -31,7 +32,9 @@ DRIVE = [1.5] + [0.5] * 30 + [1.2] + [0.3] * 15
 @pytest.mark.parametrize("alpha", [0.5, 0.8, 1.0])
 def test_the_engine_follows_the_python_model_through_a_reset(alpha: float) -> None:
     """Spike trains and potentials agree step by step while both memories have the same length."""
-    engine = pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+    require_engine()
+    import sc_neurocore_engine as engine
+
     assert len(DRIVE) < MAX_HIST - 1
     rust = engine.FractionalLIFNeuron(alpha, MAX_HIST)
     python = FractionalLIFNeuron(alpha=alpha, _max_history=MAX_HIST)
@@ -44,7 +47,9 @@ def test_the_engine_follows_the_python_model_through_a_reset(alpha: float) -> No
 
 def test_a_reset_holds_against_a_drive_below_threshold() -> None:
     """At alpha 1 the engine acts as a plain Euler LIF with dt = tau = 1: it settles at the drive."""
-    engine = pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+    require_engine()
+    import sc_neurocore_engine as engine
+
     rust = engine.FractionalLIFNeuron(1.0, MAX_HIST)
     assert rust.step(1.5) == 1
     assert [rust.step(0.5) for _ in range(10)] == [0] * 10

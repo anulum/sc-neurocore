@@ -9,13 +9,15 @@
 """PyO3 round-trip tests for sparse CSR graph backend."""
 
 import numpy as np
-import pytest
+from tests.engine_requirement import require_engine
 
-sc = pytest.importorskip("sc_neurocore_engine", exc_type=ImportError)
+require_engine()
+import sc_neurocore_engine as sc
 
 
-def test_from_sparse_forward():
+def test_from_sparse_forward() -> None:
     # Ring graph: 0→1, 1→2, 2→0
+    """A layer built from CSR arrays runs a forward pass on a ring graph."""
     row_offsets = [0, 1, 2, 3]
     col_indices = [1, 2, 0]
     values = [1.0, 1.0, 1.0]
@@ -27,22 +29,25 @@ def test_from_sparse_forward():
     assert np.all(np.isfinite(out))
 
 
-def test_from_dense_auto_sparse():
+def test_from_dense_auto_sparse() -> None:
     # 10x10 with 5 edges → 5% density → should auto-select sparse
+    """A 5 % dense adjacency matrix selects the sparse representation."""
     adj = np.zeros((10, 10))
     adj[0, 1] = adj[1, 2] = adj[2, 3] = adj[3, 4] = adj[4, 0] = 1.0
     layer = sc.StochasticGraphLayer.from_dense_auto(adj, 3, seed=42, density_threshold=0.3)
     assert layer.is_sparse()
 
 
-def test_from_dense_auto_dense():
+def test_from_dense_auto_dense() -> None:
     # 3x3 full → 100% density → should stay dense
+    """A full adjacency matrix keeps the dense representation."""
     adj = np.ones((3, 3))
     layer = sc.StochasticGraphLayer.from_dense_auto(adj, 2, seed=42, density_threshold=0.3)
     assert not layer.is_sparse()
 
 
-def test_sparse_matches_dense_output():
+def test_sparse_matches_dense_output() -> None:
+    """The sparse and dense representations give the same output."""
     adj = np.array([[0.0, 0.9, 0.0], [0.9, 0.0, 0.9], [0.0, 0.9, 0.0]])
     features = np.random.default_rng(7).random((3, 2))
     seed = 42

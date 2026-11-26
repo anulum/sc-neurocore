@@ -12,13 +12,16 @@ import numpy as np
 import pytest
 
 from sc_neurocore.graphs.gnn import StochasticGraphLayer as V2GNN
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 
 from sc_neurocore_engine.graphs import StochasticGraphLayer as V3GNN
 
 
 class TestGraphLayerEquivalence:
+    """The graph layer agrees between the v2 Python and v3 engine implementations."""
+
     @pytest.mark.parametrize(
         "n_nodes,n_features",
         [
@@ -27,7 +30,8 @@ class TestGraphLayerEquivalence:
             (20, 16),
         ],
     )
-    def test_forward_matches_v2(self, n_nodes, n_features):
+    def test_forward_matches_v2(self, n_nodes: int, n_features: int) -> None:
+        """The v3 forward pass matches v2 for each graph size."""
         rng = np.random.RandomState(42)
         adj = rng.randint(0, 2, (n_nodes, n_nodes)).astype(np.float64)
         adj = (adj + adj.T) / 2
@@ -47,7 +51,7 @@ class TestGraphLayerEquivalence:
 
         np.testing.assert_allclose(v2_out, v3_out, atol=1e-12, err_msg="GNN output mismatch")
 
-    def test_isolated_node(self):
+    def test_isolated_node(self) -> None:
         """Node with no edges should produce tanh(0) = 0."""
         adj = np.zeros((3, 3))
         adj[0, 1] = adj[1, 0] = 1.0

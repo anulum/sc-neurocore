@@ -6,13 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_numpy_interop.py
 
+"""Tests for NumPy zero-copy interop functions."""
+
 from __future__ import annotations
 
-"""Tests for NumPy zero-copy interop functions."""
 import numpy as np
 import pytest
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 import sc_neurocore_engine as v3
 
 __all__ = ["np", "pytest", "v3"]

@@ -6,17 +6,19 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_encoder_equiv.py
 
-from __future__ import annotations
-
 """Strict blueprint semantics tests for LFSR + bitstream encoder.
 
 The encoder uses compare-before-advance semantics matching the Verilog RTL
 (sc_bitstream_encoder.v): non-blocking assignments mean `bit_out` reads
 the LFSR state *before* the advance that happens in the same clock edge.
 """
-import pytest
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+from __future__ import annotations
+
+import pytest
+from tests.engine_requirement import require_engine
+
+require_engine()
 from sc_neurocore_engine import BitstreamEncoder, Lfsr16
 
 

@@ -22,6 +22,7 @@ from typing import Any
 import pytest
 
 from sc_neurocore.neurons.models.ai_optimized import ContinuousAttractorNeuron
+from tests.engine_requirement import require_engine
 
 UNITS = 16
 DRIVE = 2.0
@@ -29,7 +30,9 @@ DRIVE = 2.0
 
 def _engine_ring() -> Any:
     """Return a 16-unit engine ring, or skip when the engine is not built."""
-    engine = pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+    require_engine()
+    import sc_neurocore_engine as engine
+
     return engine.ContinuousAttractorNeuron(UNITS)
 
 

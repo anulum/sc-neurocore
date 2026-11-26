@@ -12,14 +12,16 @@ import numpy as np
 import pytest
 
 from sc_neurocore.layers import VectorizedSCLayer as V2Layer
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 
 from sc_neurocore_engine.layers import VectorizedSCLayer as V3Layer
 
 
 class TestDenseLayerEquivalence:
-    """
+    """Bernoulli encoding agrees statistically between v2 and v3.
+
     Both v2 and v3 use Bernoulli sampling to encode probabilities as bitstreams.
     They use different RNG implementations (NumPy vs ChaCha8), so outputs are
     compared for statistical equivalence, not bit-identical streams.
@@ -34,8 +36,9 @@ class TestDenseLayerEquivalence:
             (64, 32),
         ],
     )
-    def test_forward_statistical_equivalence(self, n_inputs, n_neurons):
+    def test_forward_statistical_equivalence(self, n_inputs: int, n_neurons: int) -> None:
         # Long bitstreams reduce stochastic variance enough for a tight tolerance.
+        """Long bitstreams make the v2 and v3 dense layer outputs agree within a tight tolerance."""
         length = 32768
 
         # v2 uses NumPy global RNG internally; seed for deterministic tests.
@@ -72,7 +75,8 @@ class TestDenseLayerEquivalence:
             err_msg="Dense layer outputs diverge beyond tolerance",
         )
 
-    def test_output_shape(self):
+    def test_output_shape(self) -> None:
+        """The v3 dense layer returns one output per neuron."""
         v3 = V3Layer(n_inputs=8, n_neurons=4, length=1024)
         inputs = np.full(8, 0.5)
         out = v3.forward(inputs)
@@ -80,7 +84,7 @@ class TestDenseLayerEquivalence:
         # Current layer semantics are sum_i (w_ji * p_i), so range is [0, n_inputs].
         assert np.all(out >= 0.0) and np.all(out <= v3.n_inputs)
 
-    def test_deterministic_with_same_seed(self):
+    def test_deterministic_with_same_seed(self) -> None:
         """Two v3 layers with the same default seed should match exactly."""
         v3a = V3Layer(n_inputs=8, n_neurons=4, length=1024)
         v3b = V3Layer(n_inputs=8, n_neurons=4, length=1024)

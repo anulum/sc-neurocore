@@ -10,15 +10,17 @@
 
 import numpy as np
 
-import pytest
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 
 from sc_neurocore_engine.attention import StochasticAttention
 
 
 class TestMultiHeadAttention:
-    def test_single_head_matches_forward(self):
+    """Multi-head forward passes of the engine's stochastic attention."""
+
+    def test_single_head_matches_forward(self) -> None:
         """With n_heads=1, forward_multihead == forward."""
         rng = np.random.RandomState(42)
         Q = rng.uniform(0, 1, (5, 8))
@@ -31,7 +33,7 @@ class TestMultiHeadAttention:
 
         np.testing.assert_allclose(out_single, out_multi, atol=1e-12)
 
-    def test_multi_head_output_shape(self):
+    def test_multi_head_output_shape(self) -> None:
         """Multi-head output should have same total columns as V."""
         rng = np.random.RandomState(42)
         n_heads = 4
@@ -44,7 +46,7 @@ class TestMultiHeadAttention:
 
         assert out.shape == (5, 16)
 
-    def test_multi_head_not_equal_to_single(self):
+    def test_multi_head_not_equal_to_single(self) -> None:
         """Multi-head should differ from treating all columns as one head."""
         rng = np.random.RandomState(42)
         Q = rng.uniform(0, 1, (5, 16))

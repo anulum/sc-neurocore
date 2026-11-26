@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — independently executed Butera Model 1 native parity
 
+"""Executed Julia and Mojo parity of the Butera Model 1 neuron and its SC unit-capacitance identity."""
+
 from __future__ import annotations
 
 import json
@@ -21,6 +23,7 @@ from sc_neurocore.neurons.models.butera_respiratory import ButeraRespiratoryNeur
 from sc_neurocore.neurons.models.sc_unit_capacitance_respiratory import (
     SCUnitCapacitanceRespiratoryNeuron,
 )
+from tests.julia_requirement import require_julia_executable
 
 _ROOT = Path(__file__).resolve().parents[1]
 _ONE_STEP = np.array([-50.033785184435395, 0.009677458379988083, 0.5000008443290977])
@@ -28,13 +31,15 @@ _SC_ONE_STEP = np.array([-50.71307220472, 0.009634244179940929, 0.50000098817820
 
 
 def test_python_source_one_step_fixture() -> None:
+    """The Python source model reproduces its recorded first step."""
     model = ButeraRespiratoryNeuron()
     assert model.step(12.5) == 0
     np.testing.assert_allclose([model.v, model.n, model.h_nap], _ONE_STEP, rtol=0, atol=2e-14)
 
 
-@pytest.mark.skipif(shutil.which("julia") is None, reason="Julia runtime unavailable")
 def test_julia_source_mirror_matches_python() -> None:
+    """The Julia source mirror, run through the julia command, matches the Python step."""
+    require_julia_executable()
     kernel = _ROOT / "src/sc_neurocore/accel/julia/neurons/butera_respiratory.jl"
     expression = (
         f'include(raw"{kernel}"); using .ButeraRespiratoryAccel; '
@@ -56,6 +61,7 @@ def test_julia_source_mirror_matches_python() -> None:
 
 @pytest.mark.skipif(shutil.which("mojo") is None, reason="Mojo runtime unavailable")
 def test_mojo_source_mirror_matches_python(tmp_path: Path) -> None:
+    """The Mojo source mirror, built and run, matches the Python step."""
     kernel = _ROOT / "src/sc_neurocore/accel/mojo/kernels/butera_respiratory.mojo"
     binary = tmp_path / "butera_respiratory"
     subprocess.run(
@@ -73,13 +79,15 @@ def test_mojo_source_mirror_matches_python(tmp_path: Path) -> None:
 
 
 def test_python_sc_identity_one_step_fixture() -> None:
+    """The Python SC unit-capacitance identity reproduces its recorded first step."""
     model = SCUnitCapacitanceRespiratoryNeuron()
     assert model.step(12.5) == 0
     np.testing.assert_allclose([model.v, model.n, model.h_nap], _SC_ONE_STEP, rtol=0, atol=2e-14)
 
 
-@pytest.mark.skipif(shutil.which("julia") is None, reason="Julia runtime unavailable")
 def test_julia_sc_identity_matches_python() -> None:
+    """The Julia SC identity, run through the julia command, matches the Python step."""
+    require_julia_executable()
     kernel = _ROOT / "src/sc_neurocore/accel/julia/neurons/sc_unit_capacitance_respiratory.jl"
     expression = (
         f'include(raw"{kernel}"); const SC=SCUnitCapacitanceRespiratoryAccel; '
@@ -101,6 +109,7 @@ def test_julia_sc_identity_matches_python() -> None:
 
 @pytest.mark.skipif(shutil.which("mojo") is None, reason="Mojo runtime unavailable")
 def test_mojo_sc_identity_matches_python(tmp_path: Path) -> None:
+    """The Mojo SC identity, built and run, matches the Python step."""
     kernel = _ROOT / "src/sc_neurocore/accel/mojo/kernels/sc_unit_capacitance_respiratory.mojo"
     binary = tmp_path / "sc_unit_capacitance_respiratory"
     subprocess.run(

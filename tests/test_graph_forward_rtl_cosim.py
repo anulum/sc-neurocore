@@ -23,9 +23,9 @@ from pathlib import Path
 import shutil
 import subprocess
 
-import pytest
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 
 from sc_neurocore_engine.ir import ScGraphBuilder
 
@@ -107,7 +107,7 @@ def _build_emitted_sv(
     builder.output("agg_out", agg_id)
     graph = builder.build()
     assert graph.verify() is None
-    return graph.emit_sv()
+    return str(graph.emit_sv())
 
 
 def _run_cosim(
@@ -185,11 +185,13 @@ endmodule
 
 def test_single_node_self_loop(tmp_path: Path) -> None:
     # One node, self-loop degree 1: aggregate is the node's own features.
+    """A single node with a self-loop aggregates its own features in co-simulation."""
     _run_cosim("graph_one", [0.25, -0.5], [1.0], 1, 2, tmp_path)
 
 
 def test_two_node_mean_aggregation(tmp_path: Path) -> None:
     # Fully-connected 2-node graph, degree 2: each node sees the feature mean.
+    """A fully connected two-node graph gives each node the feature mean."""
     _run_cosim(
         "graph_mean",
         [0.1, 0.2, 0.3, 0.4],
@@ -201,6 +203,7 @@ def test_two_node_mean_aggregation(tmp_path: Path) -> None:
 
 
 def test_three_node_weighted_asymmetric(tmp_path: Path) -> None:
+    """A weighted asymmetric three-node graph matches the reference in co-simulation."""
     _run_cosim(
         "graph_three",
         [1.0, -2.0, 0.5],
@@ -213,10 +216,12 @@ def test_three_node_weighted_asymmetric(tmp_path: Path) -> None:
 
 def test_isolated_node_zero_degree(tmp_path: Path) -> None:
     # A zero row-degree leaves the (zero) aggregate un-normalised, not a divide-by-zero.
+    """A zero-degree node keeps a zero aggregate instead of dividing by zero."""
     _run_cosim("graph_zero", [0.5, -0.5], [0.0, 0.0, 0.0, 0.0], 2, 1, tmp_path)
 
 
 def test_emitted_sv_instantiates_core_with_baked_parameters(tmp_path: Path) -> None:
+    """The emitted SystemVerilog instantiates the core with the baked parameters."""
     emitted = _build_emitted_sv("graph_params", [0.1, 0.2, 0.3, 0.4], [1.0, 1.0, 1.0, 1.0], 2, 2)
     assert ".N_NODES(2)" in emitted
     assert ".N_FEATURES(2)" in emitted

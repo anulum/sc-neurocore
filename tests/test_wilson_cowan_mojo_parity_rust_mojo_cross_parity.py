@@ -11,13 +11,13 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 from sc_neurocore.accel.mojo.wilson_cowan import (
     simulate_wilson_cowan,
 )
 from tests.wilson_cowan_mojo_parity_support import (
     DEFAULT_PARAMS,
 )
+from tests.engine_requirement import require_engine
 
 
 class TestRustMojoCrossParity:
@@ -25,9 +25,7 @@ class TestRustMojoCrossParity:
 
     def test_rust_mojo_within_ulp_drift(self) -> None:
         """Rust and Mojo traces under a sinusoidal drive agree within 1e-9."""
-        rs = pytest.importorskip(
-            "sc_neurocore_engine", reason="Rust engine required"
-        ).py_wilson_cowan_simulate
+        rs = require_engine().py_wilson_cowan_simulate
         n = 3_000
         ext = np.sin(np.linspace(0, 6 * np.pi, n)) * 3.0
         r_out = rs(

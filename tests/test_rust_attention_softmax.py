@@ -9,12 +9,14 @@
 """PyO3 round-trip tests for softmax attention."""
 
 import numpy as np
-import pytest
+from tests.engine_requirement import require_engine
 
-sc = pytest.importorskip("sc_neurocore_engine", exc_type=ImportError)
+require_engine()
+import sc_neurocore_engine as sc
 
 
-def test_forward_softmax_shape():
+def test_forward_softmax_shape() -> None:
+    """Softmax attention returns one output row per query."""
     attn = sc.StochasticAttention(dim_k=4)
     q = np.random.default_rng(1).random((2, 4))
     k = np.random.default_rng(2).random((3, 4))
@@ -23,7 +25,8 @@ def test_forward_softmax_shape():
     assert np.array(out).shape == (2, 5)
 
 
-def test_forward_softmax_with_temperature():
+def test_forward_softmax_with_temperature() -> None:
+    """A low temperature sharpens the weights onto the matching key."""
     attn = sc.StochasticAttention(dim_k=4, temperature=0.01)
     q = np.array([[1.0, 0.0, 0.0, 0.0]])
     k = np.array([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0]])
@@ -33,7 +36,8 @@ def test_forward_softmax_with_temperature():
     assert out[0, 0] > 9.0
 
 
-def test_multihead_softmax_shape():
+def test_multihead_softmax_shape() -> None:
+    """Multi-head softmax attention returns the expected shape."""
     attn = sc.StochasticAttention(dim_k=8)
     q = np.zeros((4, 8))
     k = np.zeros((4, 8))
@@ -42,7 +46,8 @@ def test_multihead_softmax_shape():
     assert out.shape == (4, 8)
 
 
-def test_softmax_finite_on_large_scores():
+def test_softmax_finite_on_large_scores() -> None:
+    """Very large scores still give finite outputs."""
     attn = sc.StochasticAttention(dim_k=2, temperature=1.0)
     q = np.full((1, 2), 1000.0)
     k = np.full((2, 2), 1000.0)

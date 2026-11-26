@@ -20,13 +20,13 @@ from __future__ import annotations
 
 import json
 import math
-from pathlib import Path
-import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
 
 from sc_neurocore.neurons.models.traub_miles import TraubMilesNeuron
+from tests.julia_requirement import require_julia_executable
 
 _ROOT = Path(__file__).resolve().parents[1]
 _JULIA_KERNEL = _ROOT / "src/sc_neurocore/accel/julia/neurons/traub_miles.jl"
@@ -104,9 +104,9 @@ def test_step_from_a_singular_voltage_uses_the_limit() -> None:
     assert at_singularity.v == pytest.approx(outside.v, rel=0, abs=1e-5)
 
 
-@pytest.mark.skipif(shutil.which("julia") is None, reason="Julia runtime unavailable")
 def test_julia_source_mirror_matches_python_at_the_singularities() -> None:
     """The Julia lane's rates at and beside each singular voltage equal Python's bit for bit."""
+    julia = require_julia_executable()
     voltages = [v0 + offset for _, v0, _ in _SINGULAR for offset in (0.0, -5e-7, 5e-7, 3e-6)]
     expression = (
         f'include(raw"{_JULIA_KERNEL}"); using .TraubMilesAccel; '
@@ -114,7 +114,7 @@ def test_julia_source_mirror_matches_python_at_the_singularities() -> None:
         'print("[", join([join(string.(collect(TraubMilesAccel.rates(v))), ",") for v in vs], ","), "]")'
     )
     output = subprocess.run(
-        ["julia", "--startup-file=no", "-e", expression],
+        [julia, "--startup-file=no", "-e", expression],
         check=True,
         capture_output=True,
         text=True,

@@ -16,8 +16,11 @@ import numpy as np
 import pytest
 
 from sc_neurocore.accel.jansen_rit import simulate_python
+from tests.engine_requirement import require_engine
 
-engine = pytest.importorskip("sc_neurocore_engine", reason="Rust engine wheel not installed")
+require_engine()
+import sc_neurocore_engine as engine
+
 py_jansen_rit_simulate = engine.py_jansen_rit_simulate
 
 _PARAMETERS = (
@@ -57,17 +60,20 @@ def _assert_mapping_parity(actual: dict[str, Any], expected: dict[str, Any]) -> 
 
 @pytest.mark.parametrize("steps", (0, 1, 128, 1024))
 def test_rust_complete_mapping_matches_python(steps: int) -> None:
+    """The Rust simulator follows the complete Python mapping for each run length."""
     expected = simulate_python(*_PARAMETERS, _drive(steps))
     actual = py_jansen_rit_simulate(*_PARAMETERS, _drive(steps))
     _assert_mapping_parity(actual, expected)
 
 
 def test_rust_rejects_invalid_configuration() -> None:
+    """A non-positive parameter is refused."""
     invalid = (*_PARAMETERS[:-1], -0.00012)
     with pytest.raises(ValueError, match="positive"):
         py_jansen_rit_simulate(*invalid, _drive(1))
 
 
 def test_rust_rejects_nonfinite_drive() -> None:
+    """A non-finite external drive is refused."""
     with pytest.raises(ValueError, match="external drive"):
         py_jansen_rit_simulate(*_PARAMETERS, np.asarray([220.0, np.nan]))

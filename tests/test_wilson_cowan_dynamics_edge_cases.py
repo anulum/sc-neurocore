@@ -12,15 +12,13 @@ from __future__ import annotations
 
 import math
 import numpy as np
-import pytest
+from tests.engine_requirement import require_engine
 
 
 class TestEdgeCases:
     """Edge cases of the Rust Wilson-Cowan simulator."""
 
-    rust = pytest.importorskip(
-        "sc_neurocore_engine", reason="Rust engine required"
-    ).py_wilson_cowan_simulate
+    rust = require_engine().py_wilson_cowan_simulate
 
     def test_zero_length_workload(self) -> None:
         """An empty drive gives empty traces and returns the initial state."""

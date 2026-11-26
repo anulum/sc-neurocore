@@ -17,12 +17,11 @@ import numpy.typing as npt
 import pytest
 
 from sc_neurocore.accel.ermentrout_kopell_pop import simulate_python
+from tests.engine_requirement import require_engine
 
-engine = pytest.importorskip(
-    "sc_neurocore_engine",
-    reason="Rust engine wheel not installed",
-    exc_type=ImportError,
-)
+require_engine()
+import sc_neurocore_engine as engine
+
 py_ermentrout_kopell_pop_simulate = engine.py_ermentrout_kopell_pop_simulate
 
 _PARAMETERS = (0.13, -1.7, 1.3, 0.8, -4.2, 12.5, 0.004)
@@ -44,17 +43,20 @@ def _assert_mapping_parity(actual: dict[str, Any], expected: dict[str, Any]) -> 
 
 @pytest.mark.parametrize("steps", (0, 1, 128, 1024))
 def test_rust_complete_mapping_matches_python(steps: int) -> None:
+    """The Rust simulator follows the complete Python mapping for each run length."""
     expected = simulate_python(*_PARAMETERS, _drive(steps))
     actual = py_ermentrout_kopell_pop_simulate(*_PARAMETERS, _drive(steps))
     _assert_mapping_parity(actual, expected)
 
 
 def test_rust_rejects_invalid_configuration() -> None:
+    """A non-positive parameter is refused."""
     invalid = (*_PARAMETERS[:-1], -_PARAMETERS[-1])
     with pytest.raises(ValueError, match="positive"):
         py_ermentrout_kopell_pop_simulate(*invalid, _drive(1))
 
 
 def test_rust_rejects_nonfinite_drive() -> None:
+    """A non-finite external input is refused."""
     with pytest.raises(ValueError, match="external input"):
         py_ermentrout_kopell_pop_simulate(*_PARAMETERS, np.asarray([1.5, np.nan]))

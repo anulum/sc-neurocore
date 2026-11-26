@@ -18,11 +18,14 @@ import numpy as np
 import pytest
 
 from sc_neurocore_engine.studio import get_ei_network_simulator
+from tests.engine_requirement import require_engine
 
 
 def _bridge_engine() -> ModuleType:
     """Return the Rust engine package, skipping when it is absent and failing when it lacks the Studio simulator."""
-    mod: ModuleType = pytest.importorskip("sc_neurocore_engine")
+    require_engine()
+    mod = importlib.import_module("sc_neurocore_engine")
+
     assert hasattr(mod, "py_simulate_ei_network"), (
         "installed Rust engine bridge lacks the required Studio simulator"
     )

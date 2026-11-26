@@ -14,6 +14,7 @@ import pytest
 from pathlib import (
     Path,
 )
+from tests.julia_requirement import require_julia
 
 
 class TestJuliaMissingKernelFile:
@@ -23,8 +24,8 @@ class TestJuliaMissingKernelFile:
         """A missing Jansen-Rit kernel file is reported."""
         import sc_neurocore.accel.julia.neurons as mod
 
-        if not mod._HAS_JULIA_NEURONS:
-            pytest.skip("juliacall not installed")
+        require_julia()
+        assert mod._HAS_JULIA_NEURONS, "the Julia neuron lane did not import with a healthy bridge"
         monkeypatch.setattr(mod, "_JANSEN_RIT_LOADED", False)
         monkeypatch.setattr(mod, "_KERNEL_DIR", Path("/tmp/nonexistent_jansen_rit_dir"))
         with pytest.raises(FileNotFoundError, match="jansen_rit.jl missing"):
@@ -34,8 +35,8 @@ class TestJuliaMissingKernelFile:
         """A missing Wong-Wang kernel file is reported."""
         import sc_neurocore.accel.julia.neurons as mod
 
-        if not mod._HAS_JULIA_NEURONS:
-            pytest.skip("juliacall not installed")
+        require_julia()
+        assert mod._HAS_JULIA_NEURONS, "the Julia neuron lane did not import with a healthy bridge"
         # Force a re-include path by resetting the loaded flag + pointing
         # the kernel dir at a location that does not contain the .jl.
         monkeypatch.setattr(mod, "_WONG_WANG_LOADED", False)
@@ -47,8 +48,8 @@ class TestJuliaMissingKernelFile:
         """A missing Wilson-Cowan kernel file is reported."""
         import sc_neurocore.accel.julia.neurons as mod
 
-        if not mod._HAS_JULIA_NEURONS:
-            pytest.skip("juliacall not installed")
+        require_julia()
+        assert mod._HAS_JULIA_NEURONS, "the Julia neuron lane did not import with a healthy bridge"
         monkeypatch.setattr(mod, "_WILSON_COWAN_LOADED", False)
         monkeypatch.setattr(mod, "_KERNEL_DIR", Path("/tmp/nonexistent_wilson_cowan_dir"))
         with pytest.raises(FileNotFoundError, match="wilson_cowan.jl missing"):

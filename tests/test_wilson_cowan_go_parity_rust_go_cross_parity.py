@@ -11,13 +11,13 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 from sc_neurocore.accel.go.wilson_cowan import (
     simulate_wilson_cowan,
 )
 from tests.wilson_cowan_go_parity_support import (
     DEFAULT_PARAMS,
 )
+from tests.engine_requirement import require_engine
 
 
 class TestRustGoCrossParity:
@@ -25,9 +25,7 @@ class TestRustGoCrossParity:
 
     def test_rust_go_identical(self) -> None:
         """Rust and Go traces under a sinusoidal drive agree within 1e-14."""
-        rs = pytest.importorskip(
-            "sc_neurocore_engine", reason="Rust engine required"
-        ).py_wilson_cowan_simulate
+        rs = require_engine().py_wilson_cowan_simulate
         n = 3_000
         ext = np.sin(np.linspace(0, 6 * np.pi, n)) * 3.0
         r_out = rs(

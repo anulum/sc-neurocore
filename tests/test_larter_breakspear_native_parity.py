@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — independently executed Larter-Breakspear native parity
 
+"""Executed Julia and Mojo parity of the Larter-Breakspear neuron and its SC identity."""
+
 from __future__ import annotations
 
 import json
@@ -21,6 +23,7 @@ from sc_neurocore.neurons.models.larter_breakspear import LarterBreakspearNeuron
 from sc_neurocore.neurons.models.sc_decoupled_adaptation_ion_mass import (
     SCDecoupledAdaptationIonMassNeuron,
 )
+from tests.julia_requirement import require_julia_executable
 
 _ROOT = Path(__file__).resolve().parents[1]
 _SOURCE = np.array([0.10851023903311285, 0.10395561081677293, 0.10024082963711924])
@@ -28,6 +31,7 @@ _SC = np.array([-0.4987593419078305, 0.0002412377194581311, 6.202934920494744e-7
 
 
 def test_criterion_series_keep_source_and_sc_identities_separate() -> None:
+    """The engine benchmark measures the source model and the SC identity as separate series."""
     benchmark = (_ROOT / "engine/benches/full_bench.rs").read_text()
 
     assert '"larter_breakspear_100k_steps"' not in benchmark
@@ -36,6 +40,7 @@ def test_criterion_series_keep_source_and_sc_identities_separate() -> None:
 
 
 def test_python_dual_identity_anchors() -> None:
+    """Both Python identities reproduce their recorded first steps."""
     source = LarterBreakspearNeuron()
     retained = SCDecoupledAdaptationIonMassNeuron()
     source.step()
@@ -44,7 +49,6 @@ def test_python_dual_identity_anchors() -> None:
     np.testing.assert_allclose([retained.v, retained.w, retained.z], _SC, rtol=0, atol=2e-14)
 
 
-@pytest.mark.skipif(shutil.which("julia") is None, reason="Julia runtime unavailable")
 @pytest.mark.parametrize(
     ("filename", "module", "constructor", "expected"),
     [
@@ -60,6 +64,8 @@ def test_python_dual_identity_anchors() -> None:
 def test_julia_dual_identity_parity(
     filename: str, module: str, constructor: str, expected: np.ndarray
 ) -> None:
+    """Each Julia identity, run through the julia command, reproduces its anchor."""
+    require_julia_executable()
     kernel = _ROOT / "src/sc_neurocore/accel/julia/neurons" / filename
     expression = (
         f'include(raw"{kernel}"); using .{module}; s={constructor}(); step!(s); '
@@ -83,6 +89,7 @@ def test_julia_dual_identity_parity(
     [("larter_breakspear.mojo", _SOURCE), ("sc_decoupled_adaptation_ion_mass.mojo", _SC)],
 )
 def test_mojo_dual_identity_parity(tmp_path: Path, filename: str, expected: np.ndarray) -> None:
+    """Each Mojo identity, built and run, reproduces its anchor."""
     kernel = _ROOT / "src/sc_neurocore/accel/mojo/kernels" / filename
     binary = tmp_path / kernel.stem
     command = pin_isa(

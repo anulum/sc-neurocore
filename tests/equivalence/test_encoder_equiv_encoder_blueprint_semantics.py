@@ -13,6 +13,9 @@ from __future__ import annotations
 from tests.equivalence.encoder_equiv_support import (
     _lfsr_step,
 )
+from tests.engine_requirement import require_engine
+
+require_engine()
 from sc_neurocore_engine import (
     BitstreamEncoder,
 )

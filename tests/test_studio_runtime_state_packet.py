@@ -36,6 +36,7 @@ from sc_neurocore.studio.runtime_state_packet import (
     validate_scalar_trace,
     validate_spike_indices,
 )
+from tests.engine_requirement import require_engine
 
 #: A model whose declared state does not contain ``v`` at all.
 NO_V_MODEL = "PinskyRinzelNeuron"
@@ -45,13 +46,17 @@ PARTIAL_MODEL = "AdExNeuron"
 
 
 class TestThePacket:
+    """The Rust batch lane's declared runtime state packet."""
+
     def test_the_rust_lane_states_what_it_carries(self) -> None:
+        """The Rust batch lane exports only v, with no initial snapshot or parameters."""
         assert RUST_BATCH_PACKET.runtime == "rust-batch"
         assert RUST_BATCH_PACKET.exports == ("v",)
         assert RUST_BATCH_PACKET.carries_initial_snapshot is False
         assert RUST_BATCH_PACKET.carries_parameters is False
 
     def test_the_public_form_carries_its_contract_version(self) -> None:
+        """The public form names the schema version, the exports and the runtime."""
         document = RUST_BATCH_PACKET.to_public_dict()
 
         assert document["schema_version"] == RUNTIME_STATE_PACKET_SCHEMA_VERSION
@@ -60,7 +65,10 @@ class TestThePacket:
 
 
 class TestCoverage:
+    """What a packet covers of a model's declared state."""
+
     def test_a_lane_that_carries_part_of_the_state_says_which_part(self) -> None:
+        """A lane carrying v of (v, w) reports v carried and w dropped, and is not complete."""
         coverage = packet_coverage(RUST_BATCH_PACKET, ("v", "w"))
 
         assert coverage.carried == ("v",)
@@ -70,6 +78,7 @@ class TestCoverage:
         assert coverage.names_nothing is False
 
     def test_a_lane_that_carries_all_of_it_is_complete(self) -> None:
+        """A lane carrying every declared variable is complete and drops nothing."""
         coverage = packet_coverage(RUST_BATCH_PACKET, ("v",))
 
         assert coverage.complete is True
@@ -85,6 +94,7 @@ class TestCoverage:
         assert coverage.complete is False
 
     def test_declaration_order_is_preserved(self) -> None:
+        """The carried names follow the model's declaration order, not the packet's."""
         packet = RuntimeStatePacket(
             runtime="test",
             exports=("b", "a"),
@@ -95,6 +105,7 @@ class TestCoverage:
         assert packet_coverage(packet, ("a", "b", "c")).carried == ("a", "b")
 
     def test_the_public_form_is_evidence_shaped(self) -> None:
+        """The public coverage form lists carried, dropped and unnameable names and the runtime."""
         document = packet_coverage(RUST_BATCH_PACKET, ("v", "w")).to_public_dict()
 
         assert document == {
@@ -108,7 +119,10 @@ class TestCoverage:
 
 
 class TestValidatingATrace:
+    """Validation of a scalar trace returned by a foreign runtime."""
+
     def test_a_well_formed_trace_is_returned_as_float64(self) -> None:
+        """A trace of the right length comes back as float64 with its values."""
         trace = validate_scalar_trace([1, 2, 3], runtime="rust-batch", name="v", n_steps=3)
 
         assert trace.dtype == np.float64
@@ -120,10 +134,12 @@ class TestValidatingATrace:
             validate_scalar_trace(np.zeros(10), runtime="rust-batch", name="v", n_steps=100)
 
     def test_a_trace_that_is_not_a_single_series_is_refused(self) -> None:
+        """A two-dimensional trace is refused as not a single series."""
         with pytest.raises(ForeignRuntimeError, match="not a single series"):
             validate_scalar_trace(np.zeros((2, 3)), runtime="rust-batch", name="v", n_steps=6)
 
     def test_a_trace_that_is_not_numeric_is_refused(self) -> None:
+        """A trace of strings is refused as not numeric."""
         with pytest.raises(ForeignRuntimeError, match="not numeric"):
             validate_scalar_trace(["a", "b"], runtime="rust-batch", name="v", n_steps=2)
 
@@ -137,19 +153,25 @@ class TestValidatingATrace:
 
 
 class TestValidatingSpikeIndices:
+    """Validation of spike indices returned by a foreign runtime."""
+
     def test_well_formed_indices_are_returned_in_order(self) -> None:
+        """Increasing indices inside the run come back as a list in order."""
         assert validate_spike_indices(
             np.array([0, 5, 9], dtype=np.uint64), runtime="rust-batch", n_steps=10
         ) == [0, 5, 9]
 
     def test_no_spikes_is_not_a_failure(self) -> None:
+        """An empty index array is returned as an empty list."""
         assert validate_spike_indices(np.zeros(0), runtime="rust-batch", n_steps=10) == []
 
     def test_an_index_outside_the_run_is_refused(self) -> None:
+        """An index equal to the step count is refused as outside the run."""
         with pytest.raises(ForeignRuntimeError, match="outside a 10-step run"):
             validate_spike_indices(np.array([10]), runtime="rust-batch", n_steps=10)
 
     def test_a_negative_index_is_refused(self) -> None:
+        """A negative index is refused as outside the run."""
         with pytest.raises(ForeignRuntimeError, match="outside a 10-step run"):
             validate_spike_indices(np.array([-1]), runtime="rust-batch", n_steps=10)
 
@@ -159,20 +181,25 @@ class TestValidatingSpikeIndices:
             validate_spike_indices(np.array([5, 2]), runtime="rust-batch", n_steps=10)
 
     def test_a_repeated_index_is_refused(self) -> None:
+        """A repeated index is refused because the indices do not increase."""
         with pytest.raises(ForeignRuntimeError, match="do not increase"):
             validate_spike_indices(np.array([2, 2]), runtime="rust-batch", n_steps=10)
 
     def test_indices_that_are_not_positions_are_refused(self) -> None:
+        """A fractional index is refused as not a position."""
         with pytest.raises(ForeignRuntimeError, match="not positions"):
             validate_spike_indices(np.array([1.5]), runtime="rust-batch", n_steps=10)
 
     def test_indices_that_are_not_a_single_series_are_refused(self) -> None:
+        """A two-dimensional index array is refused as not a single series."""
         with pytest.raises(ForeignRuntimeError, match="not a single series"):
             validate_spike_indices(
                 np.zeros((2, 2), dtype=np.int64), runtime="rust-batch", n_steps=4
             )
 
     def test_something_that_is_not_an_array_is_refused(self) -> None:
+        """An object that cannot become an array is refused with the reason."""
+
         class Awkward:
             def __array__(self, dtype: Any = None) -> Any:
                 raise ValueError("not an array")
@@ -182,10 +209,12 @@ class TestValidatingSpikeIndices:
 
 
 class TestThroughTheRealBoundary:
+    """The packet checks exercised through the real Studio simulation boundary."""
+
     def test_a_model_the_lane_cannot_name_records_no_state_and_says_why(self) -> None:
         """The payload must not contradict the layout printed beside it."""
         simulate_model = pytest.importorskip("sc_neurocore.studio.model_simulate").simulate_model
-        pytest.importorskip("sc_neurocore_engine.sc_neurocore_engine")
+        require_engine()
 
         result = simulate_model(NO_V_MODEL, duration=20.0, current=10.0)
 
@@ -197,8 +226,9 @@ class TestThroughTheRealBoundary:
         assert any("does not declare" in note for note in result["state_layout"]["custody_notes"])
 
     def test_a_model_the_lane_can_name_still_records_that_variable(self) -> None:
+        """A model whose state the lane can name records exactly that variable."""
         simulate_model = pytest.importorskip("sc_neurocore.studio.model_simulate").simulate_model
-        pytest.importorskip("sc_neurocore_engine.sc_neurocore_engine")
+        require_engine()
 
         result = simulate_model(PARTIAL_MODEL, duration=20.0, current=50.0)
 

@@ -17,15 +17,16 @@ membrane evolution.
 from __future__ import annotations
 
 import numpy as np
-import pytest
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 
 import sc_neurocore_engine as v3
 from sc_neurocore_engine import FixedPointLif
 
 
 def test_vector_lif_run_matches_per_step_fixed_point_lif() -> None:
+    """The vector run gives the same spikes and voltages as 200 per-step fixed-point LIF updates."""
     n_steps = 200
     leak_k = 20
     gain_k = 256
@@ -53,6 +54,7 @@ def test_vector_lif_run_matches_per_step_fixed_point_lif() -> None:
 
 
 def test_vector_lif_run_with_current_array_matches_constant_current_operation() -> None:
+    """A constant current array gives the same result as the scalar current."""
     n_steps = 100
     currents = np.full(n_steps, 128, dtype=np.int16)
 
@@ -73,6 +75,7 @@ def test_vector_lif_run_with_current_array_matches_constant_current_operation() 
 
 
 def test_vector_lif_run_accepts_zero_steps_without_padding() -> None:
+    """Zero steps return empty spike and voltage arrays."""
     spikes, voltages = v3.batch_lif_run(0, leak_k=20, gain_k=256, i_t=128)
 
     assert spikes.shape == (0,)
@@ -80,6 +83,7 @@ def test_vector_lif_run_accepts_zero_steps_without_padding() -> None:
 
 
 def test_vector_lif_run_strong_current_changes_membrane_state() -> None:
+    """A strong current moves the membrane through more than one voltage."""
     spikes, voltages = v3.batch_lif_run(100, leak_k=20, gain_k=256, i_t=200)
 
     assert spikes.shape == (100,)
@@ -88,6 +92,7 @@ def test_vector_lif_run_strong_current_changes_membrane_state() -> None:
 
 
 def test_vector_lif_run_honours_fixed_point_configuration() -> None:
+    """The fixed-point configuration arguments shape a run of the requested length."""
     spikes, voltages = v3.batch_lif_run(
         50,
         leak_k=10,
@@ -106,6 +111,7 @@ def test_vector_lif_run_honours_fixed_point_configuration() -> None:
 
 
 def test_vector_lif_run_with_noise_array_preserves_time_axis() -> None:
+    """A noise array keeps one output per step."""
     currents = np.full(50, 200, dtype=np.int16)
     noises = np.zeros(50, dtype=np.int16)
 

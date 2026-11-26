@@ -15,6 +15,7 @@ import pytest
 from sc_neurocore.neurons.models.lapicque import (
     LapicqueNeuron,
 )
+from tests.engine_requirement import require_engine
 
 
 class TestLapicqueNeuronSimulate:
@@ -30,7 +31,7 @@ class TestLapicqueNeuronSimulate:
 
     def test_simulate_rust_matches_or_ulp_python(self) -> None:
         """Simulate rust matches or ULP python."""
-        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        require_engine()
         py = LapicqueNeuron()
         rs = LapicqueNeuron()
         tr_py, sp_py = py.simulate(1000, current=2.0, backend="python")
@@ -41,7 +42,7 @@ class TestLapicqueNeuronSimulate:
 
     def test_simulate_rust_carries_non_default_complete_contract(self) -> None:
         """Simulate rust carries non-default complete contract."""
-        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        require_engine()
         python = LapicqueNeuron(v=0.2, tau=7.0, resistance=1.5, dt=0.02)
         rust = LapicqueNeuron(v=0.2, tau=7.0, resistance=1.5, dt=0.02)
         expected_trace, expected_events = python.simulate_complete(100, 2.0, backend="python")

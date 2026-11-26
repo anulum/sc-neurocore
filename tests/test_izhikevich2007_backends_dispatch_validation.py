@@ -22,11 +22,13 @@ import pytest
 from sc_neurocore.neurons.models.izhikevich2007 import Izhikevich2007Neuron
 from sc_neurocore.neurons.models import izhikevich2007 as izh
 from tests.izhikevich2007_backends_support import _go, _julia, _mojo, _run
+from tests.julia_requirement import require_julia
 
 _ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_auto_matches_python_bit_exact() -> None:
+    """The automatic backend matches the Python trace and spike count bit for bit."""
     ref, ref_spikes, _rv, _ru = _run("python")
     got, spikes, _vf, _uf = _run("auto")
     np.testing.assert_array_equal(got, ref)
@@ -34,32 +36,38 @@ def test_auto_matches_python_bit_exact() -> None:
 
 
 def test_invalid_backend_raises() -> None:
+    """An unknown backend name is refused."""
     with pytest.raises(ValueError, match="backend must be"):
         Izhikevich2007Neuron().simulate(10, 0.0, backend="cuda")
 
 
 def test_negative_n_steps_raises() -> None:
+    """A negative step count is refused."""
     with pytest.raises(ValueError, match="n_steps must be between"):
         Izhikevich2007Neuron().simulate(-1, 0.0)
 
 
 @pytest.mark.parametrize("n_steps", (True, 1.5, 1 << 31))
 def test_invalid_step_count_raises(n_steps: object) -> None:
+    """A step count that is not a valid integer is refused."""
     with pytest.raises(ValueError, match="n_steps"):
         Izhikevich2007Neuron().simulate(n_steps, 0.0)  # type: ignore[arg-type]
 
 
 def test_non_finite_current_raises() -> None:
+    """A non-finite drive current is refused."""
     with pytest.raises(ValueError, match="must be finite"):
         Izhikevich2007Neuron().simulate(10, np.inf)
 
 
 def test_non_rk4_integrator_rejected() -> None:
+    """An integrator other than RK4 is refused by simulate."""
     with pytest.raises(ValueError, match="RK4 integrator only"):
         Izhikevich2007Neuron(integrator="euler").simulate(10, 300.0)
 
 
 def test_mutated_configuration_and_overflow_are_atomic() -> None:
+    """An invalid mutated parameter or an overflow is refused without changing the state."""
     neuron = Izhikevich2007Neuron()
     neuron.C = 0.0
     before = (neuron.v, neuron.u)
@@ -76,6 +84,7 @@ def test_mutated_configuration_and_overflow_are_atomic() -> None:
 
 
 def test_non_finite_reset_candidate_preserves_state() -> None:
+    """A reset that would give a non-finite state is refused and the state is kept."""
     neuron = Izhikevich2007Neuron()
     neuron.v, neuron.u = -55.0, 7.0
     before = (neuron.v, neuron.u)
@@ -90,6 +99,7 @@ def test_non_finite_reset_candidate_preserves_state() -> None:
 
 
 def test_go_and_mojo_abis_reject_invalid_input_without_writing() -> None:
+    """The Go and Mojo C ABIs, where built, refuse invalid input without writing the trace."""
     for backend, available, loader in (("go", _go, "_go_lib"), ("mojo", _mojo, "_mojo_lib")):
         if not available():
             continue
@@ -110,9 +120,10 @@ def test_go_and_mojo_abis_reject_invalid_input_without_writing() -> None:
 
 
 def test_julia_native_api_rejects_invalid_input() -> None:
-    if not _julia():
-        pytest.skip("Julia Izhikevich 2007 backend unavailable")
-    juliacall = pytest.importorskip("juliacall")
+    """The Julia kernel refuses a non-finite input with a Julia error."""
+    juliacall = require_julia()
+    assert _julia(), "the Julia Izhikevich 2007 kernel did not load with a healthy bridge"
+    assert izh._julia_module is not None
     with pytest.raises(juliacall.JuliaError, match="inputs must be finite"):
         izh._julia_module.simulate_trace(
             -60.0,
@@ -133,6 +144,7 @@ def test_julia_native_api_rejects_invalid_input() -> None:
 
 
 def test_committed_benchmark_has_complete_backend_and_source_custody() -> None:
+    """The committed benchmark lists every backend and binds the sources it measured."""
     report = json.loads(
         (_ROOT / "benchmarks/results/bench_izhikevich2007_simulate.json").read_text()
     )

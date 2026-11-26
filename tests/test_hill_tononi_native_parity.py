@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — independently executed Hill-Tononi native parity
 
+"""Executed Julia and Mojo parity of the Hill-Tononi neuron."""
+
 from __future__ import annotations
 
 import json
@@ -18,6 +20,7 @@ import pytest
 
 from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 from sc_neurocore.neurons.models.hill_tononi import HillTononiNeuron
+from tests.julia_requirement import require_julia_executable
 
 _ROOT = Path(__file__).resolve().parents[1]
 _ONE_STEP = np.array(
@@ -33,6 +36,7 @@ _ONE_STEP = np.array(
 
 
 def test_python_reference_one_step_fixture() -> None:
+    """The Python reference reproduces its recorded first step."""
     model = HillTononiNeuron()
     assert model.step(12.0) == 0
     np.testing.assert_allclose(
@@ -43,8 +47,9 @@ def test_python_reference_one_step_fixture() -> None:
     )
 
 
-@pytest.mark.skipif(shutil.which("julia") is None, reason="Julia runtime unavailable")
 def test_julia_source_mirror_matches_python() -> None:
+    """The Julia source mirror, run through the julia command, matches the Python step."""
+    require_julia_executable()
     kernel = _ROOT / "src/sc_neurocore/accel/julia/neurons/hill_tononi.jl"
     expression = (
         f'include(raw"{kernel}"); using .HillTononiAccel; '
@@ -66,6 +71,7 @@ def test_julia_source_mirror_matches_python() -> None:
 
 @pytest.mark.skipif(shutil.which("mojo") is None, reason="Mojo runtime unavailable")
 def test_mojo_source_mirror_matches_python(tmp_path: Path) -> None:
+    """The Mojo source mirror, built and run, matches the Python step."""
     kernel = _ROOT / "src/sc_neurocore/accel/mojo/kernels/hill_tononi.mojo"
     binary = tmp_path / "hill_tononi"
     subprocess.run(

@@ -23,9 +23,9 @@ from pathlib import Path
 import shutil
 import subprocess
 
-import pytest
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 
 from sc_neurocore_engine.ir import ScGraphBuilder
 
@@ -133,7 +133,7 @@ def _build_emitted_sv(
     builder.output("phases_next", next_id)
     graph = builder.build()
     assert graph.verify() is None
-    return graph.emit_sv()
+    return str(graph.emit_sv())
 
 
 def _run_cosim(
@@ -208,10 +208,12 @@ endmodule
 
 
 def test_single_oscillator_matches_fixed_point(tmp_path: Path) -> None:
+    """One oscillator's RTL step matches the fixed-point reference."""
     _run_cosim("kuramoto_one", [0.7], [1.0], [0.0], 0.01, tmp_path)
 
 
 def test_two_oscillator_symmetric_coupling(tmp_path: Path) -> None:
+    """Two symmetrically coupled oscillators match the reference in co-simulation."""
     _run_cosim(
         "kuramoto_two",
         [0.0, 1.5],
@@ -223,6 +225,7 @@ def test_two_oscillator_symmetric_coupling(tmp_path: Path) -> None:
 
 
 def test_three_oscillator_asymmetric_coupling(tmp_path: Path) -> None:
+    """Three asymmetrically coupled oscillators match the reference in co-simulation."""
     _run_cosim(
         "kuramoto_three",
         [0.0, 1.5, 3.0],
@@ -234,6 +237,7 @@ def test_three_oscillator_asymmetric_coupling(tmp_path: Path) -> None:
 
 
 def test_emitted_sv_instantiates_core_with_baked_parameters(tmp_path: Path) -> None:
+    """The emitted SystemVerilog instantiates the core with the baked parameters."""
     emitted = _build_emitted_sv(
         "kuramoto_params", [0.0, 1.5], [0.3, -0.2], [0.0, 0.5, 0.5, 0.0], 0.01
     )

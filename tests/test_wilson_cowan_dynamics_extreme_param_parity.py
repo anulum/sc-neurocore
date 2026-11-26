@@ -18,6 +18,7 @@ from sc_neurocore.neurons.models.wilson_cowan import (
 from tests.wilson_cowan_dynamics_support import (
     DEFAULT_PARAMS,
 )
+from tests.engine_requirement import require_engine
 
 
 class TestExtremeParamParity:
@@ -27,9 +28,7 @@ class TestExtremeParamParity:
     extreme parameter regimes.
     """
 
-    rust = pytest.importorskip(
-        "sc_neurocore_engine", reason="Rust engine required"
-    ).py_wilson_cowan_simulate
+    rust = require_engine().py_wilson_cowan_simulate
 
     @pytest.mark.parametrize(
         "params",

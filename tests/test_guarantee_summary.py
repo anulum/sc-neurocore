@@ -44,6 +44,7 @@ from sc_neurocore.compiler.guarantee_summary import (
     verilog_value,
     write_guarantee_summary,
 )
+from tests.engine_requirement import require_engine
 
 ROOT = Path(__file__).resolve().parents[1]
 IR = ROOT / "engine" / "src" / "ir"
@@ -394,7 +395,9 @@ _BUILT_GRAPHS: dict[str, Callable[[Any], None]] = {
 
 def _graph(family: str) -> Any:
     """Build or parse the real IR graph of one operation family."""
-    ir = pytest.importorskip("sc_neurocore_engine.ir", reason="Rust engine not built")
+    require_engine()
+    import sc_neurocore_engine.ir as ir
+
     if family in _TEXT_GRAPHS:
         return ir.parse_ir(_TEXT_GRAPHS[family])
     builder = ir.ScGraphBuilder(family)
@@ -544,7 +547,7 @@ def test_compile_ir_refuses_unreadable_or_invalid_graphs(
     message : str
         Expected part of the refusal.
     """
-    pytest.importorskip("sc_neurocore_engine.ir", reason="Rust engine not built")
+    require_engine()
     source = tmp_path / "graph.ir"
     if content is not None:
         source.write_text(content, encoding="utf-8")

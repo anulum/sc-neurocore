@@ -10,9 +10,12 @@
 
 from __future__ import annotations
 
-import pytest
+import importlib
 
-_engine = pytest.importorskip("sc_neurocore_engine")
+from tests.engine_requirement import require_engine
+
+require_engine()
+_engine = importlib.import_module("sc_neurocore_engine")
 
 QA_SYMBOLS: tuple[str, ...] = (
     "py_qa_batch_ising_energy",

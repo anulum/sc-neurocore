@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-import pytest
+from tests.engine_requirement import require_engine
 
 
 class TestRustWiring:
@@ -18,10 +18,9 @@ class TestRustWiring:
 
     def test_optimizer_rust_import(self) -> None:
         """The engine's annealing search and Pareto extraction are callable."""
-        try:
-            from sc_neurocore_engine import py_opt_sa_search, py_opt_extract_pareto
-        except ImportError:
-            pytest.skip("Rust engine not built")
+        require_engine()
+        from sc_neurocore_engine import py_opt_sa_search, py_opt_extract_pareto
+
         assert callable(py_opt_sa_search)
         assert callable(py_opt_extract_pareto)
 
@@ -41,17 +40,16 @@ class TestRustWiring:
 
     def test_evo_rust_functions(self) -> None:
         """The engine's evolution kernels are callable and mutation changes a population."""
-        try:
-            from sc_neurocore_engine import (
-                py_evo_batch_mutate,
-                py_evo_batch_fitness,
-                py_evo_batch_crossover,
-                py_evo_diversity,
-                py_evo_novelty,
-                py_evo_tournament,
-            )
-        except ImportError:
-            pytest.skip("Rust engine not built")
+        require_engine()
+        from sc_neurocore_engine import (
+            py_evo_batch_mutate,
+            py_evo_batch_fitness,
+            py_evo_batch_crossover,
+            py_evo_diversity,
+            py_evo_novelty,
+            py_evo_tournament,
+        )
+
         for _fn in (
             py_evo_batch_fitness,
             py_evo_batch_crossover,
@@ -67,10 +65,9 @@ class TestRustWiring:
 
     def test_pareto_extraction_rust(self) -> None:
         """Pareto extraction in the engine returns indices and a non-empty front."""
-        try:
-            from sc_neurocore_engine import py_opt_extract_pareto
-        except ImportError:
-            pytest.skip("Rust engine not built")
+        require_engine()
+        from sc_neurocore_engine import py_opt_extract_pareto
+
         result = py_opt_extract_pareto(
             [100, 200, 150],
             [1.0, 0.5, 0.8],

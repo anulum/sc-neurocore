@@ -6,12 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_hdc_python.py
 
+"""End-to-end Python tests for HDC/VSA via the Rust BitStreamTensor backend."""
+
 from __future__ import annotations
 
-"""End-to-end Python tests for HDC/VSA via the Rust BitStreamTensor backend."""
 import pytest
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 from sc_neurocore_engine import BitStreamTensor, HDCVector
 
 __all__ = ["pytest", "BitStreamTensor", "HDCVector"]

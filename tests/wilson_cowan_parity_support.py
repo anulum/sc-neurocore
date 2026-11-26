@@ -6,22 +6,21 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_wilson_cowan_parity.py
 
-from __future__ import annotations
-
-"""Last-ulp parity between `WilsonCowanUnit.step` and the Rust
-`py_wilson_cowan_simulate`.
+"""Last-ulp parity between `WilsonCowanUnit.step` and the Rust `py_wilson_cowan_simulate`.
 
 Wilson-Cowan is deterministic (no stochastic noise), so Python and
 Rust must produce numerically identical trajectories up to the
 last few IEEE-754 ulps for any external-input sequence.
 """
+
+from __future__ import annotations
+
 import numpy as np
 import pytest
 from sc_neurocore.neurons.models.wilson_cowan import WilsonCowanUnit
+from tests.engine_requirement import require_engine
 
-pytest.importorskip(
-    "sc_neurocore_engine", reason="Rust engine wheel not installed (maturin develop)"
-)
+require_engine()
 from sc_neurocore_engine import py_wilson_cowan_simulate  # noqa: E402
 
 DEFAULT_PARAMS = dict(
@@ -37,7 +36,7 @@ DEFAULT_PARAMS = dict(
 )
 
 
-def _run_python(ext: np.ndarray):
+def _run_python(ext: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     u = WilsonCowanUnit(**DEFAULT_PARAMS)
     e = np.empty(ext.size, dtype=np.float64)
     i = np.empty(ext.size, dtype=np.float64)
@@ -47,7 +46,7 @@ def _run_python(ext: np.ndarray):
     return e, i
 
 
-def _run_rust(ext: np.ndarray):
+def _run_rust(ext: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     out = py_wilson_cowan_simulate(
         0.1,
         0.05,

@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5604
+    "test_files": 5605
   },
   "documentation": {
     "public_pages": [
@@ -6747,6 +6747,7 @@
       "tests/test_native/test_learning_bridge_torch_support.py",
       "tests/test_native/test_learning_bridge_validation.py",
       "tests/test_native/test_learning_bridge_wgpu.py",
+      "tests/test_native_availability_guards.py",
       "tests/test_native_equation.py",
       "tests/test_native_equation_arithmetic.py",
       "tests/test_native_equation_clock.py",

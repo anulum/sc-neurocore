@@ -20,14 +20,14 @@ import importlib
 import importlib.util
 import json
 import math
-from pathlib import Path
-import shutil
 import subprocess
+from pathlib import Path
 from typing import Protocol, cast
 
 import pytest
 
 from sc_neurocore.neurons.models.astrocyte import AstrocyteModel
+from tests.julia_requirement import require_julia_executable
 
 _HAS_ENGINE = importlib.util.find_spec("sc_neurocore_engine") is not None
 _JULIA_KERNEL = (
@@ -123,9 +123,9 @@ def test_reset_restores_the_class_defaults() -> None:
     assert _rust_state(rust) == (0.05, 0.8, 0.5)
 
 
-@pytest.mark.skipif(shutil.which("julia") is None, reason="Julia runtime unavailable")
 def test_julia_lane_matches_python_bit_for_bit() -> None:
     """Over 200 steps at 2.5 the Julia lane's state equals Python's exactly, and it refuses -0.1."""
+    julia = require_julia_executable()
     expression = (
         f'include(raw"{_JULIA_KERNEL}"); using .AstrocyteAccel; s = AstrocyteModelState(); '
         "for _ in 1:200; step!(s, 2.5); end; "
@@ -133,7 +133,7 @@ def test_julia_lane_matches_python_bit_for_bit() -> None:
         'print("[", s.ca, ",", s.h, ",", s.ip3, ",", refused, "]")'
     )
     output = subprocess.run(
-        ["julia", "--startup-file=no", "-e", expression],
+        [julia, "--startup-file=no", "-e", expression],
         check=True,
         capture_output=True,
         text=True,

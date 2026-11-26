@@ -10,16 +10,19 @@
 
 import numpy as np
 import pytest
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 
 from sc_neurocore_engine import PetriNetEngine
 
 
 class TestPetriNetEngine:
+    """PetriNetEngine on a three-place traffic-light net."""
+
     @staticmethod
-    def _traffic_light_artifacts():
-        """Simple 3-place, 3-transition traffic light Petri net.
+    def _traffic_light_artifacts() -> dict[str, np.ndarray]:
+        """Return a simple 3-place, 3-transition traffic light Petri net.
 
         Places:  [Red, Yellow, Green]
         Transitions: [R->G, G->Y, Y->R]
@@ -54,14 +57,16 @@ class TestPetriNetEngine:
             "marking": marking,
         }
 
-    def test_init(self):
+    def test_init(self) -> None:
+        """The engine takes its place and transition counts from the artifacts."""
         arts = self._traffic_light_artifacts()
         engine = PetriNetEngine(arts)
         assert engine.n_places == 3
         assert engine.n_transitions == 3
         np.testing.assert_array_equal(engine.marking, [1.0, 0.0, 0.0])
 
-    def test_step_changes_marking(self):
+    def test_step_changes_marking(self) -> None:
+        """One step moves tokens, so the marking changes."""
         arts = self._traffic_light_artifacts()
         engine = PetriNetEngine(arts, length=2048, seed=42)
         initial = engine.marking.copy()
@@ -70,7 +75,8 @@ class TestPetriNetEngine:
         # Marking should change after a step (Red consumed, Green produced)
         assert not np.array_equal(initial, after), "Marking should change after step"
 
-    def test_step_count_increments(self):
+    def test_step_count_increments(self) -> None:
+        """Each step increments the step counter from zero."""
         arts = self._traffic_light_artifacts()
         engine = PetriNetEngine(arts)
         assert engine.step_count == 0
@@ -79,7 +85,8 @@ class TestPetriNetEngine:
         engine.step()
         assert engine.step_count == 2
 
-    def test_run_returns_history(self):
+    def test_run_returns_history(self) -> None:
+        """A run returns one marking per step."""
         arts = self._traffic_light_artifacts()
         engine = PetriNetEngine(arts, length=1024)
         history = engine.run(5, seed=42)
@@ -88,7 +95,8 @@ class TestPetriNetEngine:
             assert m.shape == (3,)
             assert np.all(m >= 0)
 
-    def test_reset(self):
+    def test_reset(self) -> None:
+        """Resetting restores the initial marking and the step counter."""
         arts = self._traffic_light_artifacts()
         engine = PetriNetEngine(arts)
         engine.step()
@@ -97,14 +105,15 @@ class TestPetriNetEngine:
         np.testing.assert_array_equal(engine.marking, [0.0, 1.0, 0.0])
         assert engine.step_count == 0
 
-    def test_reset_to_zero(self):
+    def test_reset_to_zero(self) -> None:
+        """Resetting to zero empties every place."""
         arts = self._traffic_light_artifacts()
         engine = PetriNetEngine(arts)
         engine.step()
         engine.reset()
         np.testing.assert_array_equal(engine.marking, [0.0, 0.0, 0.0])
 
-    def test_marking_non_negative(self):
+    def test_marking_non_negative(self) -> None:
         """Marking should never go negative."""
         arts = self._traffic_light_artifacts()
         engine = PetriNetEngine(arts, length=1024)
@@ -112,7 +121,8 @@ class TestPetriNetEngine:
             engine.step(seed=i)
             assert np.all(engine.marking >= 0), f"Negative marking at step {i}"
 
-    def test_shape_mismatch_raises(self):
+    def test_shape_mismatch_raises(self) -> None:
+        """Weight matrices whose shapes disagree are refused."""
         with pytest.raises(AssertionError):
             PetriNetEngine(
                 {
@@ -122,7 +132,7 @@ class TestPetriNetEngine:
                 }
             )
 
-    def test_token_conservation_qualitative(self):
+    def test_token_conservation_qualitative(self) -> None:
         """Total tokens should not explode unboundedly."""
         arts = self._traffic_light_artifacts()
         engine = PetriNetEngine(arts, length=2048, seed=99)

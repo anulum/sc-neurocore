@@ -18,12 +18,11 @@ import numpy.typing as npt
 import pytest
 
 from sc_neurocore.accel.adaptive_threshold_if import simulate_python
+from tests.engine_requirement import require_engine
 
-engine = pytest.importorskip(
-    "sc_neurocore_engine",
-    reason="Rust engine wheel not installed",
-    exc_type=ImportError,
-)
+require_engine()
+import sc_neurocore_engine as engine
+
 _rust_export = getattr(engine, "py_adaptive_threshold_if_simulate", None)
 assert _rust_export is not None, "installed Rust engine lacks the Model41 batch export"
 py_adaptive_threshold_if_simulate = cast(
@@ -52,17 +51,20 @@ def _assert_mapping_parity(actual: dict[str, Any], expected: dict[str, Any]) -> 
 
 @pytest.mark.parametrize("steps", (0, 1, 128, 1024))
 def test_rust_complete_mapping_matches_python(steps: int) -> None:
+    """The Rust simulator follows the complete Python mapping for each run length."""
     expected = simulate_python(*_PARAMETERS, _drive(steps))
     actual = py_adaptive_threshold_if_simulate(*_PARAMETERS, _drive(steps))
     _assert_mapping_parity(actual, expected)
 
 
 def test_rust_rejects_invalid_configuration() -> None:
+    """A non-positive parameter is refused."""
     invalid = (*_PARAMETERS[:-1], -_PARAMETERS[-1])
     with pytest.raises(ValueError, match="positive"):
         py_adaptive_threshold_if_simulate(*invalid, _drive(1))
 
 
 def test_rust_rejects_nonfinite_drive() -> None:
+    """A non-finite drive is refused."""
     with pytest.raises(ValueError, match="finite"):
         py_adaptive_threshold_if_simulate(*_PARAMETERS, np.asarray([1.5, np.nan]))

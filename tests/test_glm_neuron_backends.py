@@ -15,16 +15,15 @@ from pathlib import Path
 import shutil
 import subprocess
 
-try:
-    import tomllib
-except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility path.
-    import tomli as tomllib
+import tomllib
 from typing import Protocol, cast
 
 import numpy as np
 import pytest
 
 from sc_neurocore.neurons.models.glm_neuron import GLMNeuron
+from tests.engine_requirement import require_engine
+from tests.julia_requirement import require_julia_executable
 
 _ROOT = Path(__file__).resolve().parents[1]
 _STEPS = 64
@@ -63,7 +62,8 @@ def _parse_trace(stdout: str) -> np.ndarray:
 
 
 def test_production_rust_binding_matches_complete_python_state() -> None:
-    engine = pytest.importorskip("sc_neurocore_engine.sc_neurocore_engine")
+    """The engine binding follows the complete Python state step for step."""
+    engine = require_engine()
     rust = cast(_RustGLM, engine.GLMNeuron())
     actual = []
     for current, sample in zip(_DRIVE, _UNIFORM, strict=True):
@@ -85,7 +85,8 @@ def test_production_rust_binding_matches_complete_python_state() -> None:
 
 
 def test_production_rust_binding_preserves_legacy_constant_filter_configuration() -> None:
-    engine = pytest.importorskip("sc_neurocore_engine.sc_neurocore_engine")
+    """The engine's legacy constant-filter configuration keeps its recorded behaviour."""
+    engine = require_engine()
     legacy = engine.GLMNeuron.legacy_constant_filters(5, 10, 42)
     state = legacy.get_state()
     np.testing.assert_array_equal(np.asarray(state["k"]), np.full(5, 0.1))
@@ -93,6 +94,7 @@ def test_production_rust_binding_preserves_legacy_constant_filter_configuration(
 
 
 def test_standalone_safety_rust_matches_complete_python_state(tmp_path: Path) -> None:
+    """The standalone safety Rust source, compiled with rustc, follows the complete Python state."""
     rustc = shutil.which("rustc")
     if rustc is None:
         pytest.skip("rustc is not installed")
@@ -137,6 +139,7 @@ fn main() {{
 
 
 def test_go_backend_matches_complete_python_state(tmp_path: Path) -> None:
+    """The Go source, built and run, follows the complete Python state."""
     go = shutil.which("go")
     if go is None:
         pytest.skip("Go is not installed")
@@ -181,9 +184,8 @@ func main() {{
 
 
 def test_julia_backend_matches_complete_python_state() -> None:
-    julia = shutil.which("julia")
-    if julia is None:
-        pytest.skip("Julia is not installed")
+    """The Julia source, run through the julia command, follows the complete Python state."""
+    julia = require_julia_executable()
     source = _ROOT / "src/sc_neurocore/accel/julia/neurons/glm_neuron.jl"
     drive = ", ".join(f"{current:.17e}" for current in _DRIVE)
     uniforms = ", ".join(f"{sample:.17e}" for sample in _UNIFORM)
@@ -227,6 +229,7 @@ end
 
 
 def test_descriptor_and_public_page_report_only_proven_backends() -> None:
+    """The model descriptor and the public page list only the backends these tests prove."""
     descriptor = tomllib.loads(
         (_ROOT / "src/sc_neurocore/neurons/model_descriptors/GLMNeuron.toml").read_text(
             encoding="utf-8"

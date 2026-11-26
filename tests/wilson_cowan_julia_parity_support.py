@@ -6,20 +6,22 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_wilson_cowan_julia_parity.py
 
-from __future__ import annotations
-
-"""Bit-exact parity between the Python primary and the Julia N-step
-simulator for the Wilson-Cowan E/I model.
+"""Bit-exact parity of the Wilson-Cowan E/I model between Python and the Julia simulator.
 
 Wilson-Cowan is deterministic (no stochastic noise); both backends
 evaluate the same sigmoid + forward-Euler arithmetic in f64, so
 trajectories match at machine-epsilon.
 """
+
+from __future__ import annotations
+
 import numpy as np
 import pytest
 from sc_neurocore.neurons.models.wilson_cowan import WilsonCowanUnit
 
-pytest.importorskip("juliacall", reason="juliacall not installed")
+from tests.julia_requirement import require_julia
+
+require_julia()
 from sc_neurocore.accel.julia.neurons import simulate_wilson_cowan  # noqa: E402
 
 DEFAULT_PARAMS = dict(
@@ -35,7 +37,7 @@ DEFAULT_PARAMS = dict(
 )
 
 
-def _run_python(ext: np.ndarray):
+def _run_python(ext: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     u = WilsonCowanUnit(**DEFAULT_PARAMS)
     e = np.empty(ext.size, dtype=np.float64)
     i = np.empty(ext.size, dtype=np.float64)
@@ -45,7 +47,7 @@ def _run_python(ext: np.ndarray):
     return e, i
 
 
-def _run_julia(ext: np.ndarray):
+def _run_julia(ext: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     out = simulate_wilson_cowan(
         0.1,
         0.05,
@@ -60,7 +62,7 @@ def _run_julia(ext: np.ndarray):
         DEFAULT_PARAMS["dt"],
         ext.astype(np.float64),
     )
-    return out["e"], out["i"]
+    return np.asarray(out["e"], dtype=np.float64), np.asarray(out["i"], dtype=np.float64)
 
 
 __all__ = [

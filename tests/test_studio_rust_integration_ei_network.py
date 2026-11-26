@@ -10,6 +10,9 @@
 
 from __future__ import annotations
 
+from tests.engine_requirement import require_engine
+
+require_engine()
 from sc_neurocore_engine.studio import (
     get_ei_network_simulator,
 )

@@ -6,16 +6,19 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_rust_integration.py
 
-from __future__ import annotations
-
 """Integration tests exercising the Rust backend through the Python API.
 
 Covers: NetworkRunner simulation, neuron step parity, IR compilation,
 and spike data format. The Rust SIMD primitives are tested separately
 in the 378 Rust-native tests (cargo test).
 """
-import pytest
 
-engine = pytest.importorskip("sc_neurocore_engine")
+from __future__ import annotations
+
+import pytest
+from tests.engine_requirement import require_engine
+
+require_engine()
+import sc_neurocore_engine as engine
 
 __all__ = ["pytest", "engine"]

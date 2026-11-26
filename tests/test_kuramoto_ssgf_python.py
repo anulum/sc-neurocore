@@ -10,15 +10,18 @@
 
 import numpy as np
 
-import pytest
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 
 from sc_neurocore_engine import KuramotoSolver
 
 
 class TestSSGFKuramoto:
-    def test_step_ssgf_matches_step_without_extras(self):
+    """The SSGF extensions of the engine-backed Kuramoto solver."""
+
+    def test_step_ssgf_matches_step_without_extras(self) -> None:
+        """step_ssgf without geometry, field or PGBO terms equals a plain step."""
         n = 16
         omega = np.ones(n)
         coupling = np.full((n, n), 0.3)
@@ -33,7 +36,8 @@ class TestSSGFKuramoto:
         assert abs(r_basic - r_ssgf) < 1e-14
         np.testing.assert_allclose(solver_a.phases, solver_b.phases, atol=1e-14)
 
-    def test_run_ssgf_matches_run_without_extras(self):
+    def test_run_ssgf_matches_run_without_extras(self) -> None:
+        """run_ssgf without extra terms equals a plain run."""
         n = 16
         omega = np.ones(n)
         coupling = np.full((n, n), 0.3)
@@ -48,7 +52,8 @@ class TestSSGFKuramoto:
         np.testing.assert_allclose(r_basic, r_ssgf, atol=1e-14)
         np.testing.assert_allclose(solver_a.phases, solver_b.phases, atol=1e-14)
 
-    def test_geometry_coupling_changes_output(self):
+    def test_geometry_coupling_changes_output(self) -> None:
+        """Geometry coupling raises the order parameter over 100 steps."""
         n = 20
         omega = np.ones(n)
         coupling = np.full((n, n), 0.5)
@@ -66,7 +71,8 @@ class TestSSGFKuramoto:
         assert len(r_values) == 100
         assert r_values[-1] > r_values[0]
 
-    def test_field_pressure(self):
+    def test_field_pressure(self) -> None:
+        """Field pressure alone builds phase structure with an order parameter above 0.1."""
         n = 20
         omega = np.zeros(n)
         coupling = np.zeros((n, n))
@@ -79,7 +85,8 @@ class TestSSGFKuramoto:
         r = solver.order_parameter()
         assert r > 0.1, f"Field pressure should create structure, R={r}"
 
-    def test_pgbo_coupling(self):
+    def test_pgbo_coupling(self) -> None:
+        """PGBO coupling keeps the order parameter within [0, 1]."""
         n = 20
         omega = np.ones(n)
         coupling = np.full((n, n), 0.3)

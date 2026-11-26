@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Tests for PING gamma oscillation circuit (Julia Parity)
 
+"""Parity of the PING gamma oscillation circuit between the NumPy and Julia backends."""
+
 import importlib.util
 import logging
 import sys
@@ -16,12 +18,11 @@ import pytest
 
 from sc_neurocore.network import gamma_oscillation
 from sc_neurocore.network.gamma_oscillation import PINGCircuit
+from tests.julia_requirement import require_julia
 
 
 class TestPythonJuliaParity:
-    """Per-population spike rates match between the NumPy and Julia
-    backends within a tight tolerance.
-    """
+    """Per-population spike rates match between the NumPy and Julia backends."""
 
     @pytest.fixture(autouse=True)
     def julia_kernel(self) -> None:
@@ -30,15 +31,16 @@ class TestPythonJuliaParity:
         The kernel loads on first use, so a skip decided at collection read the
         flag before anything had loaded it and skipped these cases everywhere.
         """
+        require_julia()
         gamma_oscillation._ensure_julia_ping_step()
-        if not gamma_oscillation._HAS_JULIA_PING_STEP:
-            pytest.skip("Julia kernel not loaded")
+        assert gamma_oscillation._HAS_JULIA_PING_STEP, "the Julia PING kernel did not load"
 
     @pytest.mark.parametrize(
         "n_e,n_i",
         [(80, 20), (400, 100), (1000, 250)],
     )
     def test_population_rates_match(self, n_e: int, n_i: int) -> None:
+        """Excitatory and inhibitory spike rates agree between the backends for each size."""
         ping_py = PINGCircuit(
             n_excitatory=n_e,
             n_inhibitory=n_i,
@@ -74,6 +76,7 @@ class TestPythonJuliaParity:
         )
 
     def test_dominant_frequency_matches_across_backends(self) -> None:
+        """Both backends give the same dominant oscillation frequency."""
         ping_py = PINGCircuit(
             n_excitatory=400,
             n_inhibitory=100,
@@ -102,6 +105,7 @@ class TestPythonJuliaParity:
         assert abs(f_py - f_julia) < 1.5
 
     def test_explicit_julia_request_works(self) -> None:
+        """Requesting the Julia backend by name runs the circuit on Julia."""
         ping = PINGCircuit(
             n_excitatory=10,
             n_inhibitory=4,

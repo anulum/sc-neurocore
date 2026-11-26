@@ -20,6 +20,10 @@ behind a green wall of skips. Kernel-level failures after a healthy
 import (a missing ``.jl`` file, a Julia-side load error) stay hard
 test failures in the test bodies.
 
+Tests that run Julia sources as a subprocess call
+:func:`require_julia_executable` instead, which applies the same rule to
+the ``julia`` command on ``PATH``.
+
 The root ``conftest.py`` imports the bridge before any test. Outside a
 run that requires Julia, :func:`disable_unrequested_julia_resolution`
 first leaves it uninitialised when its Julia project would otherwise be
@@ -33,11 +37,13 @@ from collections.abc import MutableMapping
 import importlib
 import importlib.util
 import os
+import shutil
 from types import ModuleType
 
 import pytest
 
 JULIA_BRIDGE_MODULE = "juliacall"
+JULIA_EXECUTABLE = "julia"
 
 
 def disable_unrequested_julia_resolution(environ: MutableMapping[str, str]) -> str | None:
@@ -127,3 +133,37 @@ def require_julia(module: str = JULIA_BRIDGE_MODULE) -> ModuleType:
             allow_module_level=True,
         )
     return bridge
+
+
+def require_julia_executable(name: str = JULIA_EXECUTABLE) -> str:
+    """Return the Julia command-line executable or skip only when it is absent.
+
+    The subprocess lanes run Julia sources through the ``julia`` command rather
+    than through the bridge. Hosted CI installs it with ``setup-julia`` in the
+    ``test`` job of ``ci.yml`` and exports ``SC_NEUROCORE_REQUIRE_JULIA=1``, so
+    there an absent executable is a hard failure; elsewhere it skips the
+    calling test or module.
+
+    Parameters
+    ----------
+    name : str, optional
+        Command looked up on ``PATH``; ``"julia"`` by default.
+
+    Returns
+    -------
+    str
+        Absolute path of the executable.
+
+    Raises
+    ------
+    RuntimeError
+        If the executable is absent and ``SC_NEUROCORE_REQUIRE_JULIA=1`` is set.
+    """
+    executable = shutil.which(name)
+    if executable is not None:
+        return executable
+    if os.environ.get("SC_NEUROCORE_REQUIRE_JULIA") == "1":
+        raise RuntimeError(
+            f"Julia executable {name!r} is not on PATH, and SC_NEUROCORE_REQUIRE_JULIA=1 requires it"
+        )
+    pytest.skip(f"Julia executable {name!r} is not on PATH", allow_module_level=True)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 
 import pytest
+from tests.julia_requirement import require_julia
 
 
 class TestProbeReturnsTrueOnSecondCall:
@@ -27,9 +28,10 @@ class TestProbeReturnsTrueOnSecondCall:
         """A loaded Julia probe returns True on its second call."""
         from sc_neurocore.chiplet import hierarchical_backend_runtime as hp_mod
 
-        pytest.importorskip("juliacall", reason="juliacall not installed")
-        if not hp_mod._ensure_julia_kl_refine_loaded():
-            pytest.skip("Julia kl_refine.jl not loadable")
+        require_julia()
+        assert hp_mod._ensure_julia_kl_refine_loaded(), (
+            "kl_refine.jl did not load with a healthy bridge"
+        )
         # Now julia is loaded — second call must short-circuit.
         assert hp_mod._ensure_julia_kl_refine_loaded() is True
 

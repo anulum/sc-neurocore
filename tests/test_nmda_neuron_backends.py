@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — independently executed NMDA native parity
 
+"""Executed parity of the NMDA neuron and its SC magnesium-block identity on every lane."""
+
 from __future__ import annotations
 
 import json
@@ -23,6 +25,7 @@ from tests.engine_requirement import require_engine
 
 require_engine()
 import sc_neurocore_engine as engine
+from tests.julia_requirement import require_julia_executable
 
 _ROOT = Path(__file__).resolve().parents[1]
 _SOURCE = np.array([-69.9700375, 0.0, 0.0, 0.0, 0.0])
@@ -36,6 +39,7 @@ class _EngineNeuron(Protocol):
 
 
 def test_python_dual_identity_anchors() -> None:
+    """Both Python identities reproduce their recorded first steps."""
     source = NMDANeuron()
     retained = SCWBNMDAMagnesiumBlockNeuron()
     assert source.step(0.3) == 0
@@ -71,6 +75,7 @@ def test_python_dual_identity_anchors() -> None:
 def test_production_rust_binding_dual_identity_parity(
     constructor: type[object], current: float, keys: tuple[str, ...], expected: np.ndarray
 ) -> None:
+    """The engine binding of each identity reproduces the Python anchor values."""
     neuron = cast(_EngineNeuron, constructor())
     assert neuron.step(current) == 0
     state = neuron.get_state()
@@ -83,6 +88,7 @@ def test_production_rust_binding_dual_identity_parity(
 
 @pytest.mark.skipif(shutil.which("rustc") is None, reason="rustc is unavailable")
 def test_standalone_safety_rust_dual_identity_parity(tmp_path: Path) -> None:
+    """The standalone safety Rust sources, compiled and run, reproduce both anchors."""
     source = _ROOT / "src/sc_neurocore/accel/rust/safety/nmda_neuron.rs"
     retained = _ROOT / "src/sc_neurocore/accel/rust/safety/sc_wb_nmda_magnesium_block.rs"
     program = tmp_path / "nmda_anchor.rs"
@@ -120,6 +126,7 @@ fn main() {{
 
 @pytest.mark.skipif(shutil.which("go") is None, reason="Go is unavailable")
 def test_go_dual_identity_parity(tmp_path: Path) -> None:
+    """The Go sources, compiled and run, reproduce both anchors."""
     program = tmp_path / "nmda_anchor.go"
     program.write_text(
         """package main
@@ -153,8 +160,9 @@ func main() {
     np.testing.assert_allclose(retained_values[1:], _SC, rtol=0, atol=2e-12)
 
 
-@pytest.mark.skipif(shutil.which("julia") is None, reason="Julia is unavailable")
 def test_julia_dual_identity_parity() -> None:
+    """The Julia sources, run through the julia command, reproduce both anchors."""
+    require_julia_executable()
     source = _ROOT / "src/sc_neurocore/accel/julia/neurons/nmda_neuron.jl"
     retained = _ROOT / "src/sc_neurocore/accel/julia/neurons/sc_wb_nmda_magnesium_block.jl"
     expression = f'''
@@ -185,6 +193,7 @@ println("[",be,",",b.v,",",b.h,",",b.n,",",b.s_nmda,"]")
     [("nmda_neuron.mojo", _SOURCE), ("sc_wb_nmda_magnesium_block.mojo", _SC)],
 )
 def test_mojo_dual_identity_parity(tmp_path: Path, filename: str, expected: np.ndarray) -> None:
+    """Each Mojo kernel, built and run, reproduces its anchor."""
     kernel = _ROOT / "src/sc_neurocore/accel/mojo/kernels" / filename
     binary = tmp_path / kernel.stem
     command = pin_isa(
@@ -213,6 +222,7 @@ def test_mojo_dual_identity_parity(tmp_path: Path, filename: str, expected: np.n
 
 
 def test_declared_backends_and_public_boundary_are_exact() -> None:
+    """The model descriptor declares exactly the lanes these tests execute."""
     source = (_ROOT / "src/sc_neurocore/neurons/model_descriptors/NMDANeuron.toml").read_text(
         encoding="utf-8"
     )

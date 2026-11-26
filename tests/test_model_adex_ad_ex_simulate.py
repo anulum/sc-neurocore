@@ -15,6 +15,7 @@ import pytest
 from sc_neurocore.neurons.models.adex import (
     AdExNeuron,
 )
+from tests.engine_requirement import require_engine
 
 
 class TestAdExSimulate:
@@ -41,7 +42,7 @@ class TestAdExSimulate:
 
     def test_simulate_rust_matches_python_under_default_contract(self) -> None:
         """The Rust simulation matches Python by default."""
-        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        require_engine()
         py = AdExNeuron()
         rs = AdExNeuron()
         tr_py, sp_py = py.simulate(1000, current=250.0, backend="python")
@@ -52,7 +53,7 @@ class TestAdExSimulate:
 
     def test_simulate_rust_accepts_nondefault_baseline_and_rejects_other_integrators(self) -> None:
         """The Rust simulation takes the baseline integrator only."""
-        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        require_engine()
         n = AdExNeuron(integrator="rk4")
         with pytest.raises(RuntimeError, match="baseline_euler"):
             n.simulate(10, current=0.0, backend="rust")

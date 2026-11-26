@@ -20,6 +20,7 @@ crossings of ``pi`` are robust to those sub-ULP phase perturbations.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import ctypes
 import math
 
@@ -28,12 +29,15 @@ import pytest
 
 from sc_neurocore.neurons.models import ermentrout_kopell_map_neuron as ek
 from sc_neurocore.neurons.models.ermentrout_kopell_map_neuron import ErmentroutKopellMapNeuron
+from tests.julia_requirement import require_julia
 
 # Non-amplifying ULP band for the libm-divergent backends (measured ~7e-14).
 _TRACE_ATOL = 1e-9
 
 
-def _run(backend: str, *, theta0: float = 0.0, n: int = 4000, current: float = 0.1) -> tuple:
+def _run(
+    backend: str, *, theta0: float = 0.0, n: int = 4000, current: float = 0.1
+) -> tuple[np.ndarray, int, float]:
     neuron = ErmentroutKopellMapNeuron(theta=theta0)
     trace, spikes = neuron.simulate(n, current, backend=backend)
     return trace, spikes, neuron.theta
@@ -65,6 +69,7 @@ _CURRENTS = [0.05, 0.1, 0.5, 1.0]
 @pytest.mark.skipif(not _rust(), reason="Rust Ermentrout-Kopell backend unavailable")
 @pytest.mark.parametrize("current", _CURRENTS)
 def test_rust_bit_exact(current: float) -> None:
+    """The Rust lane reproduces the Python trace and spike count bit for bit at each drive."""
     ref_trace, ref_spikes, rt = _run("python", current=current)
     trace, spikes, tf = _run("rust", current=current)
     np.testing.assert_array_equal(trace, ref_trace)
@@ -74,6 +79,7 @@ def test_rust_bit_exact(current: float) -> None:
 
 @pytest.mark.skipif(not _rust(), reason="Rust Ermentrout-Kopell backend unavailable")
 def test_rust_bit_exact_empty_and_single() -> None:
+    """The Rust lane matches Python exactly for zero, one and two steps."""
     for n in (0, 1, 2):
         ref, rs, rt = _run("python", n=n)
         got, gs, gt = _run("rust", n=n)
@@ -86,7 +92,10 @@ def test_rust_bit_exact_empty_and_single() -> None:
 
 @pytest.mark.parametrize("backend,available", _ULP_BOUNDED, ids=[b for b, _ in _ULP_BOUNDED])
 @pytest.mark.parametrize("current", _CURRENTS)
-def test_ulp_bounded_trace_and_exact_spikes(backend: str, available, current: float) -> None:
+def test_ulp_bounded_trace_and_exact_spikes(
+    backend: str, available: Callable[[], bool], current: float
+) -> None:
+    """Each native lane keeps the trace within the ULP bound and the spike count exact."""
     if not available():
         pytest.skip(f"{backend} Ermentrout-Kopell backend unavailable")
     ref_trace, ref_spikes, _rt = _run("python", current=current)
@@ -98,9 +107,10 @@ def test_ulp_bounded_trace_and_exact_spikes(backend: str, available, current: fl
 
 
 @pytest.mark.parametrize("backend,available", _ULP_BOUNDED, ids=[b for b, _ in _ULP_BOUNDED])
-def test_ulp_band_does_not_amplify(backend: str, available) -> None:
+def test_ulp_band_does_not_amplify(backend: str, available: Callable[[], bool]) -> None:
     # Over a long horizon the divergence must stay bounded (non-chaotic): a
     # chaotic map would blow this past O(1).
+    """Over a long horizon a native lane's divergence from Python stays bounded."""
     if not available():
         pytest.skip(f"{backend} Ermentrout-Kopell backend unavailable")
     ref, _rs, _rt = _run("python", n=50000, current=0.3)
@@ -109,7 +119,8 @@ def test_ulp_band_does_not_amplify(backend: str, available) -> None:
 
 
 @pytest.mark.parametrize("backend,available", _ULP_BOUNDED, ids=[b for b, _ in _ULP_BOUNDED])
-def test_ulp_bounded_empty_and_single(backend: str, available) -> None:
+def test_ulp_bounded_empty_and_single(backend: str, available: Callable[[], bool]) -> None:
+    """Each native lane stays within the ULP bound for zero, one and two steps."""
     if not available():
         pytest.skip(f"{backend} Ermentrout-Kopell backend unavailable")
     for n in (0, 1, 2):
@@ -124,6 +135,7 @@ def test_ulp_bounded_empty_and_single(backend: str, available) -> None:
 
 def test_auto_matches_python_bit_exact() -> None:
     # auto -> Rust, which is bit-exact on the shared libm.
+    """The automatic backend, which selects Rust, matches Python bit for bit."""
     ref, ref_spikes, _rt = _run("python")
     got, spikes, _tf = _run("auto")
     np.testing.assert_array_equal(got, ref)
@@ -131,27 +143,32 @@ def test_auto_matches_python_bit_exact() -> None:
 
 
 def test_invalid_backend_raises() -> None:
+    """An unknown backend name is refused."""
     with pytest.raises(ValueError, match="backend must be"):
         ErmentroutKopellMapNeuron().simulate(10, 0.0, backend="cuda")
 
 
 def test_negative_n_steps_raises() -> None:
+    """A negative step count is refused."""
     with pytest.raises(ValueError, match="n_steps must be between"):
         ErmentroutKopellMapNeuron().simulate(-1, 0.0)
 
 
 @pytest.mark.parametrize("n_steps", (True, 1.5, 1 << 31))
 def test_invalid_step_count_raises(n_steps: object) -> None:
+    """A step count that is not a valid integer is refused."""
     with pytest.raises(ValueError, match="n_steps"):
         ErmentroutKopellMapNeuron().simulate(n_steps, 0.0)  # type: ignore[arg-type]
 
 
 def test_non_finite_current_raises() -> None:
+    """A non-finite drive current is refused."""
     with pytest.raises(ValueError, match="current must be finite"):
         ErmentroutKopellMapNeuron().simulate(10, np.inf)
 
 
 def test_simulate_matches_repeated_step() -> None:
+    """One simulate call gives the same trace and spikes as repeated steps."""
     trace_a, spikes_a = ErmentroutKopellMapNeuron().simulate(500, 0.1, backend="python")
     manual = []
     spikes_b = 0
@@ -164,6 +181,7 @@ def test_simulate_matches_repeated_step() -> None:
 
 
 def test_final_state_advances_instance() -> None:
+    """After simulate the instance holds the state that repeated steps reach."""
     neuron = ErmentroutKopellMapNeuron()
     _trace, _spikes = neuron.simulate(500, 0.1, backend="python")
     manual = ErmentroutKopellMapNeuron()
@@ -173,6 +191,7 @@ def test_final_state_advances_instance() -> None:
 
 
 def test_drive_produces_spikes_monotonic() -> None:
+    """A stronger drive never produces fewer spikes."""
     counts = []
     for current in (0.05, 0.1, 0.5, 1.0):
         _trace, spikes = ErmentroutKopellMapNeuron().simulate(20000, current, backend="python")
@@ -183,12 +202,14 @@ def test_drive_produces_spikes_monotonic() -> None:
 
 def test_zero_current_rests_at_origin() -> None:
     # theta0 = 0 with no drive is the stable rest phase (1 - cos 0 = 0).
+    """With no drive the phase rests at zero and the neuron never spikes."""
     trace, spikes = ErmentroutKopellMapNeuron().simulate(1000, 0.0, backend="python")
     assert spikes == 0
     assert np.all(trace == 0.0)
 
 
 def test_phase_confined_to_circle() -> None:
+    """The phase stays in [0, 2 pi) over a long driven run."""
     trace, _spikes = ErmentroutKopellMapNeuron().simulate(50000, 0.5, backend="python")
     two_pi = 2.0 * math.pi
     assert np.all(trace >= 0.0) and np.all(trace < two_pi)
@@ -198,7 +219,10 @@ def test_phase_confined_to_circle() -> None:
     ("backend", "available"),
     (("python", lambda: True), ("rust", _rust), ("julia", _julia), ("go", _go), ("mojo", _mojo)),
 )
-def test_public_dispatch_rejects_mutated_configuration_atomically(backend: str, available) -> None:
+def test_public_dispatch_rejects_mutated_configuration_atomically(
+    backend: str, available: Callable[[], bool]
+) -> None:
+    """A configuration made invalid after construction is refused without changing the state."""
     if not available():
         pytest.skip(f"{backend} Ermentrout-Kopell backend unavailable")
     neuron = ErmentroutKopellMapNeuron(theta=0.25)
@@ -209,9 +233,11 @@ def test_public_dispatch_rejects_mutated_configuration_atomically(backend: str, 
 
 
 def test_go_c_abi_rejects_invalid_input_without_writing_trace() -> None:
+    """The Go C ABI refuses invalid input and leaves the caller's trace buffer untouched."""
     if not _go():
         pytest.skip("Go Ermentrout-Kopell backend unavailable")
     trace = np.full(2, 123.0, dtype=np.float64)
+    assert ek._go_lib is not None
     result = ek._go_lib.ermentrout_kopell_map_simulate_c(
         ctypes.c_double(0.0),
         ctypes.c_double(0.1),
@@ -226,9 +252,11 @@ def test_go_c_abi_rejects_invalid_input_without_writing_trace() -> None:
 
 
 def test_mojo_c_abi_rejects_invalid_input_without_writing_trace() -> None:
+    """The Mojo C ABI refuses invalid input and leaves the caller's trace buffer untouched."""
     if not _mojo():
         pytest.skip("Mojo Ermentrout-Kopell backend unavailable")
     trace = np.full(2, 123.0, dtype=np.float64)
+    assert ek._mojo_lib is not None
     result = ek._mojo_lib.ermentrout_kopell_map_simulate_c(
         0.0,
         0.1,
@@ -243,8 +271,9 @@ def test_mojo_c_abi_rejects_invalid_input_without_writing_trace() -> None:
 
 
 def test_julia_native_api_rejects_invalid_input() -> None:
-    if not _julia():
-        pytest.skip("Julia Ermentrout-Kopell backend unavailable")
-    juliacall = pytest.importorskip("juliacall")
+    """The Julia kernel refuses a non-finite input with a Julia error."""
+    juliacall = require_julia()
+    assert _julia(), "the Julia Ermentrout-Kopell kernel did not load with a healthy bridge"
     with pytest.raises(juliacall.JuliaError, match="inputs must be finite"):
+        assert ek._julia_module is not None
         ek._julia_module.simulate_trace(0.0, 0.1, 1.0, math.pi, 1, math.nan)

@@ -11,10 +11,10 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 from sc_neurocore.neurons.models.perfect_integrator import (
     PerfectIntegratorNeuron,
 )
+from tests.engine_requirement import require_engine
 
 
 class TestPerfectIntegratorSimulate:
@@ -31,7 +31,7 @@ class TestPerfectIntegratorSimulate:
 
     def test_simulate_rust_matches_python(self) -> None:
         """Simulate rust matches python."""
-        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        require_engine()
         py = PerfectIntegratorNeuron()
         rs = PerfectIntegratorNeuron()
         tr_py, sp_py = py.simulate(1000, current=1.0, backend="python")
@@ -41,7 +41,7 @@ class TestPerfectIntegratorSimulate:
 
     def test_simulate_rust_carries_non_default_contract(self) -> None:
         """Simulate rust carries non-default contract."""
-        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        require_engine()
         py = PerfectIntegratorNeuron(c_m=2.0, v=0.25)
         rust = PerfectIntegratorNeuron(c_m=2.0, v=0.25)
         expected = py.simulate(10, current=1.0, backend="python")

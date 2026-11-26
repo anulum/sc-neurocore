@@ -975,6 +975,26 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   new test module and Rust and Go tests check the limits, the window and
   its edge, and the Julia lane bit for bit against Python.
 
+- Engine and Julia availability skips in the tests go through the named
+  gates. 107 ad hoc `pytest.importorskip`, `skipif` and `pytest.skip`
+  sites in 84 test modules decided for themselves whether the Rust
+  engine, the Julia bridge or the `julia` command was there, so they
+  still skipped in hosted CI, where `SC_NEUROCORE_REQUIRE_ENGINE=1` and
+  `SC_NEUROCORE_REQUIRE_JULIA=1` make absence a failure, and some
+  treated a broken engine as a skip. Those on the top-level
+  `sc_neurocore_engine` package never skipped at all, because the
+  package wrapper always imports from `bridge/`. They now call
+  `require_engine`, `require_julia` or the new
+  `require_julia_executable`, which applies the same rule to the `julia`
+  command; a Julia kernel that does not load with a healthy bridge is
+  now a failure. The engine gate's sweep found 20 test modules importing
+  the engine with no gate at all, and the Julia gate's inventory missed
+  one gated module; both are fixed, the pinned inventories follow, and a
+  new contract test sweeps every test source for the ad hoc idioms. The
+  56 touched test modules that were outside the docstring policy are
+  enrolled with full docstrings, and every touched module passes mypy
+  in strict mode.
+
 - The six SHD weight-extraction tool test modules skip again without
   the torch extra. Since they import their names explicitly, they took
   them straight from the tool, which exits without torch, before their

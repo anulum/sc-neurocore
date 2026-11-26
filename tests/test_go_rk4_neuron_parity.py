@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Go RK4 neuron integrator parity tests
 
+"""The Go RK4 neuron integrator against the Python reference and the Rust engine."""
+
 from __future__ import annotations
 
 from typing import Protocol
@@ -21,6 +23,7 @@ from sc_neurocore.accel.go.rk4_neurons import (
     _HAS_GO_RK4_NEURONS,
     simulate_rk4_neuron,
 )
+from tests.engine_requirement import require_engine
 
 if not _HAS_GO_RK4_NEURONS:
     pytest.skip(
@@ -124,6 +127,7 @@ def test_go_rk4_neuron_simulator_matches_python(
     reference_fn: _ReferenceFn,
     state_keys: tuple[str, ...],
 ) -> None:
+    """The Go RK4 simulator follows the Python reference for each model and step size."""
     expected = reference_fn(currents, dt=dt)
     actual = simulate_rk4_neuron(model, currents, dt)
 
@@ -134,6 +138,7 @@ def test_go_rk4_neuron_simulator_matches_python(
 
 
 def test_go_rk4_neuron_simulator_rejects_unknown_model() -> None:
+    """An unknown model name is refused."""
     with pytest.raises(ValueError, match="unsupported RK4 neuron model"):
         simulate_rk4_neuron("unknown", np.ones(4, dtype=np.float64))
 
@@ -151,12 +156,16 @@ def test_go_rk4_neuron_simulator_rejects_unknown_model() -> None:
 def test_go_rk4_neuron_simulator_rejects_invalid_trace_or_dt(
     currents: np.ndarray, dt: float, match: str
 ) -> None:
+    """An invalid current trace or step size is refused with the reason."""
     with pytest.raises(ValueError, match=match):
         simulate_rk4_neuron("izhikevich", currents, dt)
 
 
 def test_go_rk4_neuron_simulator_matches_rust_when_available() -> None:
-    rust = pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+    """The Go RK4 simulator matches the Rust engine's RK4 simulator."""
+    require_engine()
+    import sc_neurocore_engine as rust
+
     currents = np.linspace(0.0, 12.0, 96, dtype=np.float64)
 
     rust_out = rust.py_rk4_neuron_simulate("izhikevich", currents, 1.0)

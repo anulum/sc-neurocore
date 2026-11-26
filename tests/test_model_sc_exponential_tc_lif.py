@@ -20,9 +20,11 @@ from sc_neurocore.neurons.models import (
 from sc_neurocore.neurons.models.sc_exponential_tc_lif import (
     SCExponentialTwoCompartmentLIFNeuron,
 )
+from tests.engine_requirement import require_engine
 
 
 def test_public_registry_and_defaults() -> None:
+    """The public name resolves to the model class, with its documented defaults."""
     neuron = SCExponentialTwoCompartmentLIFNeuron()
     assert PublicSCExponential is SCExponentialTwoCompartmentLIFNeuron
     assert (neuron.v_s, neuron.v_d) == (0.0, 0.0)
@@ -31,7 +33,6 @@ def test_public_registry_and_defaults() -> None:
 
 def test_frozen_anchors_match_the_pre_change_engine_bit_exactly() -> None:
     """Anchors captured from the pre-2026-08-27 built engine."""
-
     neuron = SCExponentialTwoCompartmentLIFNeuron()
     assert [neuron.step(0.5, 0.3) for _ in range(10)] == [0, 1, 0, 1, 1, 1, 1, 1, 1, 1]
     assert neuron.v_s == 0.0
@@ -45,7 +46,8 @@ def test_frozen_anchors_match_the_pre_change_engine_bit_exactly() -> None:
 
 
 def test_production_engine_class_preserves_the_same_recurrence() -> None:
-    engine = pytest.importorskip("sc_neurocore_engine.sc_neurocore_engine")
+    """The engine class follows the same two-compartment recurrence as the Python model."""
+    engine = require_engine()
     rust = engine.SCExponentialTwoCompartmentLIF()
     python = SCExponentialTwoCompartmentLIFNeuron()
     for index in range(200):
@@ -59,6 +61,7 @@ def test_production_engine_class_preserves_the_same_recurrence() -> None:
 
 @pytest.mark.parametrize("bad", (math.nan, math.inf, -math.inf))
 def test_non_finite_currents_are_rejected_atomically(bad: float) -> None:
+    """A non-finite current is refused without changing either compartment."""
     neuron = SCExponentialTwoCompartmentLIFNeuron()
     before = (neuron.v_s, neuron.v_d)
     with pytest.raises(ValueError, match="i_soma"):
@@ -81,11 +84,13 @@ def test_non_finite_currents_are_rejected_atomically(bad: float) -> None:
     ],
 )
 def test_constructor_rejects_invalid_configuration(field: str, value: float) -> None:
+    """An invalid parameter is refused at construction."""
     with pytest.raises(ValueError):
         SCExponentialTwoCompartmentLIFNeuron(**{field: value})
 
 
 def test_overflowing_candidate_is_rejected_atomically() -> None:
+    """A step whose result would overflow is refused without changing the state."""
     neuron = SCExponentialTwoCompartmentLIFNeuron()
     before = (neuron.v_s, neuron.v_d)
     with pytest.raises(ValueError, match="candidate"):
@@ -94,6 +99,7 @@ def test_overflowing_candidate_is_rejected_atomically() -> None:
 
 
 def test_corrupted_runtime_configuration_is_rejected_atomically() -> None:
+    """A parameter corrupted after construction is refused at the next step, state unchanged."""
     neuron = SCExponentialTwoCompartmentLIFNeuron()
     neuron.dt = 0.0
     before = (neuron.v_s, neuron.v_d)
@@ -103,6 +109,7 @@ def test_corrupted_runtime_configuration_is_rejected_atomically() -> None:
 
 
 def test_reset_restores_rest_potentials() -> None:
+    """Resetting returns both compartments to the rest potential."""
     neuron = SCExponentialTwoCompartmentLIFNeuron(v_rest=0.2)
     neuron.step(0.5, 0.3)
     neuron.reset()

@@ -15,6 +15,7 @@ import pytest
 from sc_neurocore.neurons.models.hodgkin_huxley import (
     HodgkinHuxleyNeuron,
 )
+from tests.engine_requirement import require_engine
 
 
 class TestHodgkinHuxleyNeuronSimulate:
@@ -30,7 +31,7 @@ class TestHodgkinHuxleyNeuronSimulate:
 
     def test_simulate_rust_matches_or_ulp_python(self) -> None:
         """Simulate rust matches or ULP python."""
-        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        require_engine()
         py = HodgkinHuxleyNeuron()
         rs = HodgkinHuxleyNeuron()
         tr_py, sp_py = py.simulate(1000, current=10.0, backend="python")
@@ -41,7 +42,7 @@ class TestHodgkinHuxleyNeuronSimulate:
 
     def test_simulate_rust_rejects_non_default(self) -> None:
         """Simulate rust rejects non-default."""
-        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        require_engine()
         n = HodgkinHuxleyNeuron(dt=0.02)
         with pytest.raises(RuntimeError, match="factory-default"):
             n.simulate(10, current=0.0, backend="rust")

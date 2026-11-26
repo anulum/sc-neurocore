@@ -23,9 +23,9 @@ from pathlib import Path
 import shutil
 import subprocess
 
-import pytest
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 
 from sc_neurocore_engine.ir import ScGraphBuilder
 
@@ -145,7 +145,7 @@ def _build_emitted_sv(
     builder.output("attn_out", attn_id)
     graph = builder.build()
     assert graph.verify() is None
-    return graph.emit_sv()
+    return str(graph.emit_sv())
 
 
 def _run_cosim(
@@ -229,12 +229,14 @@ endmodule
 
 def test_single_query_selects_matching_key(tmp_path: Path) -> None:
     # Sharp query aligned with key 0: softmax collapses onto the first V row.
+    """A sharp query aligned with key 0 makes the RTL output the first value row."""
     _run_cosim("attn_select", [1.0, 0.0], [1.0, 0.0, 0.0, 1.0], [10.0, 0.0], 1, 2, 2, 1, tmp_path)
 
 
 def test_uniform_scores_average_values(tmp_path: Path) -> None:
     # Zero query -> equal scores -> exp(0) exact -> weights are exactly 1/k_rows, so the
     # output is the mean of the V rows, free of any exp-LUT error.
+    """Equal scores make the RTL output the exact mean of the value rows."""
     out = _run_cosim(
         "attn_uniform", [0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [2.0, -4.0], 1, 2, 2, 1, tmp_path
     )
@@ -243,6 +245,7 @@ def test_uniform_scores_average_values(tmp_path: Path) -> None:
 
 
 def test_two_query_two_value_columns(tmp_path: Path) -> None:
+    """Two queries over two value columns match the reference in co-simulation."""
     _run_cosim(
         "attn_two",
         [1.0, 0.0, 0.0, 1.0],
@@ -257,6 +260,7 @@ def test_two_query_two_value_columns(tmp_path: Path) -> None:
 
 
 def test_three_key_asymmetric(tmp_path: Path) -> None:
+    """Three keys with asymmetric scores match the reference in co-simulation."""
     _run_cosim(
         "attn_three",
         [0.5, -0.5, 0.25],
@@ -271,6 +275,7 @@ def test_three_key_asymmetric(tmp_path: Path) -> None:
 
 
 def test_emitted_sv_instantiates_core_with_baked_parameters(tmp_path: Path) -> None:
+    """The emitted SystemVerilog instantiates the core with the baked parameters."""
     emitted = _build_emitted_sv(
         "attn_params", [1.0, 0.0, 0.0, 1.0], [1.0, 0.0, 0.0, 1.0], [5.0, 1.0, 1.0, 5.0], 2
     )

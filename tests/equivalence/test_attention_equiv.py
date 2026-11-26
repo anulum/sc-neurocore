@@ -12,13 +12,16 @@ import numpy as np
 import pytest
 
 from sc_neurocore.layers.attention import StochasticAttention as V2Attn
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 
 from sc_neurocore_engine.attention import StochasticAttention as V3Attn
 
 
 class TestAttentionEquivalence:
+    """Stochastic attention agrees between the v2 Python and v3 engine implementations."""
+
     @pytest.mark.parametrize(
         "n,m,dk,dv",
         [
@@ -28,7 +31,8 @@ class TestAttentionEquivalence:
             (20, 50, 32, 64),
         ],
     )
-    def test_forward_matches_v2(self, n, m, dk, dv):
+    def test_forward_matches_v2(self, n: int, m: int, dk: int, dv: int) -> None:
+        """The v3 forward pass matches v2 for each query, key and value shape."""
         rng = np.random.RandomState(42)
         Q = rng.uniform(0, 1, (n, dk))
         K = rng.uniform(0, 1, (m, dk))
@@ -47,7 +51,7 @@ class TestAttentionEquivalence:
             err_msg="Attention output mismatch (rate mode)",
         )
 
-    def test_1d_input_expansion(self):
+    def test_1d_input_expansion(self) -> None:
         """v2 handles 1-D inputs by expanding to 2-D. v3 must too."""
         rng = np.random.RandomState(42)
         q = rng.uniform(0, 1, 8)
@@ -62,7 +66,7 @@ class TestAttentionEquivalence:
 
         np.testing.assert_allclose(v2_out, v3_out, atol=1e-12)
 
-    def test_zero_scores_handling(self):
+    def test_zero_scores_handling(self) -> None:
         """When Q and K are zero, row_sums = 0. Must not crash."""
         Q = np.zeros((3, 4))
         K = np.zeros((5, 4))

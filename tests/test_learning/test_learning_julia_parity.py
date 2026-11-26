@@ -14,10 +14,13 @@ import math
 import os
 from pathlib import Path
 import subprocess
+from types import SimpleNamespace
 
 import pytest
 
 from sc_neurocore._native.learning_bridge import RULE_STDP, RustPlasticityRule, is_available
+from tests import julia_requirement
+from tests.julia_requirement import require_julia_executable
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 JULIA_BRIDGE = REPO_ROOT / "src/sc_neurocore/accel/julia/_native/learning_bridge.jl"
@@ -51,17 +54,14 @@ LearningBridgeAccel.destroy_rule(rule)
 
 def _run_julia() -> subprocess.CompletedProcess[str]:
     """Execute Julia from the repository root with the current native path."""
-    try:
-        return subprocess.run(
-            ["julia", "--startup-file=no", "-e", JULIA_SCRIPT],
-            cwd=REPO_ROOT,
-            env=dict(os.environ),
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    except FileNotFoundError:
-        pytest.skip("Julia toolchain is not installed")
+    return subprocess.run(
+        [require_julia_executable(), "--startup-file=no", "-e", JULIA_SCRIPT],
+        cwd=REPO_ROOT,
+        env=dict(os.environ),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
 
 
 def _julia_weight(result: subprocess.CompletedProcess[str]) -> float:
@@ -129,13 +129,18 @@ def test_julia_weight_rejects_broken_results(
 
 
 def test_run_julia_reports_missing_toolchain(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Retain the explicit optional-toolchain boundary."""
+    """An absent julia skips outside CI and fails when the run requires Julia."""
 
-    def missing(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
-        raise FileNotFoundError("julia")
+    def nowhere(_name: str) -> None:
+        """Find no executable on PATH."""
+        return None
 
-    monkeypatch.setattr(subprocess, "run", missing)
-    with pytest.raises(pytest.skip.Exception, match="not installed"):
+    monkeypatch.setattr(julia_requirement, "shutil", SimpleNamespace(which=nowhere))
+    monkeypatch.delenv("SC_NEUROCORE_REQUIRE_JULIA", raising=False)
+    with pytest.raises(pytest.skip.Exception, match="not on PATH"):
+        _run_julia()
+    monkeypatch.setenv("SC_NEUROCORE_REQUIRE_JULIA", "1")
+    with pytest.raises(RuntimeError, match="SC_NEUROCORE_REQUIRE_JULIA=1 requires it"):
         _run_julia()
 
 

@@ -39,6 +39,7 @@ from tools.runtime_state_conformance import (
     render_summary,
     selectable_models,
 )
+from tests.engine_requirement import require_engine
 
 _COMMITTED = Path(__file__).resolve().parents[1] / DEFAULT_OUTPUT
 
@@ -272,7 +273,9 @@ class TestTheSelectableCensus:
 
     def test_the_parsed_catalogue_matches_the_built_engine(self) -> None:
         """A committed list that has drifted from the binary would be a lie."""
-        engine = pytest.importorskip("sc_neurocore_engine")
+        require_engine()
+        import sc_neurocore_engine as engine
+
         runner = getattr(engine, "NetworkRunner", None)
         if runner is None or not hasattr(runner, "supported_models"):
             pytest.skip("the installed engine exposes no supported-model list")

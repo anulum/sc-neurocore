@@ -49,6 +49,7 @@ _GATED_JULIA_FILES = (
     "tests/test_adaptive_threshold_if_julia_parity.py",
     "tests/test_aihara_julia_buffer_contracts.py",
     "tests/test_alpha_julia_parity.py",
+    "tests/test_contrastive_ssl_julia_parity.py",
     "tests/test_gpfa_julia_parity.py",
     "tests/test_julia_rk4_neuron_parity.py",
     "tests/test_phi_estimation_julia_parity.py",

@@ -11,14 +11,18 @@
 import numpy as np
 
 import pytest
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 
 from sc_neurocore_engine import KuramotoSolver
 
 
 class TestKuramotoSolver:
-    def test_synchronization(self):
+    """The engine-backed Kuramoto solver through its Python bridge."""
+
+    def test_synchronization(self) -> None:
+        """Strong all-to-all coupling drives 100 oscillators to an order parameter above 0.8."""
         n = 100
         omega = np.ones(n)
         coupling = np.full((n, n), 1.0)
@@ -31,7 +35,8 @@ class TestKuramotoSolver:
             f"Strong coupling should synchronize: R={order_values[-1]:.4f}"
         )
 
-    def test_order_parameter_range(self):
+    def test_order_parameter_range(self) -> None:
+        """The order parameter of uncoupled random phases lies in [0, 1]."""
         solver = KuramotoSolver(
             np.ones(50),
             np.zeros((50, 50)),
@@ -40,7 +45,8 @@ class TestKuramotoSolver:
         order_value = solver.order_parameter()
         assert 0.0 <= order_value <= 1.0
 
-    def test_phase_roundtrip(self):
+    def test_phase_roundtrip(self) -> None:
+        """The phases given to the solver are returned unchanged."""
         phases = np.array([0.1, 0.2, 0.3, 0.4])
         solver = KuramotoSolver(np.ones(4), np.zeros((4, 4)), phases)
         np.testing.assert_allclose(solver.phases, phases, atol=1e-12)
@@ -49,7 +55,8 @@ class TestKuramotoSolver:
         np.testing.assert_allclose(solver.phases, updated, atol=1e-12)
 
 
-def test_python_bridge_rejects_non_finite_inputs():
+def test_python_bridge_rejects_non_finite_inputs() -> None:
+    """Non-finite frequencies, couplings or phases are refused at construction."""
     with pytest.raises(ValueError, match="omega values must be finite"):
         KuramotoSolver([1.0, np.nan], np.zeros((2, 2)), [0.1, 0.2], noise_amp=0.0)
 
@@ -63,7 +70,8 @@ def test_python_bridge_rejects_non_finite_inputs():
         KuramotoSolver([1.0, 1.1], np.zeros((2, 2)), [0.1, 0.2], noise_amp=-0.1)
 
 
-def test_python_bridge_rejects_invalid_runtime_values():
+def test_python_bridge_rejects_invalid_runtime_values() -> None:
+    """A non-finite or non-positive step and other invalid runtime values are refused."""
     solver = KuramotoSolver([1.0, 1.1], np.zeros((2, 2)), [0.1, 0.2], noise_amp=0.0)
 
     with pytest.raises(ValueError, match="dt must be finite and positive"):
@@ -79,7 +87,8 @@ def test_python_bridge_rejects_invalid_runtime_values():
         solver.step_ssgf(0.01, W=[[0.0, np.nan], [0.0, 0.0]], sigma_g=1.0)
 
 
-def test_python_bridge_rejects_invalid_run_contracts_without_steps():
+def test_python_bridge_rejects_invalid_run_contracts_without_steps() -> None:
+    """An invalid run contract is refused before any step is taken."""
     solver = KuramotoSolver([1.0, 1.1], np.zeros((2, 2)), [0.1, 0.2], noise_amp=0.0)
 
     with pytest.raises(ValueError, match="dt must be finite and positive"):
@@ -92,7 +101,8 @@ def test_python_bridge_rejects_invalid_run_contracts_without_steps():
         solver.run_ssgf(0, 0.01, h_munu=[[0.0, np.nan], [0.0, 0.0]], pgbo_weight=1.0)
 
 
-def test_python_bridge_rejects_malformed_ssgf_matrix_shapes():
+def test_python_bridge_rejects_malformed_ssgf_matrix_shapes() -> None:
+    """SSGF coupling matrices of the wrong shape are refused."""
     solver = KuramotoSolver([1.0, 1.1], np.zeros((2, 2)), [0.1, 0.2], noise_amp=0.0)
 
     with pytest.raises(ValueError, match="W must be shape"):

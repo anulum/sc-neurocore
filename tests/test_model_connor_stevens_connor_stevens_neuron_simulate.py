@@ -15,6 +15,7 @@ import pytest
 from sc_neurocore.neurons.models.connor_stevens import (
     ConnorStevensNeuron,
 )
+from tests.engine_requirement import require_engine
 
 
 class TestConnorStevensNeuronSimulate:
@@ -30,7 +31,7 @@ class TestConnorStevensNeuronSimulate:
 
     def test_simulate_rust_matches_or_ulp_python(self) -> None:
         """The Rust simulation matches Python within rounding."""
-        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        require_engine()
         py = ConnorStevensNeuron()
         rs = ConnorStevensNeuron()
         tr_py, sp_py = py.simulate(1000, current=10.0, backend="python")
@@ -41,7 +42,7 @@ class TestConnorStevensNeuronSimulate:
 
     def test_simulate_rust_rejects_non_default(self) -> None:
         """The Rust simulation takes the factory defaults only."""
-        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        require_engine()
         n = ConnorStevensNeuron(dt=0.02)
         with pytest.raises(RuntimeError, match="factory-default"):
             n.simulate(10, current=0.0, backend="rust")

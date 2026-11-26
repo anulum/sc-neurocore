@@ -32,6 +32,7 @@ from sc_neurocore.spike_codec.spike_events import (
     lowpass_coefficients,
     threshold_factor,
 )
+from tests.engine_requirement import require_engine
 
 BACKENDS = ("python", "rust")
 RATE = 19531.0
@@ -90,7 +91,7 @@ def test_filter_design_and_threshold_factor_agree_with_the_engine() -> None:
     assert highpass_coefficients(250, RATE) == (15478, -30956, 15478, -30906, 14623)
     assert lowpass_coefficients(1000, RATE) == (343, 687, 343, -25407, 10397)
     assert threshold_factor(4.5) == 27327
-    native = pytest.importorskip("sc_neurocore_engine.sc_neurocore_engine")
+    native = require_engine()
     for rate, high, low, sigma in [(RATE, 250.0, 1000.0, 4.5), (30000.0, 300.0, 3000.0, 3.5)]:
         rust = native.spike_events_filter_coefficients(rate, high, low, sigma)
         assert tuple(rust[0]) == highpass_coefficients(high, rate)

@@ -17,8 +17,11 @@ import numpy.typing as npt
 import pytest
 
 from sc_neurocore.accel.wong_wang import simulate_python
+from tests.engine_requirement import require_engine
 
-engine = pytest.importorskip("sc_neurocore_engine", reason="Rust engine wheel not installed")
+require_engine()
+import sc_neurocore_engine as engine
+
 py_wong_wang_simulate = engine.py_wong_wang_simulate
 
 _PARAMETERS = (0.24, 0.11, 0.01, -0.02, 0.12, 0.003, 0.7, 0.28, 0.06, 0.31, 0.015, 0.0002)
@@ -42,6 +45,7 @@ def _assert_mapping_parity(actual: dict[str, Any], expected: dict[str, Any]) -> 
 
 @pytest.mark.parametrize("steps", (0, 1, 128, 1024))
 def test_rust_complete_mapping_matches_python(steps: int) -> None:
+    """The Rust simulator follows the complete Python mapping for each run length."""
     inputs = _inputs(steps)
     expected = simulate_python(*_PARAMETERS, *inputs)
     actual = py_wong_wang_simulate(*_PARAMETERS, *inputs)
@@ -49,16 +53,19 @@ def test_rust_complete_mapping_matches_python(steps: int) -> None:
 
 
 def test_rust_rejects_stimulus_length_mismatch() -> None:
+    """Stimulus arrays of different lengths are refused."""
     with pytest.raises(ValueError, match="stim1 and stim2 length mismatch"):
         py_wong_wang_simulate(*_PARAMETERS, np.zeros(2), np.zeros(1), np.zeros(4))
 
 
 def test_rust_rejects_noise_length_mismatch() -> None:
+    """A noise array that is not twice the step count is refused."""
     with pytest.raises(ValueError, match=r"xi length must be 2 \* n_steps"):
         py_wong_wang_simulate(*_PARAMETERS, np.zeros(2), np.zeros(2), np.zeros(2))
 
 
 def test_rust_rejects_invalid_configuration() -> None:
+    """A non-positive parameter is refused."""
     invalid = (*_PARAMETERS[:-1], -0.0002)
     with pytest.raises(ValueError, match="positive"):
         py_wong_wang_simulate(*invalid, *_inputs(1))

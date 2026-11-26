@@ -30,13 +30,17 @@ import pytest
 from sc_neurocore.neurons.models.akida_neuron import AkidaNeuron
 from sc_neurocore.neurons.models.loihi2 import Loihi2Neuron
 from sc_neurocore.neurons.models.loihi_cuba import LoihiCUBANeuron
+from tests.engine_requirement import require_engine
 
 SHORT_DRIVE = [-7, -3, 5, -9, -1, -4]
 
 
 def _engine() -> Any:
     """Return the engine module, or skip when it is not built."""
-    return pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+    require_engine()
+    import sc_neurocore_engine
+
+    return sc_neurocore_engine
 
 
 def _seeded(seed: int, count: int, low: int, high: int, zero_share: float = 0.0) -> list[int]:

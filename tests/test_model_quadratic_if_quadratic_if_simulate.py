@@ -15,6 +15,7 @@ import pytest
 from sc_neurocore.neurons.models.quadratic_if import (
     QuadraticIFNeuron,
 )
+from tests.engine_requirement import require_engine
 
 
 class TestQuadraticIFSimulate:
@@ -31,7 +32,7 @@ class TestQuadraticIFSimulate:
 
     def test_simulate_rust_matches_python(self) -> None:
         """Simulate rust matches python."""
-        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        require_engine()
         py = QuadraticIFNeuron()
         rs = QuadraticIFNeuron()
         tr_py, sp_py = py.simulate(1000, current=1.0, backend="python")
@@ -41,7 +42,7 @@ class TestQuadraticIFSimulate:
 
     def test_simulate_rust_accepts_non_default_complete_contract(self) -> None:
         """Simulate rust accepts non-default complete contract."""
-        pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built")
+        require_engine()
         py = QuadraticIFNeuron(v=-0.5, v_reset=-2.0, v_peak=2.0, dt=0.02)
         rs = QuadraticIFNeuron(v=-0.5, v_reset=-2.0, v_peak=2.0, dt=0.02)
         py_voltage, py_events = py.simulate_complete(100, current=1.5, backend="python")

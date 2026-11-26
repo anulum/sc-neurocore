@@ -27,6 +27,8 @@ import numpy.typing as npt
 import pytest
 
 from sc_neurocore.neurons.models.psn import ParallelSpikingNeuron
+from tests.engine_requirement import require_engine
+from tests.julia_requirement import require_julia_executable
 
 _ROOT = Path(__file__).resolve().parents[1]
 _DRIVE = tuple(0.4 + 0.3 * math.sin(index * 0.17) for index in range(64))
@@ -59,7 +61,8 @@ def _parse_trace(stdout: str) -> npt.NDArray[np.float64]:
 
 
 def test_production_rust_binding_matches_complete_python_state() -> None:
-    engine = pytest.importorskip("sc_neurocore_engine.sc_neurocore_engine")
+    """The engine binding follows the complete Python state step for step."""
+    engine = require_engine()
     rust = cast(_RustPSN, engine.ParallelSpikingNeuron(kernel_size=4, v_threshold=_V_TH))
     rust.set_weights(list(_WEIGHTS))
     actual = []
@@ -84,6 +87,7 @@ def test_production_rust_binding_matches_complete_python_state() -> None:
 
 
 def test_standalone_safety_rust_matches_complete_python_state(tmp_path: Path) -> None:
+    """The standalone safety Rust source, compiled with rustc, follows the complete Python state."""
     rustc = shutil.which("rustc")
     if rustc is None:
         pytest.skip("rustc is not installed")
@@ -123,6 +127,7 @@ fn main() {{
 
 
 def test_go_backend_matches_complete_python_state(tmp_path: Path) -> None:
+    """The Go source, built and run, follows the complete Python state."""
     go = shutil.which("go")
     if go is None:
         pytest.skip("Go is not installed")
@@ -161,9 +166,8 @@ func main() {{
 
 
 def test_julia_backend_matches_complete_python_state() -> None:
-    julia = shutil.which("julia")
-    if julia is None:
-        pytest.skip("Julia is not installed")
+    """The Julia source, run through the julia command, follows the complete Python state."""
+    julia = require_julia_executable()
     source = _ROOT / "src/sc_neurocore/accel/julia/neurons/psn.jl"
     literals = ", ".join(f"{current:.17e}" for current in _DRIVE)
     weight_literals = ", ".join(f"{weight:.17e}" for weight in _WEIGHTS)
@@ -198,6 +202,7 @@ end
 
 
 def test_descriptor_and_public_page_report_only_proven_backends() -> None:
+    """The model descriptor and the public page list only the backends these tests prove."""
     descriptor = tomllib.loads(
         (_ROOT / "src/sc_neurocore/neurons/model_descriptors/ParallelSpikingNeuron.toml").read_text(
             encoding="utf-8"

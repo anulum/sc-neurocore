@@ -6,13 +6,15 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore - Support for former test_surrogate_python.py
 
+"""Tests for surrogate gradient engine (Python bridge)."""
+
 from __future__ import annotations
 
-"""Tests for surrogate gradient engine (Python bridge)."""
 import numpy as np
 import pytest
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 from sc_neurocore_engine import DifferentiableDenseLayer, SurrogateLif
 
 __all__ = ["np", "pytest", "DifferentiableDenseLayer", "SurrogateLif"]

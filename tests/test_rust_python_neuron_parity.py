@@ -11,16 +11,19 @@
 from __future__ import annotations
 
 import importlib
+import importlib.util
 from collections.abc import Sequence
 from pathlib import Path
 import re
 import sys
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 from typing import NamedTuple, Protocol, cast
 
 import pytest
 
 from sc_neurocore.neurons import models as py_models
+from tests import engine_requirement
+from tests.engine_requirement import require_engine
 
 
 class StepModel(Protocol):
@@ -48,13 +51,11 @@ class _RecordingStepModel:
 
     def __init__(self, result: object) -> None:
         """Store the deterministic result returned by every step."""
-
         self.result = result
         self.calls: list[tuple[object, ...]] = []
 
     def step(self, *args: object) -> object:
         """Record one step call and return the configured result."""
-
         self.calls.append(args)
         return self.result
 
@@ -67,14 +68,6 @@ class PythonOnlyBoundary(NamedTuple):
     source_token: str
     reason_token: str
 
-
-_ENGINE: ModuleType | None
-try:
-    _ENGINE = importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")
-    HAS_ENGINE = True
-except ImportError:  # pragma: no cover - exercised only when the optional engine is absent.
-    _ENGINE = None
-    HAS_ENGINE = False
 
 _DUAL_FLOAT = frozenset(
     {
@@ -210,40 +203,37 @@ _DOC_TOKENS = (
 
 def _all_model_names() -> tuple[str, ...]:
     """Return public Python model registry names in deterministic order."""
-
     return tuple(str(name) for name in py_models.__all__)
 
 
 def _repo_root() -> Path:
     """Return the repository root."""
-
     return Path(__file__).resolve().parents[1]
 
 
 def _engine_module() -> ModuleType:
-    """Return the compiled Rust engine module or skip parity-only tests."""
+    """Return the compiled Rust engine module through the engine gate.
 
-    if _ENGINE is None:
-        pytest.skip("Rust engine not built")
-    return _ENGINE
+    The gate skips the calling test only when the engine is genuinely absent and the run
+    does not require it (``tests/engine_requirement.py``); the Python-only tests of this
+    module never call it.
+    """
+    return require_engine()
 
 
 def _rust_name(name: str) -> str:
     """Return the current Rust constructor name for a Python registry name."""
-
     return _RUST_NAME_MAP.get(name, name)
 
 
 def _make_py(name: str) -> StepModel:
     """Instantiate a Python neuron model by public registry name."""
-
     constructor = getattr(py_models, name)
     return cast(StepModel, constructor())
 
 
 def _make_rs(name: str) -> StepModel:
     """Instantiate a Rust neuron model by mapped PyO3 constructor name."""
-
     module = _engine_module()
     rust_name = _rust_name(name)
     if not hasattr(module, rust_name):
@@ -254,7 +244,6 @@ def _make_rs(name: str) -> StepModel:
 
 def _rust_source_names() -> set[str]:
     """Return PyO3 class names declared by the committed Rust sources."""
-
     root = _repo_root()
     binding_paths = sorted((root / "engine/src/bindings").rglob("*.rs"))
     aggregate_paths = tuple(root / path for path in _RUST_AGGREGATE_SOURCE_PATHS)
@@ -274,7 +263,6 @@ def _rust_source_names() -> set[str]:
 
 def _spike_count_from_sequence(values: Sequence[object]) -> int:
     """Return an integer spike count from a vector-like model result."""
-
     total = 0
     for value in values:
         if isinstance(value, bool):
@@ -290,7 +278,6 @@ def _spike_count_from_sequence(values: Sequence[object]) -> int:
 
 def _spike_count(result: object) -> int:
     """Convert a model-specific step result into an integer spike count."""
-
     if isinstance(result, bool):
         return int(result)
     if isinstance(result, int):
@@ -310,7 +297,6 @@ def _spike_count(result: object) -> int:
 
 def _run_steps(model: StepModel, name: str, n: int = 500) -> list[int]:
     """Run a model through the generic parity stimulus and collect spikes."""
-
     spikes: list[int] = []
     for _ in range(n):
         if name in _VEC_INPUT:
@@ -332,7 +318,6 @@ def _run_steps(model: StepModel, name: str, n: int = 500) -> list[int]:
 
 def test_rust_binding_coverage_map_classifies_every_python_model() -> None:
     """Keep explicit binding decisions aligned with the Python model registry."""
-
     model_names = set(_all_model_names())
     mapped_names = set(_RUST_NAME_MAP)
     boundary_names = {boundary.name for boundary in _PYTHON_ONLY_BOUNDARIES}
@@ -350,7 +335,6 @@ def test_rust_binding_coverage_map_classifies_every_python_model() -> None:
 
 def test_rust_binding_coverage_map_matches_committed_rust_sources() -> None:
     """Verify every non-Python-only registry name has a committed PyO3 class."""
-
     rust_names = _rust_source_names()
     missing = {
         name: _rust_name(name)
@@ -364,7 +348,6 @@ def test_rust_binding_coverage_map_matches_committed_rust_sources() -> None:
 
 def test_python_only_boundaries_are_documented_from_live_sources() -> None:
     """Lock durable Python-only decisions to source evidence and public docs."""
-
     doc_text = (_repo_root() / _DOC_PATH).read_text(encoding="utf-8")
     rust_names = _rust_source_names()
 
@@ -376,10 +359,8 @@ def test_python_only_boundaries_are_documented_from_live_sources() -> None:
         assert boundary.name not in rust_names
 
 
-@pytest.mark.skipif(not HAS_ENGINE, reason="Rust engine not built")
 def test_rust_binding_coverage_map_matches_built_engine() -> None:
     """Verify the installed engine exposes the documented binding map."""
-
     module = _engine_module()
     rust_exports = set(dir(module))
     missing = {
@@ -417,7 +398,6 @@ def test_runner_profiles_match_python_state_and_events(name: str) -> None:
 
 def test_public_docs_describe_rust_binding_coverage_map() -> None:
     """Keep public model docs aligned with the live Rust binding map."""
-
     text = (_repo_root() / _DOC_PATH).read_text(encoding="utf-8")
 
     for token in _DOC_TOKENS:
@@ -425,18 +405,46 @@ def test_public_docs_describe_rust_binding_coverage_map() -> None:
 
 
 def test_optional_engine_absence_skip_path(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Cover the explicit skip path used when the optional engine is absent."""
+    """A genuinely absent engine skips the parity tests when the run does not require it."""
 
-    monkeypatch.setattr(sys.modules[__name__], "_ENGINE", None)
+    def nowhere(_name: str) -> None:
+        """Resolve no module, as in an environment without the engine."""
+        return None
+
+    monkeypatch.delenv("SC_NEUROCORE_REQUIRE_ENGINE", raising=False)
+    monkeypatch.setattr(
+        engine_requirement,
+        "importlib",
+        SimpleNamespace(
+            util=SimpleNamespace(find_spec=nowhere), import_module=importlib.import_module
+        ),
+    )
 
     with pytest.raises(pytest.skip.Exception):
         _engine_module()
 
 
+def test_required_engine_absence_is_a_hard_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With SC_NEUROCORE_REQUIRE_ENGINE=1 an absent engine fails instead of skipping."""
+
+    def absent(name: str) -> ModuleType:
+        """Refuse every import as a missing module."""
+        raise ModuleNotFoundError(name, name=name)
+
+    monkeypatch.setenv("SC_NEUROCORE_REQUIRE_ENGINE", "1")
+    monkeypatch.setattr(
+        engine_requirement,
+        "importlib",
+        SimpleNamespace(util=importlib.util, import_module=absent),
+    )
+
+    with pytest.raises(ModuleNotFoundError):
+        _engine_module()
+
+
 def test_missing_rust_constructor_skip_path(monkeypatch: pytest.MonkeyPatch) -> None:
     """Cover the explicit skip path for stale or absent Rust constructors."""
-
-    monkeypatch.setattr(sys.modules[__name__], "_ENGINE", ModuleType("empty_engine"))
+    monkeypatch.setattr(sys.modules[__name__], "_engine_module", lambda: ModuleType("empty_engine"))
 
     with pytest.raises(pytest.skip.Exception):
         _make_rs("QuadraticIFNeuron")
@@ -444,7 +452,6 @@ def test_missing_rust_constructor_skip_path(monkeypatch: pytest.MonkeyPatch) -> 
 
 def test_spike_count_conversion_branches() -> None:
     """Exercise scalar, vector, tuple, and invalid spike-result conversion."""
-
     assert _spike_count(True) == 1
     assert _spike_count(2) == 2
     assert _spike_count(0.01) == 1
@@ -459,7 +466,6 @@ def test_spike_count_conversion_branches() -> None:
 
 def test_rate_override_stimulus_routing() -> None:
     """Exercise the rate-model current overrides used by the parity harness."""
-
     poisson = _RecordingStepModel(False)
     inhomogeneous = _RecordingStepModel(False)
 
@@ -469,10 +475,8 @@ def test_rate_override_stimulus_routing() -> None:
     assert inhomogeneous.calls == [(200.0,)]
 
 
-@pytest.mark.skipif(not HAS_ENGINE, reason="Rust engine not built")
 def test_chay_keizer_five_state_trajectory_parity() -> None:
     """Lock the faithful Rust five-state burster to the Python reference trace."""
-
     py_model = py_models.ChayKeizerNeuron()
     constructor = _engine_module().ChayKeizerNeuron
     rs_model = cast(StateModel, constructor())
@@ -487,10 +491,8 @@ def test_chay_keizer_five_state_trajectory_parity() -> None:
 
 
 @pytest.mark.parametrize("name", _all_model_names())
-@pytest.mark.skipif(not HAS_ENGINE, reason="Rust engine not built")
 def test_parity(name: str) -> None:
     """Compare generic scalar-current spike counts where contracts match."""
-
     if name in _PYTHON_ONLY_MODELS:
         pytest.skip(f"{name} is currently Python-only")
     if name in _RUST_NAME_MAP:
@@ -520,10 +522,8 @@ def test_parity(name: str) -> None:
 @pytest.mark.parametrize(
     "name", ["LoihiCUBANeuron", "TrueNorthNeuron", "SigmaDeltaNeuron", "McCullochPittsNeuron"]
 )
-@pytest.mark.skipif(not HAS_ENGINE, reason="Rust engine not built")
 def test_exact_parity(name: str) -> None:
     """Check integer and deterministic hardware-style models exactly."""
-
     py_model = _make_py(name)
     rs_model = _make_rs(name)
 

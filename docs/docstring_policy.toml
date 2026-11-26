@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5130
+expected_file_count = 5187
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20562,3 +20562,231 @@ rationale = "Verify atomic rollback of EquationNeuron state, graded spike value 
 [[file]]
 path = "tests/hdl_gen/test_verilog_generator_dense_matrix.py"
 rationale = "Pin 1-D Dense emission to its base digests, bind 2-D weight matrices to sc_dense_matrix_layer with seeds and current range, refuse unhonourable seeds, and witness per-row spikes in Icarus and Rust mirror parity."
+
+[[file]]
+path = "tests/test_native_availability_guards.py"
+rationale = "Exercise SC-NeuroCore: engine and Julia availability skips go through the named gates."
+
+[[file]]
+path = "tests/dense_optimization_support.py"
+rationale = "Tests for Phase 7 dense forward optimizations."
+
+[[file]]
+path = "tests/equivalence/encoder_equiv_support.py"
+rationale = "Strict blueprint semantics tests for LFSR + bitstream encoder."
+
+[[file]]
+path = "tests/equivalence/test_attention_equiv.py"
+rationale = "Equivalence: v2 StochasticAttention vs v3."
+
+[[file]]
+path = "tests/equivalence/test_bitstream_equiv.py"
+rationale = "Equivalence: v2 pack/unpack/popcount vs v3."
+
+[[file]]
+path = "tests/equivalence/test_gnn_equiv.py"
+rationale = "Equivalence: v2 StochasticGraphLayer vs v3."
+
+[[file]]
+path = "tests/equivalence/test_layer_equiv.py"
+rationale = "Equivalence: v2 VectorizedSCLayer.forward vs v3 DenseLayer."
+
+[[file]]
+path = "tests/hdc_python_support.py"
+rationale = "End-to-end Python tests for HDC/VSA via the Rust BitStreamTensor backend."
+
+[[file]]
+path = "tests/numpy_interop_support.py"
+rationale = "Tests for NumPy zero-copy interop functions."
+
+[[file]]
+path = "tests/rust_integration_support.py"
+rationale = "Integration tests exercising the Rust backend through the Python API."
+
+[[file]]
+path = "tests/sc_neurocore_engine_reexports_support.py"
+rationale = "Shared symbol inventories and availability probes for engine re-export tests."
+
+[[file]]
+path = "tests/surrogate_python_support.py"
+rationale = "Tests for surrogate gradient engine (Python bridge)."
+
+[[file]]
+path = "tests/test_adaptive_threshold_if_parity.py"
+rationale = "Compare the modular PyO3 exact-relaxation batch with the Python golden."
+
+[[file]]
+path = "tests/test_alpha_parity.py"
+rationale = "Compare the modular PyO3 exact-flow batch with the Python golden."
+
+[[file]]
+path = "tests/test_bertram_phantom_native_parity.py"
+rationale = "Executed Julia and Mojo parity of the Bertram phantom burster and its SC three-state identity."
+
+[[file]]
+path = "tests/test_butera_respiratory_native_parity.py"
+rationale = "Executed Julia and Mojo parity of the Butera Model 1 neuron and its SC unit-capacitance identity."
+
+[[file]]
+path = "tests/test_chiplet/test_hierarchical_partitioner_runtime.py"
+rationale = "Failure-path contracts for optional backend discovery."
+
+[[file]]
+path = "tests/test_engine_lif_vector_run.py"
+rationale = "Rust engine vector LIF run contracts."
+
+[[file]]
+path = "tests/test_engine_probability_array_encoding.py"
+rationale = "Rust engine probability-array encoding contracts."
+
+[[file]]
+path = "tests/test_ermentrout_kopell_map_backends.py"
+rationale = "Cross-backend parity for ``ErmentroutKopellMapNeuron.simulate``."
+
+[[file]]
+path = "tests/test_ermentrout_kopell_pop_parity.py"
+rationale = "Compare the modular PyO3 batch with the Python golden."
+
+[[file]]
+path = "tests/test_gamma_oscillation_julia_parity.py"
+rationale = "Parity of the PING gamma oscillation circuit between the NumPy and Julia backends."
+
+[[file]]
+path = "tests/test_glm_neuron_backends.py"
+rationale = "Execute every declared GLM backend under the explicit-uniform contract."
+
+[[file]]
+path = "tests/test_gnn_sc_mode.py"
+rationale = "Tests for SC-mode GNN (new v3 capability)."
+
+[[file]]
+path = "tests/test_go_rk4_neuron_parity.py"
+rationale = "The Go RK4 neuron integrator against the Python reference and the Rust engine."
+
+[[file]]
+path = "tests/test_graph_forward_rtl_cosim.py"
+rationale = "End-to-end co-simulation of the ``sc.graph_forward`` IR lowering."
+
+[[file]]
+path = "tests/test_hill_tononi_native_parity.py"
+rationale = "Executed Julia and Mojo parity of the Hill-Tononi neuron."
+
+[[file]]
+path = "tests/test_ih_neuron_backends.py"
+rationale = "Execute every declared Ih backend and bind public claims to live sources."
+
+[[file]]
+path = "tests/test_izhikevich2007_backends_dispatch_validation.py"
+rationale = "Dispatch, input validation, and algorithm selection contracts."
+
+[[file]]
+path = "tests/test_jansen_rit_parity.py"
+rationale = "Compare the modular PyO3 batch with the Python golden."
+
+[[file]]
+path = "tests/test_julia_rk4_neuron_parity.py"
+rationale = "The Julia RK4 neuron integrator against the Python reference and the Rust engine."
+
+[[file]]
+path = "tests/test_kuramoto_python.py"
+rationale = "Tests for Rust-accelerated Kuramoto solver."
+
+[[file]]
+path = "tests/test_kuramoto_ssgf_python.py"
+rationale = "Tests for SSGF-compatible Kuramoto solver (Python bridge)."
+
+[[file]]
+path = "tests/test_kuramoto_step_rtl_cosim.py"
+rationale = "End-to-end co-simulation of the ``sc.kuramoto_step`` IR lowering."
+
+[[file]]
+path = "tests/test_larter_breakspear_native_parity.py"
+rationale = "Executed Julia and Mojo parity of the Larter-Breakspear neuron and its SC identity."
+
+[[file]]
+path = "tests/test_learning/test_learning_julia_parity.py"
+rationale = "Source contracts and live parity for the Julia autonomous-learning bridge."
+
+[[file]]
+path = "tests/test_mainen_sejnowski_backends.py"
+rationale = "Execute every declared Mainen-Sejnowski backend against the reference."
+
+[[file]]
+path = "tests/test_model_sc_exponential_tc_lif.py"
+rationale = "Frozen-anchor, atomicity, and engine custody for the exponential recurrence."
+
+[[file]]
+path = "tests/test_mojo_rk4_neuron_parity.py"
+rationale = "The Mojo RK4 neuron integrator against the Python reference and the Rust engine."
+
+[[file]]
+path = "tests/test_multihead_attention.py"
+rationale = "Tests for multi-head attention (new v3 capability)."
+
+[[file]]
+path = "tests/test_nmda_neuron_backends.py"
+rationale = "Executed parity of the NMDA neuron and its SC magnesium-block identity on every lane."
+
+[[file]]
+path = "tests/test_persistent_na_neuron_backends.py"
+rationale = "Execute every declared PersistentNa backend and bind public claims."
+
+[[file]]
+path = "tests/test_petri_net.py"
+rationale = "Tests for PetriNetEngine — SCPN Fusion Engine via stochastic DenseLayer."
+
+[[file]]
+path = "tests/test_psn_backends.py"
+rationale = "Execute every declared sliding PSN backend against the paper-exact reference."
+
+[[file]]
+path = "tests/test_resonate_and_fire_parity.py"
+rationale = "Compare the modular PyO3 exact-flow batch with the Python golden."
+
+[[file]]
+path = "tests/test_rust_attention_softmax.py"
+rationale = "PyO3 round-trip tests for softmax attention."
+
+[[file]]
+path = "tests/test_rust_graph_sparse.py"
+rationale = "PyO3 round-trip tests for sparse CSR graph backend."
+
+[[file]]
+path = "tests/test_rust_python_neuron_parity.py"
+rationale = "Rust-Python neuron binding coverage and focused runtime parity checks."
+
+[[file]]
+path = "tests/test_rust_rk4_neuron_parity.py"
+rationale = "The Rust engine's RK4 neuron integrator against the Python reference."
+
+[[file]]
+path = "tests/test_sk_neuron_backends.py"
+rationale = "Execute every declared SK backend and bind public claims to live sources."
+
+[[file]]
+path = "tests/test_softmax_attention_rtl_cosim.py"
+rationale = "End-to-end co-simulation of the ``sc.softmax_attention`` IR lowering."
+
+[[file]]
+path = "tests/test_studio_runtime_state_packet.py"
+rationale = "What the Rust boundary may name, and what it must refuse."
+
+[[file]]
+path = "tests/test_tc_lif_backends.py"
+rationale = "Execute every declared TC-LIF backend against the paper-exact reference."
+
+[[file]]
+path = "tests/test_ttype_ca_neuron_backends.py"
+rationale = "Execute every declared T-type backend and bind public claims to live sources."
+
+[[file]]
+path = "tests/test_wong_wang_parity.py"
+rationale = "Compare the modular PyO3 batch with the deterministic Python golden."
+
+[[file]]
+path = "tests/wilson_cowan_julia_parity_support.py"
+rationale = "Bit-exact parity of the Wilson-Cowan E/I model between Python and the Julia simulator."
+
+[[file]]
+path = "tests/wilson_cowan_parity_support.py"
+rationale = "Last-ulp parity between `WilsonCowanUnit.step` and the Rust `py_wilson_cowan_simulate`."

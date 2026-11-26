@@ -13,6 +13,7 @@ from __future__ import annotations
 import math
 import numpy as np
 import pytest
+from tests.engine_requirement import require_engine
 
 
 class TestLongRunStability:
@@ -25,9 +26,7 @@ class TestLongRunStability:
     would be too slow for 1 M-step sweeps in the test suite.
     """
 
-    rust = pytest.importorskip(
-        "sc_neurocore_engine", reason="Rust engine required"
-    ).py_wilson_cowan_simulate
+    rust = require_engine().py_wilson_cowan_simulate
 
     @pytest.mark.parametrize(
         "drive,dt",

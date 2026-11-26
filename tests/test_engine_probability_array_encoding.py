@@ -17,13 +17,15 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 
 import sc_neurocore_engine as v3
 
 
 def test_probability_array_encoding_packs_each_probability_row() -> None:
+    """Batch encoding packs one bitstream row per probability."""
     probabilities = np.array([0.3, 0.5, 0.8])
 
     packed = v3.batch_encode(probabilities, length=1024, seed=0xACE1)
@@ -34,6 +36,7 @@ def test_probability_array_encoding_packs_each_probability_row() -> None:
 
 
 def test_probability_array_encoding_tracks_requested_rates() -> None:
+    """Each packed row's bit rate tracks its probability."""
     probabilities = np.array([0.25, 0.5, 0.75])
 
     packed = v3.batch_encode(probabilities, length=10_000, seed=42)
@@ -44,6 +47,7 @@ def test_probability_array_encoding_tracks_requested_rates() -> None:
 
 
 def test_probability_array_encoding_is_seed_deterministic() -> None:
+    """The same seed gives the same packed rows."""
     probabilities = np.array([0.5, 0.5])
 
     first = v3.batch_encode(probabilities, length=1024, seed=42)
@@ -53,6 +57,7 @@ def test_probability_array_encoding_is_seed_deterministic() -> None:
 
 
 def test_probability_array_encoding_accepts_empty_input() -> None:
+    """An empty probability array gives an empty result."""
     packed = v3.batch_encode(np.array([], dtype=np.float64), length=1024, seed=42)
 
     assert len(packed) == 0

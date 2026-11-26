@@ -10,9 +10,9 @@
 
 from dataclasses import dataclass
 
-import pytest
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 
 from sc_neurocore_engine import FixedPointLIFNeuron as V3Lif
 

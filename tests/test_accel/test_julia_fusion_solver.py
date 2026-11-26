@@ -15,7 +15,6 @@ fails, so the wrapper's subprocess call and its logged run and failure are real.
 from __future__ import annotations
 
 import logging
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -24,6 +23,7 @@ import pytest
 
 from sc_neurocore.accel.julia import solvers
 from sc_neurocore.accel.julia.solvers import JuliaFusionSolver
+from tests.julia_requirement import require_julia_executable
 
 posix_only = pytest.mark.skipif(
     sys.platform == "win32", reason="a POSIX shell script stands in for the Julia executable"
@@ -100,7 +100,7 @@ def test_without_julia_on_path_construction_is_refused(
         JuliaFusionSolver()
 
 
-@pytest.mark.skipif(shutil.which("julia") is None, reason="no julia on PATH")
 def test_the_julia_on_path_is_the_default() -> None:
     """Without ``julia_bin`` the solver uses the ``julia`` found on ``PATH``."""
-    assert JuliaFusionSolver()._julia_bin == shutil.which("julia")
+    julia = require_julia_executable()
+    assert JuliaFusionSolver()._julia_bin == julia

@@ -14,13 +14,16 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests.julia_requirement import require_julia
 
 
 class TestProbeFailureBranches:
-    """Force every lazy-load probe through its failure branches via
-    monkeypatch — these are the user's signal that a backend is
+    """Force every lazy-load probe through its failure branches.
+
+    Monkeypatching reaches them: they are the user's signal that a backend is
     misconfigured at runtime, so they must be tested even though
-    they need cooperative mocking to reach."""
+    they need cooperative mocking to reach.
+    """
 
     def _reset_probes(self, hp_mod: Any) -> None:
         hp_mod._julia_kl_refine = None
@@ -34,6 +37,7 @@ class TestProbeFailureBranches:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """Without juliacall the Julia refine probe reports unavailable instead of raising."""
         from sc_neurocore.chiplet import hierarchical_backend_runtime as hp_mod
 
         saved_jl = hp_mod._julia_kl_refine
@@ -61,6 +65,7 @@ class TestProbeFailureBranches:
         monkeypatch: pytest.MonkeyPatch,
         tmp_path: Path,
     ) -> None:
+        """A missing kl_refine.jl makes the Julia probe report unavailable."""
         from sc_neurocore.chiplet import hierarchical_backend_runtime as hp_mod
 
         saved_jl = hp_mod._julia_kl_refine
@@ -82,17 +87,16 @@ class TestProbeFailureBranches:
         monkeypatch: pytest.MonkeyPatch,
         tmp_path: Path,
     ) -> None:
-        """Cover the `except Exception: return False` branch in
+        """A syntactically broken kl_refine.jl makes the Julia probe return False.
+
+        This covers the `except Exception: return False` branch in
         `_ensure_julia_kl_refine_loaded` by feeding a syntactically
         broken .jl file into the include path. The probe catches
         the parser error and returns False.
         """
         from sc_neurocore.chiplet import hierarchical_backend_runtime as hp_mod
 
-        try:
-            import juliacall  # noqa: F401
-        except ImportError:
-            pytest.skip("juliacall not installed")
+        require_julia()
 
         saved_jl = hp_mod._julia_kl_refine
         saved_has = hp_mod._HAS_JULIA_KL_REFINE
@@ -111,6 +115,7 @@ class TestProbeFailureBranches:
         monkeypatch: pytest.MonkeyPatch,
         tmp_path: Path,
     ) -> None:
+        """A missing Go shared library makes the Go probe report unavailable."""
         from sc_neurocore.chiplet import hierarchical_backend_runtime as hp_mod
 
         saved_lib = hp_mod._go_kl_refine_lib
@@ -131,6 +136,7 @@ class TestProbeFailureBranches:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """A Go library that fails to load makes the Go probe report unavailable."""
         from sc_neurocore.chiplet import hierarchical_backend_runtime as hp_mod
 
         saved_lib = hp_mod._go_kl_refine_lib
@@ -156,6 +162,7 @@ class TestProbeFailureBranches:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """A Go library without the refine symbol makes the Go probe report unavailable."""
         from sc_neurocore.chiplet import hierarchical_backend_runtime as hp_mod
 
         saved_lib = hp_mod._go_kl_refine_lib
@@ -180,6 +187,7 @@ class TestProbeFailureBranches:
         monkeypatch: pytest.MonkeyPatch,
         tmp_path: Path,
     ) -> None:
+        """A missing Mojo shared library makes the Mojo probe report unavailable."""
         from sc_neurocore.chiplet import hierarchical_backend_runtime as hp_mod
 
         saved_lib = hp_mod._mojo_kl_refine_lib
@@ -200,6 +208,7 @@ class TestProbeFailureBranches:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """A Mojo library that fails to load makes the Mojo probe report unavailable."""
         from sc_neurocore.chiplet import hierarchical_backend_runtime as hp_mod
 
         saved_lib = hp_mod._mojo_kl_refine_lib
@@ -224,6 +233,7 @@ class TestProbeFailureBranches:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        """A Mojo library without the refine symbol makes the Mojo probe report unavailable."""
         from sc_neurocore.chiplet import hierarchical_backend_runtime as hp_mod
 
         saved_lib = hp_mod._mojo_kl_refine_lib

@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Rust RK4 neuron integrator parity tests
 
+"""The Rust engine's RK4 neuron integrator against the Python reference."""
+
 from __future__ import annotations
 
 from typing import Protocol
@@ -16,9 +18,11 @@ import pytest
 from sc_neurocore.neurons.models.adex import AdExNeuron
 from sc_neurocore.neurons.models.hodgkin_huxley import HodgkinHuxleyNeuron
 from sc_neurocore.neurons.sc_izhikevich import SCIzhikevichNeuron
+from tests.engine_requirement import require_engine
 
 
-_engine = pytest.importorskip("sc_neurocore_engine")
+require_engine()
+import sc_neurocore_engine as _engine
 
 
 class _ReferenceFn(Protocol):
@@ -116,6 +120,7 @@ def test_rust_rk4_neuron_simulator_matches_python(
     reference_fn: _ReferenceFn,
     state_keys: tuple[str, ...],
 ) -> None:
+    """The Rust RK4 simulator follows the Python reference for each model and step size."""
     expected = reference_fn(currents, dt=dt)
     actual = _engine.py_rk4_neuron_simulate(model, currents, dt)
 
@@ -126,6 +131,7 @@ def test_rust_rk4_neuron_simulator_matches_python(
 
 
 def test_rust_rk4_neuron_simulator_rejects_unknown_model() -> None:
+    """An unknown model name is refused."""
     with pytest.raises(ValueError, match="unsupported RK4 neuron model"):
         _engine.py_rk4_neuron_simulate("unknown", np.ones(4, dtype=np.float64))
 
@@ -142,10 +148,12 @@ def test_rust_rk4_neuron_simulator_rejects_unknown_model() -> None:
 def test_rust_rk4_neuron_simulator_rejects_invalid_trace_or_dt(
     currents: np.ndarray, dt: float, match: str
 ) -> None:
+    """An invalid current trace or step size is refused with the reason."""
     with pytest.raises(ValueError, match=match):
         _engine.py_rk4_neuron_simulate("izhikevich", currents, dt)
 
 
 def test_rk4_neuron_simulator_is_reexported_when_available() -> None:
+    """The engine package re-exports the RK4 simulator and lists it in __all__."""
     assert hasattr(_engine, "py_rk4_neuron_simulate")
     assert "py_rk4_neuron_simulate" in getattr(_engine, "__all__", [])

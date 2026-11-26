@@ -22,19 +22,19 @@ import inspect
 import json
 import math
 import os
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 from typing import cast
 
 import pytest
 
+import tests.test_rust_python_neuron_parity as harness
 from sc_neurocore import neurons as facade
 from sc_neurocore.neurons import models as py_models
-import tests.test_rust_python_neuron_parity as harness
+from tests.engine_requirement import require_engine
 
 _ROOT = Path(__file__).resolve().parents[1]
-_HAS_ENGINE = importlib.util.find_spec("sc_neurocore_engine") is not None
 _STEPS = 500
 
 
@@ -106,12 +106,12 @@ def test_dispatch_list_is_one_frozenset_of_facade_names() -> None:
     assert facade._RUST_DISPATCH_NAMES <= facade._MODEL_NAMES
 
 
-@pytest.mark.skipif(not _HAS_ENGINE, reason="Rust engine not built")
 @pytest.mark.parametrize("name", sorted(facade._RUST_DISPATCH_NAMES))
 def test_listed_name_keeps_constructor_and_trajectory_parity(
     name: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A listed Rust class takes every Python field and reproduces 500 steps of Python output."""
+    require_engine()
     engine = importlib.import_module("sc_neurocore_engine.sc_neurocore_engine")
     rust_cls = cast(type, getattr(engine, name))
     py_cls = cast(type, getattr(py_models, name))
@@ -142,9 +142,9 @@ def _resolved_modules(env_extra: dict[str, str]) -> dict[str, str]:
     return cast(dict[str, str], json.loads(out.strip().splitlines()[-1]))
 
 
-@pytest.mark.skipif(not _HAS_ENGINE, reason="Rust engine not built")
 def test_only_listed_names_dispatch_to_rust() -> None:
     """With the engine installed and dispatch enabled, exactly the listed names resolve to Rust."""
+    require_engine()
     modules = _resolved_modules({"SC_NEUROCORE_NO_RUST": ""})
     rust = {name for name, module in modules.items() if module.startswith("sc_neurocore_engine")}
     assert rust == set(facade._RUST_DISPATCH_NAMES)

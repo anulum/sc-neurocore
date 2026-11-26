@@ -10,15 +10,18 @@
 
 import numpy as np
 
-import pytest
+from tests.engine_requirement import require_engine
 
-pytest.importorskip("sc_neurocore_engine", reason="Rust engine not built", exc_type=ImportError)
+require_engine()
 
 from sc_neurocore_engine.graphs import StochasticGraphLayer
 
 
 class TestGNNScMode:
-    def test_sc_mode_output_shape(self):
+    """The stochastic graph layer in its stochastic-computing mode."""
+
+    def test_sc_mode_output_shape(self) -> None:
+        """SC mode returns one feature row per node."""
         adj = np.eye(5) + np.roll(np.eye(5), 1, axis=0)
         adj = (adj + adj.T).clip(0, 1)
         np.fill_diagonal(adj, 0.0)
@@ -28,7 +31,8 @@ class TestGNNScMode:
         out = gnn.forward_sc(X, length=1024)
         assert out.shape == (5, 4)
 
-    def test_sc_mode_deterministic(self):
+    def test_sc_mode_deterministic(self) -> None:
+        """SC mode gives the same output on repeated calls."""
         adj = np.eye(5)
         gnn = StochasticGraphLayer(adj, n_features=4)
         X = np.full((5, 4), 0.5)
@@ -37,7 +41,7 @@ class TestGNNScMode:
         out2 = gnn.forward_sc(X, length=1024, seed=42)
         np.testing.assert_array_equal(out1, out2)
 
-    def test_sc_mode_approximates_rate_mode(self):
+    def test_sc_mode_approximates_rate_mode(self) -> None:
         """Long bitstreams should converge toward rate-mode result."""
         rng = np.random.RandomState(42)
         adj = rng.randint(0, 2, (5, 5)).astype(np.float64)
@@ -57,7 +61,8 @@ class TestGNNScMode:
             err_msg="SC mode should approximate rate mode with long bitstreams",
         )
 
-    def test_isolated_node_sc(self):
+    def test_isolated_node_sc(self) -> None:
+        """An isolated node gets a finite output in SC mode."""
         adj = np.zeros((3, 3))
         adj[0, 1] = adj[1, 0] = 1.0
         gnn = StochasticGraphLayer(adj, n_features=4)

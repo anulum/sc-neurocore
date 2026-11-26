@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — independently executed Bertram native parity
 
+"""Executed Julia and Mojo parity of the Bertram phantom burster and its SC three-state identity."""
+
 from __future__ import annotations
 
 import json
@@ -19,6 +21,7 @@ import pytest
 from sc_neurocore.accel.mojo.isa_baseline import pin_isa
 from sc_neurocore.neurons.models.bertram_phantom import BertramPhantomBurster
 from sc_neurocore.neurons.models.sc_three_state_phantom import SCThreeStatePhantomBurster
+from tests.julia_requirement import require_julia_executable
 
 _ROOT = Path(__file__).resolve().parents[1]
 _EXPECTED = np.array(
@@ -33,6 +36,7 @@ _SC_LONG_EXPECTED = np.array([-58.49802324062697, 0.12687104203425778, 0.1048652
 
 
 def test_python_reference_one_step_fixture() -> None:
+    """The Python reference reproduces its recorded first step."""
     model = BertramPhantomBurster()
     assert model.step(0.0) == 0
     np.testing.assert_allclose(
@@ -40,8 +44,9 @@ def test_python_reference_one_step_fixture() -> None:
     )
 
 
-@pytest.mark.skipif(shutil.which("julia") is None, reason="Julia runtime unavailable")
 def test_julia_source_mirror_matches_python() -> None:
+    """The Julia source mirror, run through the julia command, matches the Python step."""
+    require_julia_executable()
     kernel = _ROOT / "src/sc_neurocore/accel/julia/neurons/bertram_phantom.jl"
     expression = (
         f'include(raw"{kernel}"); using .BertramPhantomAccel; '
@@ -62,6 +67,7 @@ def test_julia_source_mirror_matches_python() -> None:
 
 @pytest.mark.skipif(shutil.which("mojo") is None, reason="Mojo runtime unavailable")
 def test_mojo_source_mirror_matches_python(tmp_path: Path) -> None:
+    """The Mojo source mirror, built and run, matches the Python step."""
     kernel = _ROOT / "src/sc_neurocore/accel/mojo/kernels/bertram_phantom.mojo"
     binary = tmp_path / "bertram_phantom"
     subprocess.run(
@@ -78,13 +84,15 @@ def test_mojo_source_mirror_matches_python(tmp_path: Path) -> None:
 
 
 def test_sc_python_compatibility_fixture() -> None:
+    """The Python SC three-state identity reproduces its recorded first step."""
     model = SCThreeStatePhantomBurster()
     assert model.step(0.0) == 0
     np.testing.assert_allclose([model.v, model.s1, model.s2], _SC_EXPECTED, rtol=0, atol=2e-14)
 
 
-@pytest.mark.skipif(shutil.which("julia") is None, reason="Julia runtime unavailable")
 def test_sc_julia_compatibility_mirror() -> None:
+    """The Julia SC identity, run through the julia command, matches the Python step."""
+    require_julia_executable()
     kernel = _ROOT / "src/sc_neurocore/accel/julia/neurons/sc_three_state_phantom.jl"
     expression = (
         f'include(raw"{kernel}"); using .SCThreeStatePhantomAccel; '
@@ -106,6 +114,7 @@ def test_sc_julia_compatibility_mirror() -> None:
 
 @pytest.mark.skipif(shutil.which("mojo") is None, reason="Mojo runtime unavailable")
 def test_sc_mojo_compatibility_mirror(tmp_path: Path) -> None:
+    """The Mojo SC identity, built and run, matches the Python step."""
     kernel = _ROOT / "src/sc_neurocore/accel/mojo/kernels/sc_three_state_phantom.mojo"
     binary = tmp_path / "sc_three_state_phantom"
     subprocess.run(
