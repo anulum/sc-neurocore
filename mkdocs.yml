@@ -185,8 +185,12 @@ nav:
   - How-to Guides:
       - For Research Labs: guides/FOR_RESEARCH_LABS.md
       - Install Profiles: guides/install_profiles.md
+      - Installation and Extras: guides/installation.md
+      - More Ways In: guides/more_ways_in.md
       - Supported Workflows: guides/supported_workflows.md
       - Examples: guides/EXAMPLES.md
+      - Example Scripts: guides/example_scripts.md
+      - Hardware-Software Co-Simulation: guides/hardware_cosimulation.md
       - Advanced Usage: guides/ADVANCED_USAGE_PATTERNS.md
       - Performance Tuning: guides/PERFORMANCE_TUNING.md
       - Integration Guide: guides/INTEGRATION_GUIDE.md
@@ -440,6 +444,7 @@ nav:
       - Side-Channel Encoding: guides/side_channel_encoding.md
       - Architecture:
           - Overview: architecture/architecture.md
+          - Package Architecture: architecture/package_architecture.md
           - Evidence: architecture/evidence.md
           - System Map: architecture/SYSTEM_MAP.md
           - Package Boundary Decision: architecture/package_boundary_decision.md
@@ -480,6 +485,7 @@ nav:
           - Comparison: benchmarks/comparison.md
           - Training Benchmarks: benchmarks/training.md
           - Summary: benchmarks/BENCHMARKS.md
+          - Rust Engine and Benchmark Evidence: benchmarks/rust_engine_evidence.md
           - Detailed Report: benchmarks/BENCHMARK_REPORT.md
       - Hardware:
           - External Formal Evidence: formal/external_results.md
@@ -538,6 +544,7 @@ nav:
       - Development:
           - Audit Cadence: development/audit_cadence.md
           - Maintenance Tools: development/maintenance_tools.md
+          - CI/CD Workflows: development/ci_workflows.md
           - Native Go MAT Statement Gate: development/native_go_coverage.md
           - Security Hardening: development/security_hardening.md
           - Licensing: development/licensing.md

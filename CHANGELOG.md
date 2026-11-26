@@ -516,6 +516,30 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- The README is now a landing page of 299 lines, and so is the package
+  page on PyPI. It keeps the introduction, Quick Start, the group
+  programme, who the package is for, what makes it distinct, the
+  application areas, the current evidence boundary, the generated
+  capability snapshot, the Documentation links, and the community,
+  citation, AI disclosure, licence and text and data mining sections.
+  Its reference sections moved word for word to seven site pages, each
+  linked from Documentation: Installation and Extras (with the
+  development setup, the local docs build and Docker), More Ways In
+  (Zenith, the bio-hybrid closed loop and the Studio), Rust Engine and
+  Benchmark Evidence (with the engine's crate tables and the benchmark
+  suite), Package Architecture (module tiers, diagram, core API
+  subset, Verilog RTL, GPU and the native IR), Hardware-Software
+  Co-Simulation (with reproducibility and the key technical details),
+  Example Scripts and CI/CD Workflows. Only link targets, heading
+  levels and two sentences that pointed "above" changed. The tests
+  that checked a moved fact in the README now read its page: the
+  Brunel speed and rerun statements, the formal inventory summary, the
+  Rust speedup anchors and the workflow table. The README keeps the
+  workflow count and must still not carry a bare 39-202x comparison. A
+  new test keeps the README at most 300 lines, every local
+  Documentation link on an existing file and a page of the site
+  navigation, and every moved section's page linked.
+
 - ArcaneNeuron's Python step now takes a fixed summation order for its
   predictor norm and novelty mean, so its results can differ in the last
   bits from the previous release on hosts whose BLAS uses fused

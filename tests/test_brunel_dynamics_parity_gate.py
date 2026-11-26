@@ -38,11 +38,11 @@ _PARITY_SIMULATORS = frozenset({"sc_numpy_dense"})
 _NON_PARITY_SIMULATORS = frozenset({"sc_rust_engine"})
 
 # The one value behind the published sentence, this gate and the scheduled
-# rerun: the README says "rates within 5% of Brian2", and a parity row further
+# rerun: the Rust engine evidence page says "rates within 5% of Brian2", and a parity row further
 # off fails here and in tools/brunel_parity_check.py alike.
 _RATE_TOLERANCE = RATE_TOLERANCE
 _PUBLIC_CLAIM_FILES = (
-    "README.md",
+    "docs/benchmarks/rust_engine_evidence.md",
     "docs/COMPETITIVE_LANDSCAPE.md",
     "docs/guides/faq.md",
 )
@@ -105,13 +105,14 @@ def test_public_pages_bind_the_speed_claim_to_the_parity_boundary() -> None:
     assert "39-202x vs Brian2" not in readme, (
         "README presents the non-parity wall-clock ratio as a bare Brian2 comparison"
     )
-    assert "2.4x" in readme, "README omits the parity-validated speed numbers"
+    evidence = (_ROOT / "docs/benchmarks/rust_engine_evidence.md").read_text(encoding="utf-8")
+    assert "2.4x" in evidence, "the evidence page omits the parity-validated speed numbers"
 
 
 def test_the_published_tolerance_and_speed_ratios_are_those_of_the_artefact() -> None:
-    """The README states the enforced tolerance and the ratios the artefact holds."""
-    readme = (_ROOT / "README.md").read_text(encoding="utf-8")
-    assert f"rates within {_RATE_TOLERANCE:.0%} of Brian2" in readme
+    """The Rust engine evidence page states the enforced tolerance and the artefact's ratios."""
+    page = (_ROOT / "docs/benchmarks/rust_engine_evidence.md").read_text(encoding="utf-8")
+    assert f"rates within {_RATE_TOLERANCE:.0%} of Brian2" in page
     rows = _rows()
     ratios = {
         n_neurons: rows[("brian2", n_neurons)]["wall_mean_s"] / row["wall_mean_s"]
@@ -119,15 +120,17 @@ def test_the_published_tolerance_and_speed_ratios_are_those_of_the_artefact() ->
         if simulator == "sc_numpy_dense" and ("brian2", n_neurons) in rows
     }
     assert sorted(ratios) == [1000, 5000, 10000]
-    assert f"{ratios[1000]:.1f}x faster at 1,000 neurons" in readme
-    assert f"{ratios[5000]:.1f}x at 5,000" in readme
-    assert f"{ratios[10000]:.2f}x (slower than Brian2) at 10,000" in readme
+    assert f"{ratios[1000]:.1f}x faster at 1,000 neurons" in page
+    assert f"{ratios[5000]:.1f}x at 5,000" in page
+    assert f"{ratios[10000]:.2f}x (slower than Brian2) at 10,000" in page
 
 
-def test_the_readme_states_what_the_recording_is() -> None:
+def test_the_evidence_page_states_what_the_recording_is() -> None:
     """Duration, repetitions and the absence of a rerun are said where the numbers are."""
     payload = json.loads(_ARTEFACT.read_text(encoding="utf-8"))
-    readme = " ".join((_ROOT / "README.md").read_text(encoding="utf-8").split())
+    page = " ".join(
+        (_ROOT / "docs/benchmarks/rust_engine_evidence.md").read_text(encoding="utf-8").split()
+    )
     assert payload["params"] == {
         "sim_ms": 300.0,
         "repeats": 2,
@@ -136,5 +139,5 @@ def test_the_readme_states_what_the_recording_is() -> None:
         "weight_exc": 0.1,
     }
     assert payload["timestamp"].startswith("2026-03-08")
-    assert "2026-03-08, one host, 300 ms simulated, two repetitions with one seed" in readme
-    assert "it does not rerun the simulation" in readme
+    assert "2026-03-08, one host, 300 ms simulated, two repetitions with one seed" in page
+    assert "it does not rerun the simulation" in page

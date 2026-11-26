@@ -115,7 +115,7 @@ def test_a_second_regime_of_a_size_does_not_replace_the_first() -> None:
     assert rate_ratios({"data": rows}) == {100: 1.02}
 
 
-def test_the_rerun_recording_is_what_the_readme_says_it_is() -> None:
+def test_the_rerun_recording_is_what_the_evidence_page_says_it_is() -> None:
     """The cited rerun has eight distinct seeds per lane, one second simulated, and the cited ratios."""
     rerun = json.loads(
         (ROOT / "benchmarks/results/brunel_parity_rerun_2026-10-12.json").read_text(
@@ -129,10 +129,12 @@ def test_the_rerun_recording_is_what_the_readme_says_it_is() -> None:
         assert 0.01 <= row["rate_std_hz"] / row["rate_mean_hz"] <= 0.045
     ratios = rate_ratios(rerun)
     assert sorted(ratios) == [1000, 5000]
-    readme = " ".join((ROOT / "README.md").read_text(encoding="utf-8").split())
+    page = " ".join(
+        (ROOT / "docs/benchmarks/rust_engine_evidence.md").read_text(encoding="utf-8").split()
+    )
     assert (
         f"rate ratios of {ratios[1000]:.3f} at 1,000 neurons and {ratios[5000]:.3f} at 5,000"
-        in readme
+        in page
     )
-    assert "one loaded host, 1 s simulated, eight seeds per lane" in readme
-    assert "varied by about 1 to 4 %" in readme
+    assert "one loaded host, 1 s simulated, eight seeds per lane" in page
+    assert "varied by about 1 to 4 %" in page

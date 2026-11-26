@@ -311,13 +311,15 @@ def test_public_formal_claims_match_hdl_inventory() -> None:
         f"{statements['cover']} cover)"
     )
 
-    readme = (_repo_root() / "README.md").read_text(encoding="utf-8")
+    architecture = (_repo_root() / "docs/architecture/package_architecture.md").read_text(
+        encoding="utf-8"
+    )
     comparison = (_repo_root() / "docs/benchmarks/comparison.md").read_text(encoding="utf-8")
     tutorial = (_repo_root() / "docs/tutorials/21_formal_verification.md").read_text(
         encoding="utf-8"
     )
 
-    assert expected_summary in _compact_whitespace(readme)
+    assert expected_summary in _compact_whitespace(architecture)
     assert expected_summary in _compact_whitespace(comparison)
     assert expected_summary in _compact_whitespace(tutorial)
     assert f"| SymbiYosys `.sby` proof jobs | {proof_jobs} |" in tutorial
@@ -365,7 +367,7 @@ def test_every_public_formal_count_matches_hdl_inventory() -> None:
 
     assert stale == []
     assert {
-        "README.md",
+        "docs/architecture/package_architecture.md",
         "docs/benchmarks/comparison.md",
         "docs/guides/FOR_RESEARCH_LABS.md",
         "docs/guides/bci_codec.md",
@@ -379,16 +381,20 @@ def test_every_public_formal_count_matches_hdl_inventory() -> None:
 def test_rust_speedup_claims_are_artifact_anchored() -> None:
     """Ensure Rust speedup claims name the committed benchmark evidence."""
     readme = (_repo_root() / "README.md").read_text(encoding="utf-8")
+    evidence = (_repo_root() / "docs/benchmarks/rust_engine_evidence.md").read_text(
+        encoding="utf-8"
+    )
     faq = (_repo_root() / "docs/guides/faq.md").read_text(encoding="utf-8")
     landscape = (_repo_root() / "docs/COMPETITIVE_LANDSCAPE.md").read_text(encoding="utf-8")
 
     speedup_evidence = "benchmarks/results/rust_scaling_benchmark.json"
-    assert speedup_evidence in readme
+    assert speedup_evidence in evidence
     assert speedup_evidence in faq
     assert speedup_evidence in landscape
-    assert "Brunel balanced-network" in readme
-    assert "39-202x faster" not in readme
-    assert "39–202× faster" not in readme
+    assert "Brunel balanced-network" in evidence
+    for page in (readme, evidence):
+        assert "39-202x faster" not in page
+        assert "39–202× faster" not in page
 
 
 def test_512x_class_speedup_claims_are_artifact_anchored() -> None:
