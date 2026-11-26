@@ -830,6 +830,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   equation programs at between 0.9 and 2.8 times the reference function,
   and the four compiler-bound co-simulation readiness receipts and
   derived readiness views are re-recorded against the updated compiler.
+  Measured cost (one process on one core of an Intel Xeon E5-2640 at
+  load average 9 to 15, 11 base/unit pairs in alternating order,
+  per-call minimum of 31 repeats; median ratio and its interquartile
+  range): a `leaky_integrator_euler` step takes 1.00 times as long as
+  before (IQR 0.99-1.01), so the 1.14 times measured on an earlier build
+  of this change no longer holds; a step with a caller `noise_rng` and
+  escape-rate detection takes 1.70 times as long (IQR 1.69-1.71; 29.1 to
+  49.1 µs), from snapshotting the generator state.
 
 - StochasticIFNeuron takes a NumPy integer seed (`np.int64(7)` and the
   like), which it refused with a `TypeError`. Any integral seed except a
@@ -845,6 +853,12 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   check these declarations failed after the seed was added.
 
 - `BitstreamEncoder` (`bernoulli`, `bipolar`, `sobol`, `chaotic`), the probability/value conversion helpers in `sc_neurocore.utils.bitstreams`, and `SCDenseLayer`, `SCRecurrentLayer`, `SCLearningLayer`, `PredictiveCodingSCLayer`, and `SCFusionLayer` now reject `NaN`, `±Inf`, boolean scalars, and mismatched input shapes before clamping or mutating RNG, membrane, or synaptic state.
+  Measured cost (one process on one core of an Intel Xeon E5-2640 at
+  load average 9 to 15, 11 base/unit pairs in alternating order,
+  per-call minimum of 31 repeats; median ratio and its interquartile
+  range): bipolar `encode` at L=256 takes 1.22 times as long (IQR
+  1.19-1.26), and `value_to_unipolar_prob` 3.55 times as long (IQR
+  3.47-3.61; 0.52 to 1.80 µs) for its finite-value checks.
 
 - `SpikeServer` now refuses unlabelled or duplicate-label population networks at construction and validates all population inputs (names, finite real numeric scalars rejecting booleans and complex numbers, and exact `pop.n` vector lengths) before any population steps, answering malformed population drives with HTTP 400 `ServeRefusal` instead of advancing earlier populations or raising HTTP 500 `IndexError`/`TypeError`.
 
