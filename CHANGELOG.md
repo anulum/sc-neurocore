@@ -14,6 +14,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Security
 
+- The hardware-in-the-loop debugger's Go module no longer uses
+  `github.com/gorilla/websocket` v1.5.3, which
+  [GO-2026-6278](https://pkg.go.dev/vuln/GO-2026-6278)
+  (GHSA-w67g-5rqw-f597) lists for drawing WebSocket mask keys from a
+  cryptographically weak generator. No tagged release carries the fix,
+  so `src/sc_neurocore/accel/go/services/hil_debugger/go.mod` requires
+  the fixing commit, `v1.5.4-0.20240701034025-d67f41855da4`, and the
+  `golang.org/x/net` v0.63.0 it now needs indirectly; `go.sum` holds
+  only those two modules. The locked-dependency audit passes for all
+  five Go modules again, and the debugger's `go vet` and `go test`
+  pass.
+
 - `SECURITY.md` states the fuzzing that exists. Its known limitations
   still said there was no fuzzing harness, after the `cargo-fuzz`
   targets, the scheduled fuzz workflow and the Python `hypothesis` fuzz
