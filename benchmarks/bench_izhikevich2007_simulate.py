@@ -61,10 +61,12 @@ SOURCE_HASH_PATHS = (
 
 
 def _sha256(path: Path) -> str:
+    """Return the SHA-256 hex digest of the file at ``path``."""
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _source_hashes() -> dict[str, object]:
+    """Return the digests of the measured sources, flat by path and nested by stem and suffix."""
     flat: dict[str, object] = {path: _sha256(REPO_ROOT / path) for path in SOURCE_HASH_PATHS}
     nested: dict[str, object] = {}
     for path, digest in flat.items():
@@ -76,20 +78,24 @@ def _source_hashes() -> dict[str, object]:
 
 
 def _probe_rust() -> tuple[bool, str]:
+    """Return whether the engine exposes the RK4 simulator, and why not."""
     return (izh._HAS_RUST, "" if izh._HAS_RUST else "engine wheel lacks the symbol")
 
 
 def _probe_julia() -> tuple[bool, str]:
+    """Return whether the Julia lane loads, and why not."""
     ok = izh._ensure_julia_loaded()
     return (ok, "" if ok else "juliacall/.jl unavailable")
 
 
 def _probe_go() -> tuple[bool, str]:
+    """Return whether the Go shared library loads, and why not."""
     ok = izh._ensure_go_loaded()
     return (ok, "" if ok else "accel/go/neurons/izhikevich2007/libizh2007.so not built")
 
 
 def _probe_mojo() -> tuple[bool, str]:
+    """Return whether the Mojo toolchain and shared library are present and load, and why not."""
     if not _os.path.isfile(_os.path.expanduser("~/.pixi/bin/mojo")):
         return False, "mojo binary not at ~/.pixi/bin/mojo"
     ok = izh._ensure_mojo_loaded()
@@ -97,6 +103,13 @@ def _probe_mojo() -> tuple[bool, str]:
 
 
 def _run(backend: str) -> tuple[float, float, npt.NDArray[np.float64], int, float, float]:
+    """Time ``N_REPEATS`` simulations on ``backend`` after one warm-up.
+
+    Returns
+    -------
+    tuple
+        The median and minimum time in ms, the last trace, its spike count and the final ``v`` and ``u``.
+    """
     Izhikevich2007Neuron().simulate(N_STEPS, CURRENT, backend=backend)  # warm-up (Julia JIT)
     times_ms: list[float] = []
     trace: npt.NDArray[np.float64] = np.empty(0, dtype=np.float64)
@@ -114,8 +127,14 @@ def _run(backend: str) -> tuple[float, float, npt.NDArray[np.float64], int, floa
 
 
 def main(argv: list[str]) -> int:
+    """Run every available backend, print the table and optionally write the JSON record."""
     parser = argparse.ArgumentParser(description="Izhikevich 2007 RK4 multi-language benchmark.")
     parser.add_argument("--json", type=Path, default=None)
+    parser.add_argument(
+        "--isolation",
+        default="non-isolated (loaded workstation)",
+        help="How the host was shared during the run; recorded in the result as given.",
+    )
     args = parser.parse_args(argv)
 
     print("# Izhikevich 2007 RK4 N-step benchmark")
@@ -123,7 +142,7 @@ def main(argv: list[str]) -> int:
     print(f"# Repeats per backend: {N_REPEATS}")
     print(f"# Python: {platform.python_version()}, NumPy: {np.__version__}")
     print(f"# platform: {platform.platform()}")
-    print("# isolation: non-isolated (loaded workstation) — functional/regression evidence")
+    print(f"# isolation: {args.isolation} — functional/regression evidence")
     print()
 
     backends = {
@@ -191,7 +210,7 @@ def main(argv: list[str]) -> int:
             "python": platform.python_version(),
             "numpy": np.__version__,
             "platform": platform.platform(),
-            "isolation": "non-isolated (loaded workstation)",
+            "isolation": args.isolation,
         },
         "results": rows,
         "backend_summary": {

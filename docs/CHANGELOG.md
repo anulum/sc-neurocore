@@ -1966,6 +1966,19 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The Izhikevich 2007 RK4 benchmark is measured again, on all five
+  backends, from the current sources. The recorded result bound
+  `engine/src/rk4_neurons.rs` by its SHA-256, and the file has changed
+  since the 2026-11-20 run, so the test holding the record to its sources
+  failed in CI. The new run used an idle 12-core laptop host with no
+  cores reserved, CPython 3.12.3 and NumPy 2.5.4, and an engine built in
+  release mode from the same tree: median 1875.76 ms for NumPy, 101.49 ms
+  for Rust, 98.88 ms for Julia, 95.91 ms for Go and 73.63 ms for Mojo,
+  with Rust, Julia and Go bit-exact, Mojo within 8.8e-12, and 10695
+  spikes on every backend. The benchmark takes an `--isolation` argument
+  that it records as given; its default is the earlier description. The
+  model page's table and the benchmark module's docstrings follow.
+
 - The qualified engine interface reference,
   `tests/fixtures/engine_abi_default.json`, records the signature
   `ParametricLIFNeuron(v=0.0, a=0.0, threshold=1.0)` that the engine's

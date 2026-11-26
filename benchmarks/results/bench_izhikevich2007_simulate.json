@@ -2,10 +2,10 @@
   "backend_summary": {
     "go": {
       "backend": "go",
-      "median_ms": 91.05296398047358,
-      "min_ms": 86.39353699982166,
+      "median_ms": 95.90913600004569,
+      "min_ms": 94.61897200162639,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 16.944886794131946,
+      "speedup_vs_python": 19.55771713969667,
       "spikes": 10695,
       "trace_sha256": "12d46d3293051747222b086985a1227510586fa900f036ef3ce0b4a43e108670",
       "u_final": 83.08976063199837,
@@ -13,10 +13,10 @@
     },
     "julia": {
       "backend": "julia",
-      "median_ms": 97.34205505810678,
-      "min_ms": 86.53515193145722,
+      "median_ms": 98.87811900080123,
+      "min_ms": 94.48628700010886,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 15.850108835264466,
+      "speedup_vs_python": 18.970463556111874,
       "spikes": 10695,
       "trace_sha256": "12d46d3293051747222b086985a1227510586fa900f036ef3ce0b4a43e108670",
       "u_final": 83.08976063199837,
@@ -24,10 +24,10 @@
     },
     "mojo": {
       "backend": "mojo",
-      "median_ms": 71.70023198705167,
-      "min_ms": 68.80892906337976,
+      "median_ms": 73.62846000069112,
+      "min_ms": 73.20444600009068,
       "parity_max_abs_diff": 8.775202786637237e-12,
-      "speedup_vs_python": 21.518510110231265,
+      "speedup_vs_python": 25.476069348509878,
       "spikes": 10695,
       "trace_sha256": "2d9fbb2c141fbf0b06b303701c5eb56275d3cb0d6d2ce49b88723080591bbc86",
       "u_final": 83.08976063199837,
@@ -35,8 +35,8 @@
     },
     "python": {
       "backend": "python",
-      "median_ms": 1542.8821669192985,
-      "min_ms": 1475.9076948976144,
+      "median_ms": 1875.7637530015927,
+      "min_ms": 1865.5713810003363,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 10695,
@@ -46,10 +46,10 @@
     },
     "rust": {
       "backend": "rust",
-      "median_ms": 96.09836805611849,
-      "min_ms": 89.2156281042844,
+      "median_ms": 101.4859869992506,
+      "min_ms": 99.25283700067666,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 16.055237962192063,
+      "speedup_vs_python": 18.482982808409243,
       "spikes": 10695,
       "trace_sha256": "12d46d3293051747222b086985a1227510586fa900f036ef3ce0b4a43e108670",
       "u_final": 83.08976063199837,
@@ -58,16 +58,16 @@
   },
   "benchmark": "izhikevich2007_simulate_rk4",
   "environment": {
-    "isolation": "non-isolated (loaded workstation)",
+    "isolation": "non-isolated (idle 12-core laptop host, cores not reserved)",
     "numpy": "2.5.4",
-    "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.39",
-    "python": "3.12.16"
+    "platform": "Linux-7.0.0-43-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
   },
   "results": [
     {
       "backend": "python",
-      "median_ms": 1542.8821669192985,
-      "min_ms": 1475.9076948976144,
+      "median_ms": 1875.7637530015927,
+      "min_ms": 1865.5713810003363,
       "parity_max_abs_diff": 0.0,
       "speedup_vs_python": 1.0,
       "spikes": 10695,
@@ -77,10 +77,10 @@
     },
     {
       "backend": "rust",
-      "median_ms": 96.09836805611849,
-      "min_ms": 89.2156281042844,
+      "median_ms": 101.4859869992506,
+      "min_ms": 99.25283700067666,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 16.055237962192063,
+      "speedup_vs_python": 18.482982808409243,
       "spikes": 10695,
       "trace_sha256": "12d46d3293051747222b086985a1227510586fa900f036ef3ce0b4a43e108670",
       "u_final": 83.08976063199837,
@@ -88,10 +88,10 @@
     },
     {
       "backend": "julia",
-      "median_ms": 97.34205505810678,
-      "min_ms": 86.53515193145722,
+      "median_ms": 98.87811900080123,
+      "min_ms": 94.48628700010886,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 15.850108835264466,
+      "speedup_vs_python": 18.970463556111874,
       "spikes": 10695,
       "trace_sha256": "12d46d3293051747222b086985a1227510586fa900f036ef3ce0b4a43e108670",
       "u_final": 83.08976063199837,
@@ -99,10 +99,10 @@
     },
     {
       "backend": "go",
-      "median_ms": 91.05296398047358,
-      "min_ms": 86.39353699982166,
+      "median_ms": 95.90913600004569,
+      "min_ms": 94.61897200162639,
       "parity_max_abs_diff": 0.0,
-      "speedup_vs_python": 16.944886794131946,
+      "speedup_vs_python": 19.55771713969667,
       "spikes": 10695,
       "trace_sha256": "12d46d3293051747222b086985a1227510586fa900f036ef3ce0b4a43e108670",
       "u_final": 83.08976063199837,
@@ -110,10 +110,10 @@
     },
     {
       "backend": "mojo",
-      "median_ms": 71.70023198705167,
-      "min_ms": 68.80892906337976,
+      "median_ms": 73.62846000069112,
+      "min_ms": 73.20444600009068,
       "parity_max_abs_diff": 8.775202786637237e-12,
-      "speedup_vs_python": 21.518510110231265,
+      "speedup_vs_python": 25.476069348509878,
       "spikes": 10695,
       "trace_sha256": "2d9fbb2c141fbf0b06b303701c5eb56275d3cb0d6d2ce49b88723080591bbc86",
       "u_final": 83.08976063199837,
@@ -122,17 +122,17 @@
   ],
   "source_hashes": {
     "benchmarks/bench_izhikevich2007_simulate": {
-      "py": "9335b3a6525abf5a91281472cc1af89e248c38422ed7d4d5ff915b749fd448cc"
+      "py": "6f35d129dfb536084fef8e15d11e2e79844b60ec851751a54c51e9afeb875bb0"
     },
-    "benchmarks/bench_izhikevich2007_simulate.py": "9335b3a6525abf5a91281472cc1af89e248c38422ed7d4d5ff915b749fd448cc",
+    "benchmarks/bench_izhikevich2007_simulate.py": "6f35d129dfb536084fef8e15d11e2e79844b60ec851751a54c51e9afeb875bb0",
     "engine/src/bindings/izhikevich2007": {
       "rs": "aa36d039ea9660bf47e16c1d5eeffe56ea1f84dffefaaf680b31448743027219"
     },
     "engine/src/bindings/izhikevich2007.rs": "aa36d039ea9660bf47e16c1d5eeffe56ea1f84dffefaaf680b31448743027219",
     "engine/src/rk4_neurons": {
-      "rs": "40c2761605a357318d3b118f85d1ef30e2a66d99b114fee6a995a76ec8d50df7"
+      "rs": "451e9e6a3a036d83d58d1c937387123dd2adf006f6df1c9d7be2c5a1b88009e8"
     },
-    "engine/src/rk4_neurons.rs": "40c2761605a357318d3b118f85d1ef30e2a66d99b114fee6a995a76ec8d50df7",
+    "engine/src/rk4_neurons.rs": "451e9e6a3a036d83d58d1c937387123dd2adf006f6df1c9d7be2c5a1b88009e8",
     "src/sc_neurocore/accel/go/neurons/izhikevich2007/izhikevich2007": {
       "go": "a5dbbc7e2525435112cc7b874581c083381afc2438e8da771615bdc4484e7bc8"
     },

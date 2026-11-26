@@ -2302,7 +2302,7 @@
       "description": "Izhikevich 2007 biophysical RK4 five-backend simulation evidence.",
       "expected_values": {
         "benchmark": "izhikevich2007_simulate_rk4",
-        "environment.isolation": "non-isolated (loaded workstation)",
+        "environment.isolation": "non-isolated (idle 12-core laptop host, cores not reserved)",
         "workload.current": 300.0,
         "workload.n_steps": 2000000,
         "workload.repeats": 5

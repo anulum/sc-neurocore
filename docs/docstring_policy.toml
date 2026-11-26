@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5227
+expected_file_count = 5228
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20948,3 +20948,7 @@ rationale = "adaptive_length: power-of-two lengths, the three bounds, min and ma
 [[file]]
 path = "tests/test_studio_platform_facade.py"
 rationale = "Studio platform facade: lazy sources match TYPE_CHECKING and __all__, names are the defining objects, unknown names raise, the narrow import and star import."
+
+[[file]]
+path = "benchmarks/bench_izhikevich2007_simulate.py"
+rationale = "Izhikevich 2007 RK4 five-backend benchmark: source custody hashes, backend probes, timing and the recorded host isolation."

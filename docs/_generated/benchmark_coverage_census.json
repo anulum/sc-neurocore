@@ -1,7 +1,7 @@
 {
   "all_record_currency_totals": {
-    "current": 25,
-    "outdated": 130,
+    "current": 26,
+    "outdated": 129,
     "reviewed": 0,
     "unbound": 175
   },
@@ -13,8 +13,8 @@
   "catalogue_models": 185,
   "cited_records": 87,
   "record_currency_totals": {
-    "current": 2,
-    "outdated": 84,
+    "current": 3,
+    "outdated": 83,
     "reviewed": 0,
     "unbound": 1
   },
@@ -1015,10 +1015,7 @@
       "records": [
         {
           "attribution": "bound_script",
-          "changed": [
-            "engine/src/rk4_neurons.rs"
-          ],
-          "currency": "outdated",
+          "currency": "current",
           "name": "bench_izhikevich2007_simulate.json",
           "script": "bench_izhikevich2007_simulate.py"
         }
