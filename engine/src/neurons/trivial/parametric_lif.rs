@@ -29,17 +29,22 @@ impl ParametricLIFNeuron {
         }
     }
 
-    /// Advance one step with the input `current` and return the spike of the stored `v`.
+    /// Advance one step with the input `current` and return the spike of the updated `v`.
     ///
-    /// The spike is read before the update: 1 if the stored `v` has reached `threshold`,
-    /// else 0. Then `v` becomes `sigmoid(a) * v + current`, with the decay term dropped
-    /// when that spike fired. The returned spike therefore belongs to the previous update;
-    /// the Python model returns the spike of the new `v`. The input is not validated.
+    /// The stored `v` is the previous charge `H[t-1]`; if it reached `threshold` it fired
+    /// and was reset, so its decay term is dropped. The charge becomes
+    /// `H[t] = sigmoid(a) * v * (1 - S[t-1]) + current`, and the returned spike is
+    /// `S[t] = 1` if `H[t] >= threshold`, else 0 (Fang et al. 2021, Eq. 2-3), as in the
+    /// Python model and the Go, Julia and safety-Rust lanes. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let alpha = 1.0 / (1.0 + (-self.a).exp());
-        let spike = if self.v >= self.threshold { 1 } else { 0 };
-        self.v = alpha * self.v * (1.0 - spike as f64) + current;
-        spike
+        let previous = if self.v >= self.threshold { 1.0 } else { 0.0 };
+        self.v = alpha * self.v * (1.0 - previous) + current;
+        if self.v >= self.threshold {
+            1
+        } else {
+            0
+        }
     }
 
     /// Clear the membrane potential; the parameters are kept.
@@ -58,6 +63,19 @@ impl Default for ParametricLIFNeuron {
 mod tests {
     use super::*;
 
+    #[test]
+    fn plif_returns_the_spike_of_the_updated_potential() {
+        // a = 0 gives alpha = 0.5. A first input of 5.0 lifts v from 0 to 5, over the
+        // threshold, so the first step spikes; the next step drops the decay term and the
+        // potential becomes the new input alone.
+        let mut n = ParametricLIFNeuron::default();
+        assert_eq!(n.step(5.0), 1);
+        assert!((n.v - 5.0).abs() < 1e-15);
+        assert_eq!(n.step(0.5), 0);
+        assert!((n.v - 0.5).abs() < 1e-15);
+        assert_eq!(n.step(0.75), 1);
+        assert!((n.v - 1.0).abs() < 1e-15);
+    }
     #[test]
     fn plif_fires() {
         let mut n = ParametricLIFNeuron::default();

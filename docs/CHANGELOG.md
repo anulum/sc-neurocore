@@ -964,6 +964,20 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   the hosted runner, and the dependency-profile guard test failed on
   the workflow.
 
+- The engine's Parametric LIF neuron returns the spike of the updated
+  potential. Its `step` read the spike of the stored potential before
+  the update, so its spike train trailed the Python model, the Go, Julia
+  and safety-Rust lanes and the model page by one step: an input of 5.0
+  from rest spiked at once in Python and only on the next step in the
+  engine, and the network runner's Parametric LIF populations carried
+  the same delay. It now charges
+  `sigmoid(a) * v * (1 - previous spike) + current` and returns 1 when
+  that charge reaches the threshold (Fang et al. 2021, Eq. 2-3). The
+  model's reference now cites the ICCV 2021 paper
+  (doi:10.1109/ICCV48922.2021.00266) instead of an AAAI volume, and a
+  new test compares 2000 steps of spikes and potentials between the
+  engine and Python.
+
 - The Rust engine's `AstrocyteModel` now follows the Python Li-Rinzel
   reference: the ER leak uses `leak` (0.01 per second) rather than the
   SERCA half-activation `k_er`, IP3 is a third ODE, and the input drives

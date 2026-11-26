@@ -1,7 +1,9 @@
 # ParametricLIFNeuron (PLIF)
 
 **Module:** `sc_neurocore.neurons.models.plif`
-**Reference:** Fang et al. 2021
+**Reference:** Fang, W. et al. (2021). Incorporating Learnable Membrane Time Constant to
+Enhance Learning of Spiking Neural Networks. *Proc. IEEE/CVF ICCV*, 2661–2671.
+[doi:10.1109/ICCV48922.2021.00266](https://doi.org/10.1109/ICCV48922.2021.00266)
 **Family:** Integrate-and-fire (learnable decay)
 **State variables:** `v` (voltage), `a` (learnable parameter)
 

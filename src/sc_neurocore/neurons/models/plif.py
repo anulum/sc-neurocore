@@ -6,6 +6,8 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SC-NeuroCore — Fang et al. 2021 — Parametric LIF (PLIF) with learnable
 
+"""Parametric LIF neuron (Fang et al. 2021) with a learnable membrane decay."""
+
 from __future__ import annotations
 
 import math
@@ -20,7 +22,10 @@ class ParametricLIFNeuron:
     alpha  = sigmoid(a)    (learnable parameter)
     spike  = Theta(V - threshold)
 
-    Reference: Fang, W. et al. (2021). Proc. AAAI Conf. Artif. Intell. 35(3):2661–2669.
+    Reference: Fang, W., Yu, Z., Chen, Y., Masquelier, T., Huang, T. & Tian, Y. (2021).
+    Incorporating Learnable Membrane Time Constant to Enhance Learning of Spiking Neural
+    Networks. Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV), 2661–2671.
+    doi:10.1109/ICCV48922.2021.00266
     """
 
     v: float = 0.0
@@ -29,6 +34,14 @@ class ParametricLIFNeuron:
     dt: float = 1.0
 
     def __post_init__(self) -> None:
+        """Refuse non-finite state, a non-positive threshold and a non-positive step.
+
+        Raises
+        ------
+        ValueError
+            If ``v`` or ``a`` is not finite, or ``threshold`` or ``dt`` is not finite and
+            positive.
+        """
         for name in ("v", "a"):
             if not math.isfinite(getattr(self, name)):
                 raise ValueError(f"{name} must be finite")
@@ -39,6 +52,13 @@ class ParametricLIFNeuron:
 
     @property
     def alpha(self) -> float:
+        """Return the membrane decay ``sigmoid(a)``, computed without overflow for any ``a``.
+
+        Returns
+        -------
+        float
+            The decay factor in ``(0, 1)``.
+        """
         if self.a >= 0.0:
             z = math.exp(-self.a)
             return 1.0 / (1.0 + z)
@@ -46,6 +66,28 @@ class ParametricLIFNeuron:
         return z / (1.0 + z)
 
     def step(self, current: float) -> int:
+        """Advance one step and return the spike of the updated potential.
+
+        The stored ``v`` is the previous charge; if it reached ``threshold`` it fired and its
+        decay term is dropped. The new charge is ``alpha * v * (1 - spike) + current``, and the
+        returned spike is 1 when that charge reaches ``threshold`` (Fang et al. 2021, Eq. 2-3).
+
+        Parameters
+        ----------
+        current : float
+            Input added to the decayed potential.
+
+        Returns
+        -------
+        int
+            1 if the updated potential reaches ``threshold``, else 0.
+
+        Raises
+        ------
+        ValueError
+            If ``current`` or the updated potential is not finite, or the state was made
+            invalid after construction; the state is then left unchanged.
+        """
         if not math.isfinite(current):
             raise ValueError("current must be finite")
         self._validate_runtime_state()
@@ -57,6 +99,7 @@ class ParametricLIFNeuron:
         return 1 if next_v >= self.threshold else 0
 
     def reset(self) -> None:
+        """Return the potential to rest; ``a``, ``threshold`` and ``dt`` are kept."""
         self.v = 0.0
 
     def _validate_runtime_state(self) -> None:

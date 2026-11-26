@@ -36792,12 +36792,19 @@ V(t+1) = alpha * V(t) * (1 - spike(t)) + I(t)
 alpha  = sigmoid(a)    (learnable parameter)
 spike  = Theta(V - threshold)
 
-Reference: Fang, W. et al. (2021). Proc. AAAI Conf. Artif. Intell. 35(3):2661–2669.
+Reference: Fang, W., Yu, Z., Chen, Y., Masquelier, T., Huang, T. & Tian, Y. (2021).
+Incorporating Learnable Membrane Time Constant to Enhance Learning of Spiking Neural
+Networks. Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV), 2661–2671.
+doi:10.1109/ICCV48922.2021.00266
 
 - **__post_init__**()
+  - Refuse non-finite state, a non-positive threshold and a non-positive step.
 - **alpha**()
+  - Return the membrane decay ``sigmoid(a)``, computed without overflow for any ``a``.
 - **step**(current)
+  - Advance one step and return the spike of the updated potential.
 - **reset**()
+  - Return the potential to rest; ``a``, ``threshold`` and ``dt`` are kept.
 
 ---
 

@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5197
+expected_file_count = 5199
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20830,3 +20830,11 @@ rationale = "Verify spinal Renshaw cell conductance dynamics and fail-loud refus
 [[file]]
 path = "tests/test_fail_loud_neuron_domain_guards.py"
 rationale = "Verify constructor, runtime, overflow-rollback, type guards, cross-libm 20k-step regression, and Golgi power-operator bit-identity."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/plif.py"
+rationale = "Public Parametric LIF model (Fang et al. 2021) whose spike is read from the updated potential."
+
+[[file]]
+path = "tests/test_parametric_lif_rust_python_parity.py"
+rationale = "Exercise SC-NeuroCore: the engine Parametric LIF returns the spike of the updated potential."
