@@ -869,7 +869,7 @@
           "lane": "julia",
           "path": "src/sc_neurocore/accel/julia/analysis_spike_stats/correlation.jl",
           "rule": "header_underscore_dir",
-          "verbatim_line_share": "116/214",
+          "verbatim_line_share": "114/214",
           "loaders": [],
           "named_by": [],
           "declared": "mirror"
@@ -4462,7 +4462,7 @@
           "lane": "julia",
           "path": "src/sc_neurocore/accel/julia/identity/decoder.jl",
           "rule": "header",
-          "verbatim_line_share": "27/83",
+          "verbatim_line_share": "21/83",
           "loaders": [],
           "named_by": [],
           "declared": null
@@ -5795,7 +5795,7 @@
           "lane": "julia",
           "path": "src/sc_neurocore/accel/julia/network/monitor.jl",
           "rule": "header",
-          "verbatim_line_share": "13/110",
+          "verbatim_line_share": "12/110",
           "loaders": [],
           "named_by": [],
           "declared": null
@@ -10917,7 +10917,7 @@
           "lane": "julia",
           "path": "src/sc_neurocore/accel/julia/utils/bitstreams.jl",
           "rule": "header",
-          "verbatim_line_share": "67/192",
+          "verbatim_line_share": "45/192",
           "loaders": [],
           "named_by": [],
           "declared": null

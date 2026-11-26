@@ -806,7 +806,7 @@
       "loaders": [],
       "transcribed_module": "src/sc_neurocore/analysis/spike_stats/correlation.py",
       "transcription_rule": "header_underscore_dir",
-      "verbatim_line_share": "116/214",
+      "verbatim_line_share": "114/214",
       "transcription_candidates": []
     },
     {
@@ -2771,7 +2771,7 @@
       "loaders": [],
       "transcribed_module": "src/sc_neurocore/identity/decoder.py",
       "transcription_rule": "header",
-      "verbatim_line_share": "27/83",
+      "verbatim_line_share": "21/83",
       "transcription_candidates": []
     },
     {
@@ -3393,7 +3393,7 @@
       "loaders": [],
       "transcribed_module": "src/sc_neurocore/network/monitor.py",
       "transcription_rule": "header",
-      "verbatim_line_share": "13/110",
+      "verbatim_line_share": "12/110",
       "transcription_candidates": []
     },
     {
@@ -8025,7 +8025,7 @@
       "loaders": [],
       "transcribed_module": "src/sc_neurocore/utils/bitstreams.py",
       "transcription_rule": "header",
-      "verbatim_line_share": "67/192",
+      "verbatim_line_share": "45/192",
       "transcription_candidates": []
     },
     {
@@ -9558,7 +9558,7 @@
     },
     {
       "python": "src/sc_neurocore/neurons/models/sc_clipped_logistic_bursting_map.py",
-      "line": 74,
+      "line": 112,
       "status": "resolved",
       "target": "src/sc_neurocore/accel/julia/neurons/sc_clipped_logistic_bursting_map.jl"
     },

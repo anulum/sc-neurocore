@@ -1966,6 +1966,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- `docs/_generated/julia_lane_inventory.json` is regenerated with Julia
+  1.13.3. Later changes to the Python sources four Julia files are
+  compared with (spike-train correlation, the identity decoder, the
+  network monitor and the bitstream utilities) moved their verbatim line
+  shares, and a map model's reference line moved, so the inventory check
+  failed on every Python in CI. Only those five recorded figures change.
+
 - `tests/test_studio_platform_facade.py` admits `sc_neurocore._version`
   among the modules that importing the jobs-ledger supervisor loads. The
   package root has read its version from that module, which imports
