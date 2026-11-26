@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5608
+    "test_files": 5609
   },
   "documentation": {
     "public_pages": [
@@ -6943,6 +6943,7 @@
       "tests/test_non_resetting_lif_engine_binding_inputs.py",
       "tests/test_non_resetting_lif_engine_binding_serialization.py",
       "tests/test_non_resetting_lif_schema_parity.py",
+      "tests/test_nonlinear_lif_rust_python_parity.py",
       "tests/test_notebooks/test_bci_closed_loop_notebook.py",
       "tests/test_notebooks/test_brf_notebook.py",
       "tests/test_notebooks/test_closed_loop_in_silico_notebook.py",

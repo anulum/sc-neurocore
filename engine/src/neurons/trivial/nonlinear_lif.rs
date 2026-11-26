@@ -55,25 +55,51 @@ impl NonlinearLIFNeuron {
         }
     }
 
-    /// Advance one forward-Euler step with the input `current` and return 1 on a spike,
-    /// else 0.
+    /// Advance one fourth-order Runge-Kutta step with the input `current` and return 1 on a
+    /// spike, else 0.
     ///
-    /// `v` gains `(a * (v - v_rest) * (v - v_crit) - w + current) / c_m * dt`; then `w`
-    /// gains `(b * (v - v_rest) - w) / tau_w * dt`, computed with the new `v`. A spike needs
-    /// an upward crossing: the new `v` reaches `v_threshold` while the previous `v` was
-    /// below it. `v` is then set to `v_reset` and `w` is kept. Neither the input nor the
-    /// parameters are validated. This is not the validated RK4 step of the Python model.
+    /// The derivatives are `dv = (a * (v - v_rest) * (v - v_crit) - w + current) / c_m` and
+    /// `dw = (b * (v - v_rest) - w) / tau_w`. The candidate `(v, w)` is the classic RK4
+    /// combination of four slopes, evaluated in the same order of operations as the Python
+    /// model, the Go and Julia lanes and the safety crate, so the engine follows them bit for
+    /// bit. The candidate becomes the state; when its `v` reaches `v_threshold`, `v` is set to
+    /// `v_reset` and `w` is kept. Neither the input nor the parameters are validated.
     pub fn step(&mut self, current: f64) -> i32 {
-        let v_prev = self.v;
-        let cubic = self.a * (self.v - self.v_rest) * (self.v - self.v_crit);
-        self.v += (cubic - self.w + current) / self.c_m * self.dt;
-        self.w += (self.b * (self.v - self.v_rest) - self.w) / self.tau_w * self.dt;
-        if self.v >= self.v_threshold && v_prev < self.v_threshold {
+        let (next_v, next_w) = self.rk4_candidate(current);
+        self.v = next_v;
+        self.w = next_w;
+        if next_v >= self.v_threshold {
             self.v = self.v_reset;
             1
         } else {
             0
         }
+    }
+
+    fn derivatives(&self, v: f64, w: f64, current: f64) -> (f64, f64) {
+        let nonlinear = self.a * (v - self.v_rest) * (v - self.v_crit);
+        let dv = (nonlinear - w + current) / self.c_m;
+        let dw = (self.b * (v - self.v_rest) - w) / self.tau_w;
+        (dv, dw)
+    }
+
+    fn rk4_candidate(&self, current: f64) -> (f64, f64) {
+        let (k1_v, k1_w) = self.derivatives(self.v, self.w, current);
+        let (k2_v, k2_w) = self.derivatives(
+            self.v + 0.5 * self.dt * k1_v,
+            self.w + 0.5 * self.dt * k1_w,
+            current,
+        );
+        let (k3_v, k3_w) = self.derivatives(
+            self.v + 0.5 * self.dt * k2_v,
+            self.w + 0.5 * self.dt * k2_w,
+            current,
+        );
+        let (k4_v, k4_w) =
+            self.derivatives(self.v + self.dt * k3_v, self.w + self.dt * k3_w, current);
+        let next_v = self.v + (self.dt / 6.0) * (k1_v + 2.0 * k2_v + 2.0 * k3_v + k4_v);
+        let next_w = self.w + (self.dt / 6.0) * (k1_w + 2.0 * k2_w + 2.0 * k3_w + k4_w);
+        (next_v, next_w)
     }
 
     /// Return `v` to `v_rest` and clear `w`; the parameters are kept.
@@ -92,6 +118,17 @@ impl Default for NonlinearLIFNeuron {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn nlif_rk4_matches_the_python_model_bit_for_bit() {
+        // Python's NonlinearLIFNeuron after 100 steps of 10.0 from its defaults: one spike,
+        // v = -46.898989710403434 and w = 0.6505804659142335.
+        let mut n = NonlinearLIFNeuron::new();
+        let spikes: i32 = (0..100).map(|_| n.step(10.0)).sum();
+        assert_eq!(spikes, 1);
+        assert_eq!(n.v, -46.898989710403434);
+        assert_eq!(n.w, 0.6505804659142335);
+    }
 
     #[test]
     fn nlif_fires() {

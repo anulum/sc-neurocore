@@ -934,6 +934,17 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   neuron. A new test compares the engine and Python step by step over
   2000 seeded inputs and through a reset.
 
+- The engine's NonlinearLIFNeuron takes the Python model's step. It
+  integrated by semi-implicit Euler and spiked only when `v` crossed
+  `v_threshold` from below, while the Python model, the Go and Julia
+  lanes and the safety crate take a candidate-first fourth-order
+  Runge-Kutta step and spike whenever the candidate reaches the
+  threshold, so the same public name gave different trajectories. The
+  engine now takes that RK4 step, in the same order of operations, with
+  the same spike rule; an engine test pins a Python value and a new test
+  compares the engine and Python bit for bit over constant, mixed and
+  suprathreshold drives and through a reset.
+
 - The eight AI-optimised neuron models in `sc_neurocore.neurons.models.ai_optimized`
   (`MultiTimescaleNeuron`, `AttentionGatedNeuron`, `PredictiveCodingNeuron`,
   `SelfReferentialNeuron`, `CompositionalBindingNeuron`,
