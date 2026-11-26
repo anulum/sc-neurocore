@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5220
+expected_file_count = 5221
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20902,6 +20902,10 @@ rationale = "Document Dendrify two-compartment parameters, plateau state, and fa
 [[file]]
 path = "src/sc_neurocore/neurons/models/huber_braun.py"
 rationale = "Document Huber-Braun cold-receptor parameters, overflow-safe sigmoids, and state guards."
+
+[[file]]
+path = "tests/test_huber_braun_seed.py"
+rationale = "Pin the seeded HuberBraunNeuron noise stream: same seed, global generator untouched, exact first draw, reset replay, generator kept on a refused step, NumPy integer seeds and refused seeds."
 
 [[file]]
 path = "src/sc_neurocore/neurons/models/tsodyks_markram.py"

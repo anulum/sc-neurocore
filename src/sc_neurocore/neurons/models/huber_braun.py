@@ -11,10 +11,13 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
-from numbers import Real
+from dataclasses import dataclass, field
+from numbers import Integral, Real
+from typing import Any, ClassVar
 
 import numpy as np
+
+from sc_neurocore.neurons.seed_domain import NUMPY_SEED_DOMAIN, SeedDomain
 
 _exp = math.exp
 _isfinite = math.isfinite
@@ -95,11 +98,19 @@ class HuberBraunNeuron:
         Discrete integration timestep in milliseconds; must be strictly positive.
     v_threshold : float, default=-20.0
         Upward spike-detection threshold in millivolts.
+    seed : int or None, default=None
+        Seed of the neuron's own noise generator, any non-negative integer (NumPy's
+        included, stored as a Python ``int``) up to ``SEED_DOMAIN``'s bound. With a seed the
+        noise comes from that ``numpy.random.Generator``, two neurons with the same seed give
+        the same trajectory whatever else draws random numbers, and ``reset`` restarts the
+        stream. Without one the noise comes from ``np.random.randn``, as before, so
+        ``np.random.seed`` governs it.
 
     Raises
     ------
     TypeError
-        If any parameter is a boolean or not a real number.
+        If any parameter is a boolean or not a real number, or ``seed`` is a boolean or
+        not an integer.
     ValueError
         If any parameter is non-finite or violates its positivity or
         non-negativity domain.
@@ -119,6 +130,10 @@ class HuberBraunNeuron:
     eta: float = 0.012
     dt: float = 0.1
     v_threshold: float = -20.0
+    seed: int | np.integer[Any] | None = None
+    _rng: np.random.Generator | None = field(default=None, init=False, repr=False, compare=False)
+
+    SEED_DOMAIN: ClassVar[SeedDomain] = NUMPY_SEED_DOMAIN
 
     def __post_init__(self) -> None:
         """Validate and normalise all initial state and parameter fields."""
@@ -136,6 +151,14 @@ class HuberBraunNeuron:
         self.eta = _require_non_negative_float(self.eta, "eta")
         self.dt = _require_positive_float(self.dt, "dt")
         self.v_threshold = _require_finite_float(self.v_threshold, "v_threshold")
+        if self.seed is not None:
+            if isinstance(self.seed, bool) or not isinstance(self.seed, Integral):
+                raise TypeError("seed must be an integer or None")
+            seed = int(self.seed)
+            if seed < 0:
+                raise ValueError("seed must be non-negative")
+            self.seed = seed
+        self._rng = None if self.seed is None else np.random.default_rng(self.seed)
 
     def step(self, current: float) -> int:
         """Advance slow gates and membrane potential by one Euler timestep.
@@ -239,11 +262,19 @@ class HuberBraunNeuron:
         i_sd = g_sd * next_a_sd * (v - e_sd)
         i_sr = g_sr * next_a_sr * (v - e_sr)
         i_l = g_l * (v - e_l)
-        noise = float(np.random.randn())
+        rng = self._rng
+        if rng is None:
+            noise = float(np.random.randn())
+        else:
+            # A seeded neuron's generator is part of its state: a refused step leaves it unmoved.
+            drawn_from = rng.bit_generator.state
+            noise = float(rng.standard_normal())
         next_v = v + (-i_sd - i_sr - i_l + current + eta * noise) * dt
         if not (
             next_a_sd - next_a_sd == 0.0 and next_a_sr - next_a_sr == 0.0 and next_v - next_v == 0.0
         ):
+            if rng is not None:
+                rng.bit_generator.state = drawn_from
             raise ValueError("HuberBraun step produced a non-finite state.")
 
         self.a_sd = next_a_sd
@@ -252,6 +283,8 @@ class HuberBraunNeuron:
         return 1 if (next_v >= v_threshold and v < v_threshold) else 0
 
     def reset(self) -> None:
-        """Reset membrane potential and slow gating variables to defaults."""
+        """Reset membrane potential and slow gating variables; a seeded neuron restarts its noise."""
         self.v = -50.0
         self.a_sd, self.a_sr = 0.0, 0.0
+        if self.seed is not None:
+            self._rng = np.random.default_rng(self.seed)

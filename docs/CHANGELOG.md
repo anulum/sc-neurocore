@@ -111,6 +111,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Added
 
+- HuberBraunNeuron takes an explicit `seed`. It drew its membrane noise
+  from NumPy's process-wide generator, so with `eta > 0` its trajectory
+  depended on everything else that drew random numbers and two neurons
+  could not have independent reproducible streams. With `seed` set it
+  owns a `numpy.random.Generator` seeded with it, a refused step leaves
+  that generator where it was, and `reset` restarts it; a negative,
+  boolean or non-integer seed is refused, and NumPy integers are taken as
+  Python ints. Without a seed it still draws from `np.random.randn`. The
+  model declares its seed domain and is listed on purpose among the
+  catalogue models holding undeclared generator state. The engine's
+  HuberBraunNeuron stays noiseless.
+
 - StochasticIFNeuron takes an explicit `seed`. It drew every noise
   sample from NumPy's process-wide generator, so its spike train
   depended on everything else that drew random numbers and two neurons

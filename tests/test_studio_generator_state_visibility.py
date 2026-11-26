@@ -52,6 +52,11 @@ GENERATOR_MODELS: dict[str, bool] = {
     "GIFPopulationNeuron": False,
     "GLMNeuron": False,
     "GammaRenewalNeuron": False,
+    # Listed on purpose as undeclared generator state: since its explicit seed, a seeded
+    # HuberBraunNeuron holds its own NumPy generator in `_rng`, which nothing declares while
+    # DISCOVERED-PRIVATE-REGISTERS-OUTSIDE-LAYOUT and DISCOVERED-DESCRIPTORS-WITHOUT-STATE are
+    # open (a PCG64 state has no scalar descriptor form). The audit reports its movement.
+    "HuberBraunNeuron": False,
     "QuantumInspiredLIFNeuron": False,
     "SCStochasticRateAdaptationNeuron": False,
     # Listed on purpose as undeclared generator state: since its explicit seed, a seeded
@@ -70,6 +75,9 @@ DRIVE = 1.0
 # deterministic and its generator correctly never advances. The audit is asked
 # about the configuration where it does.
 DRAWING_PARAMETERS: dict[str, dict[str, float]] = {
+    # Unseeded, HuberBraunNeuron draws from the global generator and holds `_rng = None`;
+    # seeded, its own generator advances every step.
+    "HuberBraunNeuron": {"seed": 1},
     # Unseeded, StochasticIFNeuron draws from the global generator and holds `_rng = None`;
     # seeded, its own generator advances every step.
     "StochasticIFNeuron": {"seed": 1},

@@ -66,6 +66,7 @@ Rust: single Euler step (no sub-stepping). C_m = 1 (implicit).
 | `eta` | 0.012 | mV/√ms | Noise amplitude (not used in Rust) |
 | `dt` | 0.1 | ms | Integration timestep |
 | `v_threshold` | −20.0 | mV | Spike detection threshold |
+| `seed` | None | — | Seed of the neuron's own noise generator (non-negative integer, Python or NumPy); `None` uses NumPy's global generator |
 
 ### Conductance hierarchy
 
@@ -167,6 +168,11 @@ Measured 2026-04-05 on i5-11600K @ 3.90 GHz, Criterion 0.8.
   because V is clamped by conductance-based negative feedback.
 - **Noise:** The η parameter is defined but not applied in the Rust
   implementation (Python applies Gaussian noise). Rust is deterministic.
+  With `seed` set, the Python noise comes from the neuron's own
+  `numpy.random.Generator`, so two neurons with the same seed follow the
+  same trajectory whatever else draws random numbers, a refused step leaves
+  the generator where it was, and `reset` restarts the stream; without a
+  seed it comes from `np.random.randn` and `np.random.seed` governs it.
 
 ---
 

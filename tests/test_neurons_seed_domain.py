@@ -50,6 +50,7 @@ SEEDED_MODELS: dict[str, tuple[int, int]] = {
     "PoissonNeuron": LFSR16_DOMAIN,
     "GIFPopulationNeuron": NUMPY_SEED_DOMAIN,
     "GLMNeuron": NUMPY_SEED_DOMAIN,
+    "HuberBraunNeuron": NUMPY_SEED_DOMAIN,
     "QuantumInspiredLIFNeuron": NONZERO_SEED_DOMAIN,
     "SCStochasticRateAdaptationNeuron": NUMPY_SEED_DOMAIN,
     "StochasticIFNeuron": NUMPY_SEED_DOMAIN,
