@@ -108,6 +108,26 @@ class ArcaneNeuron:
     dt: float = 1.0
 
     def step(self, current: float) -> int:
+        """Advance one step: gate the input, relax the three compartments exactly, learn the predictor.
+
+        The step uses plain left-to-right sums for the novelty mean and the predictor norm, so its
+        result does not depend on the CPU, and the Rust engine follows it bit for bit.
+
+        Parameters
+        ----------
+        current : float
+            Finite input current of this step.
+
+        Returns
+        -------
+        int
+            1 when the candidate fast state reaches the effective threshold, otherwise 0.
+
+        Raises
+        ------
+        ValueError
+            If ``current`` or a state or candidate is not finite; the state is left unchanged.
+        """
         if not math.isfinite(current):
             raise ValueError("ArcaneNeuron current must be finite")
         self._validate_runtime_state()
@@ -120,7 +140,12 @@ class ArcaneNeuron:
 
         # Self-referential metrics
         spike_rate = float(sum(old_spike_history) / len(old_spike_history))
-        confidence = 1.0 - float(np.mean(old_novelty_history))
+        # A plain left-to-right sum: numpy's reductions and BLAS kernels pick their order by
+        # CPU, and the engine mirrors this step bit for bit.
+        novelty_total = 0.0
+        for value in old_novelty_history:
+            novelty_total += value
+        confidence = 1.0 - novelty_total / len(old_novelty_history)
 
         # Attention gate
         gate_input = (
@@ -177,7 +202,8 @@ class ArcaneNeuron:
         next_w_pred[0] += meta_lr * error * accepted_v_fast
         next_w_pred[1] += meta_lr * error * next_v_work
         next_w_pred[2] += meta_lr * error * next_v_deep
-        norm = float(np.linalg.norm(next_w_pred))
+        w0, w1, w2 = (float(weight) for weight in next_w_pred)
+        norm = math.sqrt(w0 * w0 + w1 * w1 + w2 * w2)
         if not math.isfinite(norm):
             raise ValueError("ArcaneNeuron predictor candidate must remain finite")
         if norm > 0.0:
@@ -272,6 +298,11 @@ class ArcaneNeuron:
             raise ValueError("ArcaneNeuron history counters must be non-negative")
 
     def reset(self) -> None:
+        """Clear the fast and working compartments, the step diagnostics and the spike history.
+
+        The deep compartment, the novelty history and the learned predictor are kept: they carry
+        the neuron's identity across resets.
+        """
         self.v_fast = 0.0
         self.v_work = 0.0
         # Deep compartment does NOT reset — it IS the identity
@@ -289,10 +320,12 @@ class ArcaneNeuron:
 
     @property
     def confidence(self) -> float:
+        """One minus the mean novelty of the history, as used by the last step."""
         return self._confidence
 
     @property
     def novelty(self) -> float:
+        """Novelty of the last step: the logistic of the scaled surprise above its baseline."""
         return self._novelty
 
     @property
@@ -302,6 +335,7 @@ class ArcaneNeuron:
 
     @property
     def meta_learning_rate(self) -> float:
+        """Predictor learning rate at the current novelty, ``lr_base * (1 + eta * novelty)``."""
         return self.lr_base * (1.0 + self.eta * self._novelty)
 
     def get_recent_pre_activity(self) -> float:
@@ -310,6 +344,14 @@ class ArcaneNeuron:
         return float(self._spike_history[hist_ix])
 
     def get_state(self) -> dict[str, float]:
+        """Return the compartments, the step diagnostics and the learning rate.
+
+        Returns
+        -------
+        dict[str, float]
+            ``v_fast``, ``v_work``, ``v_deep``, ``confidence``, ``novelty``, ``surprise``,
+            ``prediction``, ``identity_drift``, ``meta_lr`` and ``total_steps``.
+        """
         return {
             "v_fast": self.v_fast,
             "v_work": self.v_work,

@@ -504,6 +504,25 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- ArcaneNeuron's Python step now takes a fixed summation order for its
+  predictor norm and novelty mean, so its results can differ in the last
+  bits from the previous release on hosts whose BLAS uses fused
+  multiply-add; they are now the same on every CPU and equal to the
+  engine's.
+
+- ArcaneNeuron takes one deterministic step in Python and in the
+  engine. The Python model took its predictor's norm through
+  `np.linalg.norm`, which goes through the BLAS dot kernel (a fused
+  multiply-add chain on CPUs that have one, plain products elsewhere),
+  so its trajectory could change with the host; it now takes the square
+  root of a plain left-to-right sum of squares, and the mean of the
+  novelty history as a plain left-to-right sum. The engine took Euler
+  steps of the three compartments in a different order from Python's
+  exact relaxations; it now takes the Python step in the same order and
+  arithmetic. An engine test pins a Python value and a new test compares
+  the engine and Python bit for bit over constant and mixed drives and
+  across a reset, which keeps the deep compartment in both.
+
 - `GIFPopulationNeuron`, `AvRonCardiacNeuron`, `GolgiCell`, `MotorUnit`, and
   `RenshawCell` now fail loudly with `TypeError` (on booleans or non-real /
   non-integer values) or `ValueError` (on non-finite inputs, out-of-domain

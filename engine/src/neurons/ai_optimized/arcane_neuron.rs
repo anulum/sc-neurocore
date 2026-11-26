@@ -107,80 +107,114 @@ impl ArcaneNeuron {
 
     /// Advance one step with `current` and return 1 on a spike, else 0.
     ///
-    /// In order:
-    /// 1. The confidence is 1 minus the mean of the novelty history.
+    /// The step is the Python model's, in its order and with its arithmetic, so the engine
+    /// follows it bit for bit:
+    /// 1. The spike rate is the spike count of the history over its length, and the
+    ///    confidence is 1 minus the left-to-right mean of the novelty history.
     /// 2. The attention gate is the logistic of `w_gate` applied to the input, `v_fast`,
     ///    `v_work` and the confidence, and it scales the input.
-    /// 3. `v_fast` takes an Euler step with the gated input and the inhibition
-    ///    `w_inh * spike_rate`, where the spike rate is taken over the history window.
-    /// 4. The prediction, surprise and novelty follow from the new `v_fast`.
-    /// 5. The threshold is `max(theta * (1 + gamma * v_deep) * (1 - delta_conf * confidence), 0.1)`.
-    /// 6. A spike feeds `v_work` and sets `v_fast` to 0.
-    /// 7. `v_work` and `v_deep` decay and integrate.
-    /// 8. `w_pred` takes a novelty-modulated learning step on the prediction error and is
-    ///    renormalised.
+    /// 3. `v_fast` relaxes exactly over `dt` towards the gated input minus
+    ///    `w_inh * spike_rate`, with `tau_fast`.
+    /// 4. The prediction, surprise and novelty follow from that candidate `v_fast` and the
+    ///    previous `v_work` and `v_deep`.
+    /// 5. The threshold is `max(theta * (1 + gamma * v_deep) * (1 - delta_conf * confidence), 0.1)`
+    ///    with the previous `v_deep`; a candidate at or above it spikes and `v_fast` becomes 0.
+    /// 6. `v_work` relaxes exactly towards `alpha_w * v_fast` on a spike and towards 0
+    ///    otherwise; `v_deep` relaxes exactly towards `alpha_d * v_work * novelty`.
+    /// 7. `w_pred` takes a novelty-modulated learning step on the error of the accepted
+    ///    `v_fast` and is renormalised by the square root of its plain sum of squares.
     ///
     /// The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
-        let sh_len = self.spike_history.len() as f64;
-        let nh_len = self.novelty_history.len() as f64;
-        let spike_rate: f64 = self.spike_history.iter().map(|&s| s as f64).sum::<f64>() / sh_len;
-        self.confidence = 1.0 - self.novelty_history.iter().sum::<f64>() / nh_len;
-
-        let gate_in = self.w_gate[0] * current
-            + self.w_gate[1] * self.v_fast
-            + self.w_gate[2] * self.v_work
-            + self.w_gate[3] * self.confidence;
-        let gate = 1.0 / (1.0 + (-gate_in).exp());
-        let i_eff = gate * current;
-
-        self.v_fast += (-self.v_fast + i_eff - self.w_inh * spike_rate) / self.tau_fast * self.dt;
-
-        self.prediction = self.w_pred[0] * self.v_fast
-            + self.w_pred[1] * self.v_work
-            + self.w_pred[2] * self.v_deep;
-        self.surprise = (self.v_fast - self.prediction).abs();
-        self.novelty = 1.0 / (1.0 + (-self.kappa * (self.surprise - self.surprise_baseline)).exp());
-
-        let nh_sz = self.novelty_history.len();
-        self.novelty_history[self.nov_idx % nh_sz] = self.novelty;
-        self.nov_idx += 1;
-
-        let eff_threshold = (self.theta
-            * (1.0 + self.gamma * self.v_deep)
-            * (1.0 - self.delta_conf * self.confidence))
-            .max(0.1);
-
-        let spike = if self.v_fast >= eff_threshold { 1 } else { 0 };
-
-        if spike == 1 {
-            self.v_work += self.alpha_w * self.v_fast / self.tau_work * self.dt;
-            self.v_fast = 0.0;
+        let old_v_fast = self.v_fast;
+        let old_v_work = self.v_work;
+        let old_v_deep = self.v_deep;
+        let spike_count: u32 = self.spike_history.iter().map(|&s| s as u32).sum();
+        let spike_rate = spike_count as f64 / self.spike_history.len() as f64;
+        let mut novelty_total = 0.0;
+        for &value in &self.novelty_history {
+            novelty_total += value;
         }
+        let confidence = 1.0 - novelty_total / self.novelty_history.len() as f64;
 
-        self.v_work += -self.v_work / self.tau_work * self.dt;
-        self.v_deep +=
-            (-self.v_deep + self.alpha_d * self.v_work * self.novelty) / self.tau_deep * self.dt;
+        let gate_input = self.w_gate[0] * current
+            + self.w_gate[1] * old_v_fast
+            + self.w_gate[2] * old_v_work
+            + self.w_gate[3] * confidence;
+        let gate = Self::sigmoid(gate_input);
+        let i_eff = gate * current;
+        let fast_drive = i_eff - self.w_inh * spike_rate;
+        let next_v_fast = Self::exact_relaxation(old_v_fast, fast_drive, self.dt, self.tau_fast);
 
-        let meta_lr = self.lr_base * (1.0 + self.eta * self.novelty);
-        let error = self.v_fast - self.prediction;
-        self.w_pred[0] += meta_lr * error * self.v_fast;
-        self.w_pred[1] += meta_lr * error * self.v_work;
-        self.w_pred[2] += meta_lr * error * self.v_deep;
-        let norm =
-            (self.w_pred[0].powi(2) + self.w_pred[1].powi(2) + self.w_pred[2].powi(2)).sqrt();
+        let prediction = self.w_pred[0] * next_v_fast
+            + self.w_pred[1] * old_v_work
+            + self.w_pred[2] * old_v_deep;
+        let surprise = (next_v_fast - prediction).abs();
+        let novelty = Self::sigmoid(self.kappa * (surprise - self.surprise_baseline));
+
+        let eff_threshold =
+            (self.theta * (1.0 + self.gamma * old_v_deep) * (1.0 - self.delta_conf * confidence))
+                .max(0.1);
+        let spike = if next_v_fast >= eff_threshold { 1 } else { 0 };
+        let accepted_v_fast = if spike == 1 { 0.0 } else { next_v_fast };
+
+        let work_drive = if spike == 1 {
+            self.alpha_w * next_v_fast
+        } else {
+            0.0
+        };
+        let next_v_work = Self::exact_relaxation(old_v_work, work_drive, self.dt, self.tau_work);
+        let deep_drive = self.alpha_d * next_v_work * novelty;
+        let next_v_deep = Self::exact_relaxation(old_v_deep, deep_drive, self.dt, self.tau_deep);
+
+        let meta_lr = self.lr_base * (1.0 + self.eta * novelty);
+        let error = accepted_v_fast - prediction;
+        let mut w_pred = self.w_pred;
+        w_pred[0] += meta_lr * error * accepted_v_fast;
+        w_pred[1] += meta_lr * error * next_v_work;
+        w_pred[2] += meta_lr * error * next_v_deep;
+        let norm = (w_pred[0] * w_pred[0] + w_pred[1] * w_pred[1] + w_pred[2] * w_pred[2]).sqrt();
         if norm > 0.0 {
-            for w in &mut self.w_pred {
-                *w /= norm;
+            for weight in &mut w_pred {
+                *weight /= norm;
             }
         }
 
-        let sh_sz = self.spike_history.len();
-        self.spike_history[self.hist_idx % sh_sz] = spike as u8;
+        let novelty_len = self.novelty_history.len();
+        self.novelty_history[self.nov_idx % novelty_len] = novelty;
+        let spike_len = self.spike_history.len();
+        self.spike_history[self.hist_idx % spike_len] = spike as u8;
+
+        self.v_fast = accepted_v_fast;
+        self.v_work = next_v_work;
+        self.v_deep = next_v_deep;
+        self.prediction = prediction;
+        self.surprise = surprise;
+        self.novelty = novelty;
+        self.confidence = confidence;
+        self.w_pred = w_pred;
+        self.nov_idx += 1;
         self.hist_idx += 1;
         self.total_steps += 1;
-
         spike
+    }
+
+    fn sigmoid(x: f64) -> f64 {
+        if !x.is_finite() {
+            return if x > 0.0 { 1.0 } else { 0.0 };
+        }
+        if x >= 0.0 {
+            let z = (-x).exp();
+            1.0 / (1.0 + z)
+        } else {
+            let z = x.exp();
+            z / (1.0 + z)
+        }
+    }
+
+    fn exact_relaxation(state: f64, steady_state: f64, dt: f64, tau: f64) -> f64 {
+        let decay = (-dt / tau).exp();
+        decay * state + (1.0 - decay) * steady_state
     }
 
     /// Clear the fast and working compartments, the prediction, the surprise, the novelty
@@ -207,6 +241,23 @@ impl Default for ArcaneNeuron {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn arcane_matches_the_python_model_bit_for_bit() {
+        // Python's ArcaneNeuron after 300 steps of 2.0 from its defaults: 75 spikes, then
+        // v_fast = 0, v_work = 0.052144899505804664, v_deep = 2.041571933657978e-05 and
+        // w_pred = [0.9161249065184631, 0.37682124738564304, 0.13682435154337574].
+        let mut n = ArcaneNeuron::new();
+        let spikes: i32 = (0..300).map(|_| n.step(2.0)).sum();
+        assert_eq!(spikes, 75);
+        assert_eq!(n.v_fast, 0.0);
+        assert_eq!(n.v_work, 0.052144899505804664);
+        assert_eq!(n.v_deep, 2.041571933657978e-05);
+        assert_eq!(
+            n.w_pred,
+            [0.9161249065184631, 0.37682124738564304, 0.13682435154337574]
+        );
+    }
 
     #[test]
     fn arcane_fires() {

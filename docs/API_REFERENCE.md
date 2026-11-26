@@ -33987,17 +33987,23 @@ ValueError
 Unified self-referential cognition neuron for persistent identity.
 
 - **step**(current)
+  - Advance one step: gate the input, relax the three compartments exactly, learn the predictor.
 - **reset**()
+  - Clear the fast and working compartments, the step diagnostics and the spike history.
 - **identity_state**()
   - The deep compartment value — the accumulated identity.
 - **confidence**()
+  - One minus the mean novelty of the history, as used by the last step.
 - **novelty**()
+  - Novelty of the last step: the logistic of the scaled surprise above its baseline.
 - **identity_drift**()
   - Cumulative absolute magnitude of identity mutation.
 - **meta_learning_rate**()
+  - Predictor learning rate at the current novelty, ``lr_base * (1 + eta * novelty)``.
 - **get_recent_pre_activity**()
   - Get proxy for pre-synaptic activation (recent spike behavior).
 - **get_state**()
+  - Return the compartments, the step diagnostics and the learning rate.
 
 ---
 
