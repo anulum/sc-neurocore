@@ -448,18 +448,18 @@ class PredictiveCodingNeuron:
 class SelfReferentialNeuron:
     """Leaky integrate-and-fire neuron whose time constant follows its own firing rate.
 
-    rate    = spikes among the last steps / number of those steps (at most 50)
+    rate    = spikes among the held steps / number of held steps (the last ``window`` at most)
     tau_eff = tau * (1 + rate / target_rate)
     dv/dt   = (-v + I) / tau_eff
 
     The more it has fired recently, the slower it integrates, which damps
     its own rate. The threshold ``theta`` is fixed. The history holds the
-    last 50 steps whatever ``window`` says: the field is stored but not
-    used. The Rust engine's counterpart divides by the full 50-step window
-    from the first step, so the two part when the neuron fires within its
-    first 50 steps and can stay apart afterwards: under a constant current
-    of 2.0 they first differ at the 15th step and differ at 155 of the first
-    1,000 steps.
+    last ``window`` steps since the last reset, so during the first
+    ``window`` steps the rate is taken over the steps seen so far; after a
+    live change of ``window`` it is taken over the latest ``window`` held
+    steps, so it never exceeds 1. ``_step_count`` counts the steps since the
+    last reset. The Rust engine's neuron follows the same rule step for
+    step at its fixed window of 50.
     """
 
     v: float = 0.0
@@ -472,8 +472,9 @@ class SelfReferentialNeuron:
     _step_count: int = 0
 
     def __post_init__(self) -> None:
-        """Validate state, positive ``tau``, ``target_rate``, ``dt`` and integer counters."""
+        """Validate the fields, then size the spike history to ``window``."""
         self._validate_configuration()
+        self._history = deque(self._history, maxlen=self.window)
 
     def _validate_configuration(self) -> None:
         self.v = _require_finite_float(self.v, "v")
@@ -545,6 +546,7 @@ class SelfReferentialNeuron:
             and dt > 0.0
             and window > 0
             and step_count >= 0
+            and self._history.maxlen == window
         ):
             current = _require_finite_float(current, "current")
             self._validate_configuration()
@@ -553,15 +555,19 @@ class SelfReferentialNeuron:
             theta = self.theta
             target_rate = self.target_rate
             dt = self.dt
+            window = self.window
             step_count = self._step_count
 
-        n_spikes = sum(self._history)
-        rate = n_spikes / max(len(self._history), 1)
+        held = self._history if len(self._history) <= window else list(self._history)[-window:]
+        seen = len(held)
+        rate = sum(held) / seen if seen else 0.0
         tau_eff = tau * (1.0 + rate / target_rate)
         next_v = v + (-v + current) / tau_eff * dt
         if not (math.isfinite(tau_eff) and math.isfinite(next_v)):
             raise FloatingPointError("SelfReferentialNeuron state overflowed finite range")
 
+        if self._history.maxlen != window:
+            self._history = deque(self._history, maxlen=window)
         self._step_count = step_count + 1
         if next_v >= theta:
             self.v = 0.0

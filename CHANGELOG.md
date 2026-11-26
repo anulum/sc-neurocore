@@ -908,6 +908,18 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
   Python. Changelogs, release notes, dated reports and the
   version 3 migration guide keep their original facts.
 
+- The engine's SelfReferentialNeuron takes its firing rate the way the
+  Python model does. The rate behind its adaptive time constant was the
+  spikes of the last 50 steps divided by 50 from the first step, while
+  Python divided by the steps seen so far, so the two parted at the step
+  after the first spike (step 8 under a constant 2.0) and could stay
+  apart. Both now divide by the steps since the last reset, at most the
+  window, counted by the step counter that Python kept but did not use.
+  The Python model's history also held 50 steps whatever `window` said;
+  it now holds `window` steps, also when `window` is changed on a live
+  neuron. A new test compares the engine and Python step by step over
+  2000 seeded inputs and through a reset.
+
 - The eight AI-optimised neuron models in `sc_neurocore.neurons.models.ai_optimized`
   (`MultiTimescaleNeuron`, `AttentionGatedNeuron`, `PredictiveCodingNeuron`,
   `SelfReferentialNeuron`, `CompositionalBindingNeuron`,

@@ -24,6 +24,7 @@ pub struct SelfReferentialNeuron {
     history: Vec<u8>,
     head: usize,
     window: usize,
+    steps: u64,
 }
 
 impl SelfReferentialNeuron {
@@ -40,18 +41,25 @@ impl SelfReferentialNeuron {
             history: vec![0; window],
             head: 0,
             window,
+            steps: 0,
         }
     }
 
     /// Advance one forward-Euler step and return 1 on a spike, else 0.
     ///
-    /// The time constant is `tau * (1 + rate / target_rate)`, where `rate` is the fraction of
-    /// the last 50 steps with a spike, so more firing slows the membrane; at the target rate
-    /// the time constant is doubled. Reaching `theta` sets `v` to 0. The input is not
-    /// validated.
+    /// The time constant is `tau * (1 + rate / target_rate)`, where `rate` is the number of
+    /// spikes in the last 50 steps divided by the steps seen since the last reset, at most 50,
+    /// so during the first 50 steps the rate is taken over the steps seen so far, as in the
+    /// Python model. More firing slows the membrane; at the target rate the time constant is
+    /// doubled. Reaching `theta` sets `v` to 0. The input is not validated.
     pub fn step(&mut self, current: f64) -> i32 {
         let n_spikes: u32 = self.history.iter().map(|&x| x as u32).sum();
-        let rate = n_spikes as f64 / self.window as f64;
+        let seen = self.steps.min(self.window as u64);
+        let rate = if seen == 0 {
+            0.0
+        } else {
+            n_spikes as f64 / seen as f64
+        };
         let tau_eff = self.tau * (1.0 + rate / self.target_rate);
         self.v += (-self.v + current) / tau_eff * self.dt;
         let fired = if self.v >= self.theta {
@@ -62,14 +70,16 @@ impl SelfReferentialNeuron {
         };
         self.history[self.head] = fired as u8;
         self.head = (self.head + 1) % self.window;
+        self.steps = self.steps.saturating_add(1);
         fired
     }
 
-    /// Clear `v` and the spike history; the parameters are kept.
+    /// Clear `v`, the spike history and the step count; the parameters are kept.
     pub fn reset(&mut self) {
         self.v = 0.0;
         self.history.fill(0);
         self.head = 0;
+        self.steps = 0;
     }
 }
 
@@ -98,6 +108,19 @@ mod tests {
         }
         let n_spikes: u32 = n.history.iter().map(|&x| x as u32).sum();
         assert!(n_spikes > 0);
+    }
+
+    #[test]
+    fn self_referential_rate_is_taken_over_the_steps_seen_during_warm_up() {
+        // Under a constant 2.0, v climbs as 2 * (1 - 0.9^k) and first reaches 1 at step 7.
+        // At step 8 one spike in 7 steps gives rate 1/7, not 1/50, so tau_eff = 10 * (1 + 10/7).
+        let mut n = SelfReferentialNeuron::new();
+        let spikes: Vec<i32> = (0..7).map(|_| n.step(2.0)).collect();
+        assert_eq!(spikes, vec![0, 0, 0, 0, 0, 0, 1]);
+        assert_eq!(n.v, 0.0);
+        n.step(2.0);
+        let tau_eff = 10.0 * (1.0 + (1.0 / 7.0) / 0.1);
+        assert_eq!(n.v, (-0.0 + 2.0) / tau_eff * 1.0);
     }
 
     #[test]

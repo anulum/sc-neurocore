@@ -33704,21 +33704,21 @@ the defaults (a larger step overshoots).
 ### Class `SelfReferentialNeuron`
 Leaky integrate-and-fire neuron whose time constant follows its own firing rate.
 
-rate    = spikes among the last steps / number of those steps (at most 50)
+rate    = spikes among the held steps / number of held steps (the last ``window`` at most)
 tau_eff = tau * (1 + rate / target_rate)
 dv/dt   = (-v + I) / tau_eff
 
 The more it has fired recently, the slower it integrates, which damps
 its own rate. The threshold ``theta`` is fixed. The history holds the
-last 50 steps whatever ``window`` says: the field is stored but not
-used. The Rust engine's counterpart divides by the full 50-step window
-from the first step, so the two part when the neuron fires within its
-first 50 steps and can stay apart afterwards: under a constant current
-of 2.0 they first differ at the 15th step and differ at 155 of the first
-1,000 steps.
+last ``window`` steps since the last reset, so during the first
+``window`` steps the rate is taken over the steps seen so far; after a
+live change of ``window`` it is taken over the latest ``window`` held
+steps, so it never exceeds 1. ``_step_count`` counts the steps since the
+last reset. The Rust engine's neuron follows the same rule step for
+step at its fixed window of 50.
 
 - **__post_init__**()
-  - Validate state, positive ``tau``, ``target_rate``, ``dt`` and integer counters.
+  - Validate the fields, then size the spike history to ``window``.
 - **step**(current)
   - Set the time constant from the recent rate, integrate one Euler step and test the threshold.
 - **reset**()
