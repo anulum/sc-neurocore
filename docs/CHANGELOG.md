@@ -886,6 +886,11 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Fixed
 
+- HuberBraunNeuron and StochasticIFNeuron refuse a seed above their
+  declared `SEED_DOMAIN` (0 to 2**63-1, the bound the request and receipt
+  surfaces carry) with a `ValueError`; they refused only negative seeds,
+  so a larger one was taken although the declaration excludes it.
+
 - The engine's ParametricLIFNeuron takes the decay `sigmoid(a)` in the
   sign-split form the Python model and the Go, Julia and safety-Rust lanes
   use (`exp(a) / (1 + exp(a))` below zero); it took `1 / (1 + exp(-a))`

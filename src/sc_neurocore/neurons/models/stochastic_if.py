@@ -65,8 +65,9 @@ class StochasticIFNeuron:
             if isinstance(self.seed, bool) or not isinstance(self.seed, numbers.Integral):
                 raise TypeError("seed must be an integer or None")
             seed = int(self.seed)
-            if seed < 0:
-                raise ValueError("seed must be non-negative")
+            low, high = self.SEED_DOMAIN
+            if not low <= seed <= high:
+                raise ValueError(f"seed must be in [{low}, {high}], the declared SEED_DOMAIN")
             self.seed = seed
         self._rng = None if self.seed is None else np.random.default_rng(self.seed)
 

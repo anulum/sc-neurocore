@@ -110,3 +110,26 @@ def test_a_bad_seed_is_refused(seed: object, error: type[Exception]) -> None:
     arguments: dict[str, Any] = {"seed": seed}
     with pytest.raises(error, match="seed"):
         StochasticIFNeuron(**arguments)
+
+
+@pytest.mark.parametrize("seed", [2**63, np.uint64(2**63), 2**64])
+def test_a_seed_above_the_declared_domain_is_refused(seed: object) -> None:
+    """A seed past ``SEED_DOMAIN``'s upper bound is refused, as one below its lower bound is.
+
+    Parameters
+    ----------
+    seed : object
+        An integer above ``2**63 - 1``.
+    """
+    arguments: dict[str, Any] = {"seed": seed}
+    with pytest.raises(ValueError, match="SEED_DOMAIN"):
+        StochasticIFNeuron(**arguments)
+
+
+def test_both_ends_of_the_declared_domain_are_taken() -> None:
+    """The lowest and highest declared seeds construct and seed a generator."""
+    low, high = StochasticIFNeuron.SEED_DOMAIN
+    assert (low, high) == (0, 2**63 - 1)
+    assert StochasticIFNeuron(seed=low).seed == low
+    assert StochasticIFNeuron(seed=high).seed == high
+    assert StochasticIFNeuron(seed=np.uint64(high)).seed == high

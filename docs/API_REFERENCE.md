@@ -35815,8 +35815,8 @@ dt : float, default=0.1
 v_threshold : float, default=-20.0
     Upward spike-detection threshold in millivolts.
 seed : int or None, default=None
-    Seed of the neuron's own noise generator, any non-negative integer (NumPy's
-    included, stored as a Python ``int``) up to ``SEED_DOMAIN``'s bound. With a seed the
+    Seed of the neuron's own noise generator, an integer in ``SEED_DOMAIN``
+    (0 to 2**63 - 1; NumPy's integers included, stored as a Python ``int``). With a seed the
     noise comes from that ``numpy.random.Generator``, two neurons with the same seed give
     the same trajectory whatever else draws random numbers, and ``reset`` restarts the
     stream. Without one the noise comes from ``np.random.randn``, as before, so
@@ -35829,7 +35829,7 @@ TypeError
     not an integer.
 ValueError
     If any parameter is non-finite or violates its positivity or
-    non-negativity domain.
+    non-negativity domain, or ``seed`` lies outside ``SEED_DOMAIN``.
 
 - **__post_init__**()
   - Validate and normalise all initial state and parameter fields.
