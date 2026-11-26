@@ -504,6 +504,16 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Changed
 
+- `GIFPopulationNeuron`, `AvRonCardiacNeuron`, `GolgiCell`, `MotorUnit`, and
+  `RenshawCell` now fail loudly with `TypeError` (on booleans or non-real /
+  non-integer values) or `ValueError` (on non-finite inputs, out-of-domain
+  parameters or state fields, non-finite candidates, or candidate states
+  leaving their valid voltage or gating ranges) instead of silently returning
+  `0`; on refusal every model preserves its prior state (including
+  `GIFPopulationNeuron`'s PRNG state). `GIFPopulationNeuron` continues to
+  accept negative integer seeds at construction so the experiment seed-domain
+  contract remains the enforcement point.
+
 - `SCClippedLogisticBurstingMapNeuron` now normalises `np.float32` (and other
   NumPy scalar) drives to Python `float` (`float64`) before stepping so the
   Python backend evaluates updates in `float64` identically to the Rust, Julia,

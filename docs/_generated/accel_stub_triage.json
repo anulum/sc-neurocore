@@ -6186,11 +6186,10 @@
       "markers": {
         "app": [],
         "numeric": [
-          "pure numeric calls with multiplicative operators",
           "multiplicative operators"
         ],
-        "operators": 46,
-        "basis": "b"
+        "operators": 47,
+        "basis": "c"
       },
       "stubs": [
         {
@@ -6429,11 +6428,10 @@
       "markers": {
         "app": [],
         "numeric": [
-          "pure numeric calls with multiplicative operators",
           "multiplicative operators"
         ],
-        "operators": 16,
-        "basis": "b"
+        "operators": 17,
+        "basis": "c"
       },
       "stubs": [
         {
@@ -11697,13 +11695,11 @@
     "src/sc_neurocore/learning/schedulers.py",
     "src/sc_neurocore/neurons/models/ai_optimized.py",
     "src/sc_neurocore/neurons/models/alpha_motor_neuron.py",
-    "src/sc_neurocore/neurons/models/av_ron_cardiac.py",
     "src/sc_neurocore/neurons/models/bk_neuron.py",
     "src/sc_neurocore/neurons/models/booth_rinzel.py",
     "src/sc_neurocore/neurons/models/cfc.py",
     "src/sc_neurocore/neurons/models/chay.py",
     "src/sc_neurocore/neurons/models/chay_keizer.py",
-    "src/sc_neurocore/neurons/models/gif_population.py",
     "src/sc_neurocore/neurons/models/lugaro_cell.py",
     "src/sc_neurocore/neurons/models/marder_stg.py",
     "src/sc_neurocore/neurons/models/pinsky_rinzel.py",
@@ -11740,6 +11736,8 @@
     "src/sc_neurocore/synapses/r_stdp.py",
     "src/sc_neurocore/neurons/dendritic.py",
     "src/sc_neurocore/neurons/fixed_point_lif.py",
+    "src/sc_neurocore/neurons/models/av_ron_cardiac.py",
+    "src/sc_neurocore/neurons/models/gif_population.py",
     "src/sc_neurocore/neurons/models/spinnaker2.py",
     "src/sc_neurocore/neurons/models/tsodyks_markram.py"
   ],

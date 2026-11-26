@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5187
+expected_file_count = 5197
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20790,3 +20790,43 @@ rationale = "Bit-exact parity of the Wilson-Cowan E/I model between Python and t
 [[file]]
 path = "tests/wilson_cowan_parity_support.py"
 rationale = "Last-ulp parity between `WilsonCowanUnit.step` and the Rust `py_wilson_cowan_simulate`."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/gif_population.py"
+rationale = "Document GIF population neuron parameters, fail-loud guards, and PRNG rollback."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/av_ron_cardiac.py"
+rationale = "Document Av-Ron cardiac ganglion parameters, RK4 candidate range checks, and refusals."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/golgi_cell.py"
+rationale = "Document cerebellar Golgi cell parameters, physiological bounds, and fail-loud refusals."
+
+[[file]]
+path = "src/sc_neurocore/neurons/models/renshaw_cell.py"
+rationale = "Document spinal Renshaw cell parameters, Wang-Buzsaki bounds, and fail-loud refusals."
+
+[[file]]
+path = "tests/test_model_gif_population.py"
+rationale = "Verify GIF population neuron analytical dynamics, seeding, and fail-loud refusals."
+
+[[file]]
+path = "tests/test_model_av_ron_cardiac.py"
+rationale = "Verify Av-Ron cardiac ganglion RK4 dynamics, gate bounds, and fail-loud refusals."
+
+[[file]]
+path = "tests/test_model_golgi_cell.py"
+rationale = "Verify cerebellar Golgi cell multi-current dynamics and fail-loud refusals."
+
+[[file]]
+path = "tests/test_model_motor_unit.py"
+rationale = "Verify alpha motor unit LIF, adaptation, twitch force, and fail-loud refusals."
+
+[[file]]
+path = "tests/test_model_renshaw_cell.py"
+rationale = "Verify spinal Renshaw cell conductance dynamics and fail-loud refusals."
+
+[[file]]
+path = "tests/test_fail_loud_neuron_domain_guards.py"
+rationale = "Verify constructor, runtime, overflow-rollback, type guards, cross-libm 20k-step regression, and Golgi power-operator bit-identity."

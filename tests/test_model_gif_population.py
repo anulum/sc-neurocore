@@ -12,10 +12,12 @@ from __future__ import annotations
 
 import math
 
+import pytest
 from sc_neurocore.neurons.models.gif_population import GIFPopulationNeuron
 
 
 def test_exact_coupled_subthreshold_reference_point() -> None:
+    """Single subthreshold step matches the coupled analytical solution."""
     neuron = GIFPopulationNeuron(v=-68.0, eta=0.4, seed=7)
 
     assert neuron.step(4.0) == 0
@@ -25,6 +27,7 @@ def test_exact_coupled_subthreshold_reference_point() -> None:
 
 
 def test_equal_time_constant_limit_is_finite() -> None:
+    """Degenerate ``tau_m == tau_eta`` limit stays finite and accurate."""
     neuron = GIFPopulationNeuron(v=-63.0, eta=1.5, tau_m=20.0, tau_eta=20.0)
 
     assert neuron.step(2.0) == 0
@@ -34,6 +37,7 @@ def test_equal_time_constant_limit_is_finite() -> None:
 
 
 def test_forced_spike_resets_voltage_and_adds_decayed_adaptation() -> None:
+    """A high hazard triggers a spike, resets voltage, and increments adaptation."""
     neuron = GIFPopulationNeuron(v=-51.0, eta=0.3, theta=-90.0, lambda_0=1.0e9)
 
     assert neuron.step(0.0) == 1
@@ -43,6 +47,7 @@ def test_forced_spike_resets_voltage_and_adds_decayed_adaptation() -> None:
 
 
 def test_zero_baseline_hazard_never_spikes() -> None:
+    """Zero baseline hazard suppresses spiking regardless of drive."""
     neuron = GIFPopulationNeuron(theta=-1000.0, lambda_0=0.0)
 
     spikes = sum(neuron.step(100.0) for _ in range(128))
@@ -51,28 +56,34 @@ def test_zero_baseline_hazard_never_spikes() -> None:
     assert neuron._spike_probability(neuron.v) == 0.0
 
 
-def test_invalid_input_and_invalid_parameters_preserve_state() -> None:
+def test_invalid_input_and_invalid_parameters_raise_and_preserve_state() -> None:
+    """Non-finite drive or mutated invalid parameters raise ``ValueError`` without mutating state."""
     neuron = GIFPopulationNeuron(v=-62.0, eta=0.75)
     before = (neuron.v, neuron.eta)
 
-    assert neuron.step(float("nan")) == 0
+    with pytest.raises(ValueError, match="current"):
+        neuron.step(float("nan"))
     assert (neuron.v, neuron.eta) == before
 
     neuron.tau_m = 0.0
-    assert neuron.step(1.0) == 0
+    with pytest.raises(ValueError, match="tau_m"):
+        neuron.step(1.0)
     assert (neuron.v, neuron.eta) == before
 
 
-def test_nonfinite_candidate_preserves_state() -> None:
+def test_nonfinite_candidate_raises_and_preserves_state() -> None:
+    """Overflowing candidate voltage raises ``ValueError`` without mutating state."""
     neuron = GIFPopulationNeuron(v=1.0e308, v_rest=1.0e308, eta=0.0)
     before = (neuron.v, neuron.eta)
 
-    assert neuron.step(1.0e308) == 0
+    with pytest.raises(ValueError, match="finite"):
+        neuron.step(1.0e308)
 
     assert (neuron.v, neuron.eta) == before
 
 
 def test_seeded_reproducibility_and_seed_separation() -> None:
+    """Identical seeds reproduce spike trains; distinct seeds diverge."""
     left = GIFPopulationNeuron(seed=123)
     right = GIFPopulationNeuron(seed=123)
     other = GIFPopulationNeuron(seed=999)
@@ -89,6 +100,7 @@ def test_seeded_reproducibility_and_seed_separation() -> None:
 
 
 def test_reset_restores_state_and_rng_sequence() -> None:
+    """Reset restores rest state and replays the seeded spike sequence."""
     neuron = GIFPopulationNeuron(seed=123, theta=-90.0, lambda_0=1.0e9)
 
     first = [neuron.step(0.0) for _ in range(3)]

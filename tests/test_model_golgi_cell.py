@@ -1,16 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# (C) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# (C) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore GolgiCell behavioural tests
+# SC-NeuroCore — GolgiCell behavioural tests
+
+"""Behavioural and fail-loud refusal tests for the Solinas cerebellar Golgi cell."""
 
 from __future__ import annotations
 
 import math
 from dataclasses import asdict, replace
 
+import pytest
 from sc_neurocore.neurons.models.golgi_cell import GolgiCell
 
 
@@ -122,6 +125,7 @@ def _reference_step(cell: GolgiCell, current: float) -> GolgiCell:
 
 
 def test_golgi_exact_gate_calcium_and_conductance_step() -> None:
+    """Single step matches the independent exponential-integrator reference."""
     cell = GolgiCell()
     expected = _reference_step(GolgiCell(), 5.0)
 
@@ -135,29 +139,40 @@ def test_golgi_exact_gate_calcium_and_conductance_step() -> None:
     assert math.isclose(cell.n, expected.n, rel_tol=0.0, abs_tol=1e-12)
     assert math.isclose(cell.ca, expected.ca, rel_tol=0.0, abs_tol=1e-12)
 
+    sing_cell = GolgiCell(v=-35.0, sub_steps=1)
+    sing_expected = _reference_step(GolgiCell(v=-35.0, sub_steps=1), 0.0)
+    assert sing_cell.step(0.0) == 1
+    assert math.isclose(sing_cell.v, sing_expected.v, rel_tol=0.0, abs_tol=1e-12)
 
-def test_golgi_invalid_current_preserves_state() -> None:
+
+def test_golgi_invalid_current_raises_and_preserves_state() -> None:
+    """Non-finite current raises ``ValueError`` and leaves state unchanged."""
     cell = GolgiCell()
     for _ in range(10):
         cell.step(5.0)
     before = asdict(cell)
 
-    assert cell.step(math.nan) == 0
+    with pytest.raises(ValueError, match="current"):
+        cell.step(math.nan)
     assert asdict(cell) == before
-    assert cell.step(math.inf) == 0
+    with pytest.raises(ValueError, match="current"):
+        cell.step(math.inf)
     assert asdict(cell) == before
 
 
-def test_golgi_excess_current_preserves_state() -> None:
+def test_golgi_excess_current_raises_and_preserves_state() -> None:
+    """Out-of-range voltage candidate raises ``ValueError`` without mutating state."""
     cell = GolgiCell()
     before = asdict(cell)
 
-    assert cell.step(1.0e8) == 0
+    with pytest.raises(ValueError, match="voltage|range|finite"):
+        cell.step(1.0e8)
 
     assert asdict(cell) == before
 
 
 def test_golgi_all_currents_bounded_and_calcium_active() -> None:
+    """Sustained drive spikes while keeping all gates, voltage, and calcium in bounds."""
     cell = GolgiCell()
     baseline_ca = cell.ca
     spikes = sum(cell.step(10.0) for _ in range(2000))

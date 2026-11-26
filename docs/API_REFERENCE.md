@@ -34087,8 +34087,51 @@ The four-state conductance model uses instantaneous sodium activation,
 voltage-dependent h/n/s gate relaxation, and candidate-first RK4 integration
 so invalid states cannot partially mutate the neuron.
 
+Parameters
+----------
+v : float, default=-60.0
+    Initial membrane potential in millivolts.
+h : float, default=0.6
+    Initial sodium inactivation gate in ``&#91;0, 1&#93;``.
+n : float, default=0.3
+    Initial potassium activation gate in ``&#91;0, 1&#93;``.
+s : float, default=0.5
+    Initial slow inward-current gate in ``&#91;0, 1&#93;``.
+g_na : float, default=80.0
+    Maximal sodium conductance; must be non-negative.
+g_k : float, default=40.0
+    Maximal potassium conductance; must be non-negative.
+g_s : float, default=20.0
+    Maximal slow conductance; must be non-negative.
+g_l : float, default=0.1
+    Leak conductance; must be non-negative.
+e_na : float, default=40.0
+    Sodium reversal potential in millivolts.
+e_k : float, default=-80.0
+    Potassium reversal potential in millivolts.
+e_s : float, default=-25.0
+    Slow reversal potential in millivolts.
+e_l : float, default=-60.0
+    Leak reversal potential in millivolts.
+dt : float, default=0.02
+    RK4 integration timestep in milliseconds; must be strictly positive.
+v_threshold : float, default=-20.0
+    Upward spike-detection threshold in millivolts.
+
+Raises
+------
+TypeError
+    If any parameter is a boolean or not a real number.
+ValueError
+    If any parameter is non-finite or violates its positivity,
+    non-negativity, or ``&#91;0, 1&#93;`` gating domain.
+
+- **__post_init__**()
+  - Validate and normalise all initial state variables and parameters.
 - **step**(current)
+  - Advance membrane potential and h/n/s gates by one RK4 step.
 - **reset**()
+  - Restore membrane potential and h/n/s gates to resting defaults.
 
 ---
 
@@ -35208,9 +35251,49 @@ Poisson interval probability.
 
 Reference: Mensi, S. et al. (2012). J. Neurophysiol. 107:1756-1775.
 
+Parameters
+----------
+v : float, default=-65.0
+    Initial membrane potential in millivolts.
+theta : float, default=-50.0
+    Baseline escape-rate threshold in millivolts.
+eta : float, default=0.0
+    Initial spike-history adaptation current.
+tau_m : float, default=20.0
+    Membrane time constant in milliseconds; must be strictly positive.
+tau_eta : float, default=100.0
+    Adaptation time constant in milliseconds; must be strictly positive.
+delta_v : float, default=2.0
+    Escape-rate voltage sensitivity in millivolts; must be strictly positive.
+lambda_0 : float, default=0.001
+    Baseline hazard rate at ``v == theta``; must be non-negative.
+eta_increment : float, default=5.0
+    Adaptation current added after each emitted spike.
+v_rest : float, default=-65.0
+    Resting membrane potential in millivolts.
+v_reset : float, default=-65.0
+    Post-spike reset membrane potential in millivolts.
+dt : float, default=0.5
+    Discrete integration timestep in milliseconds; must be strictly positive.
+seed : int, default=42
+    Integer PRNG seed (negative integers are masked to 64 bits; the
+    experiment contract enforces ``SEED_DOMAIN``).
+
+Raises
+------
+TypeError
+    If any floating-point field is a boolean or not a real number, or if
+    ``seed`` is a boolean or not an integer.
+ValueError
+    If any floating-point field is non-finite or violates its positivity
+    or non-negativity domain.
+
 - **__post_init__**()
+  - Validate initial state and parameters and initialise the PRNG.
 - **step**(current)
+  - Advance the neuron by one exact subthreshold and escape-rate step.
 - **reset**()
+  - Restore membrane potential, adaptation, and PRNG to initial seeded state.
 
 ---
 
@@ -35272,8 +35355,48 @@ Ih (r), IL. Spontaneously active 3–10 Hz.
 
 Reference: Solinas et al. (2007) Front Cell Neurosci 1:2.
 
+Parameters
+----------
+v : float, default=-60.0
+    Initial membrane potential in millivolts within ``&#91;-100, 60&#93;``.
+m, h, p_na, n, a, b, w, m_t, s, c_n, r : float
+    Initial gating probabilities, each within ``&#91;0, 1&#93;``.
+ca : float, default=0.05
+    Initial intracellular calcium concentration; must be non-negative.
+g_na_t, g_na_p, g_kdr, g_ka, g_km, g_cat, g_can, g_bk, g_sk, g_h, g_l : float
+    Maximal ionic conductances; each must be non-negative.
+e_na, e_k, e_ca, e_h, e_l : float
+    Ionic reversal potentials in millivolts.
+c_m : float, default=1.0
+    Membrane capacitance; must be strictly positive.
+tau_ca : float, default=200.0
+    Calcium decay time constant in milliseconds; must be strictly positive.
+kd_bk : float, default=1.0
+    BK calcium half-activation constant; must be strictly positive.
+kd_sk : float, default=0.5
+    SK calcium half-activation constant; must be strictly positive.
+dt : float, default=0.5
+    Outer integration timestep in milliseconds; must be strictly positive.
+sub_steps : int, default=10
+    Number of exponential-integrator substeps per ``step``; must be a positive integer.
+gain : float, default=1.0
+    External input current scaling factor; must be non-negative.
+
+Raises
+------
+TypeError
+    If any floating-point field is a boolean or not a real number, or if
+    ``sub_steps`` is a boolean or not an integer.
+ValueError
+    If any field is non-finite or violates its physiological, positivity,
+    non-negativity, or ``&#91;0, 1&#93;`` gating domain.
+
+- **__post_init__**()
+  - Validate and normalise all initial state variables and parameters.
 - **step**(current)
+  - Advance all 11 ionic currents, calcium, and voltage by one outer step.
 - **reset**()
+  - Restore membrane voltage, gating variables, and calcium to resting defaults.
 
 ---
 
@@ -36271,6 +36394,48 @@ with ``tau_twitch``.
 Reference: Fuglevand et al. (1993) J Neurophysiol 70(6);
 Heckman & Enoka (2012) Compr Physiol 2(4).
 
+Parameters
+----------
+v : float, default=-65.0
+    Initial membrane potential in millivolts within ``&#91;-150, 100&#93;``.
+v_rest : float, default=-65.0
+    Resting potential in millivolts within ``&#91;-150, 100&#93;``.
+v_reset : float, default=-70.0
+    Post-spike reset potential in millivolts within ``&#91;-150, 100&#93;``; must
+    satisfy ``v_reset < v_threshold``.
+v_threshold : float, default=-50.0
+    Spike threshold in millivolts within ``&#91;-150, 100&#93;``.
+tau_m : float, default=10.0
+    Membrane time constant in milliseconds; must be strictly positive.
+adapt : float, default=0.0
+    Initial spike-frequency adaptation state.
+tau_adapt : float, default=100.0
+    Adaptation time constant in milliseconds; must be strictly positive.
+a_adapt : float, default=0.2
+    Subthreshold adaptation coupling coefficient.
+gain : float, default=1.0
+    Descending drive gain; must be non-negative.
+force : float, default=0.0
+    Initial normalised muscle force within ``&#91;0, 1&#93;``.
+twitch_amp : float, default=0.05
+    Force increment added on each spike; must be non-negative.
+tau_twitch : float, default=90.0
+    Muscle twitch decay time constant in milliseconds; must be strictly positive.
+force_decay : float, default=0.0
+    Unused compatibility field retained for descriptor schema parity.
+dt : float, default=0.5
+    Integration timestep in milliseconds; must be strictly positive.
+
+Raises
+------
+TypeError
+    If any parameter is a boolean or not a real number.
+ValueError
+    If any parameter is non-finite, outside its domain, or violates
+    ``v_reset < v_threshold``.
+
+- **__post_init__**()
+  - Validate and normalise all initial state variables and parameters.
 - **slow**()
   - Slow motor unit (type S): small, fatigue-resistant, low force.
 - **fast**()
@@ -36892,8 +37057,55 @@ response to motor axon collateral input.
 
 Reference: Renshaw (1941); Windhorst (1996) Prog Neurobiol 46(5).
 
+Parameters
+----------
+v : float, default=-65.0
+    Initial membrane potential in millivolts within ``&#91;-150, 100&#93;``.
+h : float, default=0.8
+    Initial sodium inactivation gate within ``&#91;0, 1&#93;``.
+n : float, default=0.1
+    Initial potassium activation gate within ``&#91;0, 1&#93;``.
+adapt : float, default=0.0
+    Initial adaptation gate within ``&#91;0, 1&#93;``.
+g_na : float, default=35.0
+    Maximal sodium conductance; must be non-negative.
+g_k : float, default=9.0
+    Maximal potassium conductance; must be non-negative.
+g_adapt : float, default=5.0
+    Maximal adaptation conductance; must be non-negative.
+g_l : float, default=0.12
+    Leak conductance; must be non-negative.
+e_na : float, default=55.0
+    Sodium reversal potential in millivolts.
+e_k : float, default=-90.0
+    Potassium reversal potential in millivolts.
+e_l : float, default=-65.0
+    Leak reversal potential in millivolts.
+c_m : float, default=1.0
+    Membrane capacitance; must be strictly positive.
+phi : float, default=5.0
+    Gating temperature/rate scaling factor; must be strictly positive.
+tau_adapt : float, default=50.0
+    Adaptation time constant in milliseconds; must be strictly positive.
+dt : float, default=0.01
+    Substep integration interval in milliseconds; must be strictly positive.
+v_threshold : float, default=-20.0
+    Upward spike-detection threshold in millivolts.
+
+Raises
+------
+TypeError
+    If any parameter is a boolean or not a real number.
+ValueError
+    If any parameter is non-finite or violates its physiological,
+    positivity, non-negativity, or ``&#91;0, 1&#93;`` gating domain.
+
+- **__post_init__**()
+  - Validate and normalise all initial state variables and parameters.
 - **step**(current)
+  - Advance gating variables and membrane potential over one 0.5 ms window.
 - **reset**()
+  - Restore membrane potential, ionic gates, and adaptation to resting defaults.
 
 ---
 

@@ -989,7 +989,7 @@
     "python_model_source_modules": 176,
     "rust_pyo3_model_wrappers": 208,
     "studio_catalogue_models": 185,
-    "test_files": 5605
+    "test_files": 5606
   },
   "documentation": {
     "public_pages": [
@@ -5204,6 +5204,7 @@
       "tests/test_facet_receipt_provenance.py",
       "tests/test_facet_receipts.py",
       "tests/test_facet_receipts_ingress.py",
+      "tests/test_fail_loud_neuron_domain_guards.py",
       "tests/test_fault_engine_bindings.py",
       "tests/test_fault_injection/fault_injection_support.py",
       "tests/test_fault_injection/test_fault_injection_fault_injection_result.py",

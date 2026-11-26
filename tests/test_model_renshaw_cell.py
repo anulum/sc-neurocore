@@ -1,16 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Commercial license available
-# (C) Concepts 1996-2026 Miroslav Sotek. All rights reserved.
-# (C) Code 2020-2026 Miroslav Sotek. All rights reserved.
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SC-NeuroCore Renshaw cell behavioral tests
+# SC-NeuroCore — Renshaw cell behavioural tests
+
+"""Behavioural and fail-loud refusal tests for the spinal Renshaw cell."""
 
 from __future__ import annotations
 
 import math
 from dataclasses import asdict
 
+import pytest
 from sc_neurocore.neurons.models.renshaw_cell import RenshawCell
 
 
@@ -65,6 +68,7 @@ def _reference_step(cell: RenshawCell, current: float) -> RenshawCell:
 
 
 def test_renshaw_exact_gate_and_conductance_membrane_step() -> None:
+    """Single step matches the independent Wang-Buzsaki exponential-integrator reference."""
     cell = RenshawCell()
     expected = _reference_step(RenshawCell(), 4.0)
 
@@ -76,29 +80,40 @@ def test_renshaw_exact_gate_and_conductance_membrane_step() -> None:
     assert math.isclose(cell.n, expected.n, rel_tol=0.0, abs_tol=1e-12)
     assert math.isclose(cell.adapt, expected.adapt, rel_tol=0.0, abs_tol=1e-12)
 
+    sing_cell = RenshawCell(v=-35.0, dt=0.5)
+    sing_expected = _reference_step(RenshawCell(v=-35.0, dt=0.5), 0.0)
+    assert sing_cell.step(0.0) == 1
+    assert math.isclose(sing_cell.v, sing_expected.v, rel_tol=0.0, abs_tol=1e-12)
 
-def test_renshaw_rejects_invalid_current_without_state_mutation() -> None:
+
+def test_renshaw_rejects_invalid_current_raises_without_state_mutation() -> None:
+    """Non-finite current raises ``ValueError`` and leaves state unchanged."""
     cell = RenshawCell()
     for _ in range(20):
         cell.step(4.0)
     before = asdict(cell)
 
-    assert cell.step(math.nan) == 0
+    with pytest.raises(ValueError, match="current"):
+        cell.step(math.nan)
     assert asdict(cell) == before
-    assert cell.step(math.inf) == 0
+    with pytest.raises(ValueError, match="current"):
+        cell.step(math.inf)
     assert asdict(cell) == before
 
 
-def test_renshaw_rejects_excess_current_without_state_corruption() -> None:
+def test_renshaw_rejects_excess_current_raises_without_state_corruption() -> None:
+    """Out-of-range voltage candidate raises ``ValueError`` without mutating state."""
     cell = RenshawCell()
     before = asdict(cell)
 
-    assert cell.step(1.0e8) == 0
+    with pytest.raises(ValueError, match="voltage|range|finite"):
+        cell.step(1.0e8)
 
     assert asdict(cell) == before
 
 
 def test_renshaw_adaptation_remains_bounded_and_increases() -> None:
+    """Sustained drive spikes, increases adaptation, and keeps state in physiological bounds."""
     cell = RenshawCell()
     baseline = cell.adapt
 
