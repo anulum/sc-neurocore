@@ -14,7 +14,7 @@
 
 [quality]
 min_docstring_chars = 20
-expected_file_count = 5225
+expected_file_count = 5226
 
 [[file]]
 path = "src/sc_neurocore/cli/codec/recording.py"
@@ -20940,3 +20940,7 @@ rationale = "Quantum-inspired LIF neuron with an xorshift stream whose seed is c
 [[file]]
 path = "src/sc_neurocore/neurons/models/sc_stochastic_rate_adaptation.py"
 rationale = "Stochastic rate-adaptation neuron with an RK4 adaptation step and a seed checked against its declared domain."
+
+[[file]]
+path = "tests/test_adaptive_length.py"
+rationale = "adaptive_length: power-of-two lengths, the three bounds, min and max length, and the refused epsilon, method and confidence."

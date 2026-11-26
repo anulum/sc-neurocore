@@ -1966,6 +1966,13 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- `tests/test_adaptive_length.py` expects the messages `adaptive_length`
+  raises since it refuses non-finite inputs: "epsilon must be finite and
+  positive" and "confidence must be in (0.0, 1.0)". Its three refusal
+  tests still matched the earlier wording and failed on every Python in
+  CI. The module gains docstrings and is enrolled in the docstring
+  policy.
+
 - No star import may come back, suppressed or not. Every
   `from …support import *` in the tests has been replaced with an
   explicit import, so the ruff exemptions of F403 and F405 for
