@@ -1966,6 +1966,14 @@ All notable changes to the `sc-neurocore` project will be documented in this fil
 
 ### Repository hygiene
 
+- The function-call domain guide gives the timings of the recorded
+  benchmark again. The result was measured anew on 2026-11-24, when its
+  bound sources changed, but the guide's table kept the earlier figures,
+  so the test holding the guide to the recorded result failed in CI. The
+  table now reads 5.09, 218.87, 2652.12 and 16.44 ms for the first
+  collector call and 253.60, 626.37, 601.46 and 671.98 µs for the cached
+  median per call.
+
 - `tests/test_engine_gate_provenance.py` copies
   `tools/ci_workflow_inventory.py` into the private repository its
   source sweeps run in. Since the engine requirement gate reads the CI
